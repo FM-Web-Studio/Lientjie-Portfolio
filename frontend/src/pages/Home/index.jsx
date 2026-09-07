@@ -78,7 +78,6 @@ export default function Home() {
      one while the sheet's own captions collided with it. With no image the
      hero is composed type on a ruled ground, which always reads. */
   const heroImage = t.heroImage?.trim() || ''
-  const heroProject = projects[0]
 
   const STATS = [
     { value: t.stat1Value, label: t.stat1Label },
@@ -150,12 +149,6 @@ export default function Home() {
           {/* Metadata rail, pinned against the opposite edge. Hidden below the
               grid breakpoint, where there is no room for a second column. */}
           <dl className={styles.heroRail}>
-            {heroProject && (
-              <div className={styles.railItem}>
-                <dt className={styles.railKey}>Featured</dt>
-                <dd className={styles.railVal}>{heroProject.title}</dd>
-              </div>
-            )}
             {info.location && (
               <div className={styles.railItem}>
                 <dt className={styles.railKey}>Based in</dt>

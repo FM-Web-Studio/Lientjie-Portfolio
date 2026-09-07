@@ -43,8 +43,17 @@ export default function ProfileSection() {
   return (
     <div>
       <p className={styles.intro}>
-        Your name, title and bio shown on the About page and home hero. Email, phone,
-        location and social links live under <strong>Contact Info</strong>.
+        Your name, title and bio as shown on the <strong>About</strong> page. Email,
+        phone, location and social links live under <strong>Contact Info</strong>.
+      </p>
+      {/* The big name on the home page is NOT this field. It is split across two
+          typographic halves (italic first name, roman last name) and lives in
+          Site Copy. Saying so here is the whole fix for "I changed my name and
+          nothing happened": Profile is the obvious place to look, and it is the
+          wrong one. */}
+      <p className={styles.intro}>
+        Changing the large name on the <strong>home page</strong>? That one lives under{' '}
+        <strong>Site Copy → Home → &ldquo;Hero — first name&rdquo; / &ldquo;Hero — last name&rdquo;</strong>.
       </p>
       <form className={styles.formCard} onSubmit={handleSave}>
         <div className={styles.grid2}>

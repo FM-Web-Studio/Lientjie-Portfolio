@@ -27,8 +27,8 @@ export const HOME_FIELDS = [
    */
   { key: 'heroImage',     label: 'Hero background image URL (optional - leave blank for type-only hero)', type: 'text', default: '' },
   { key: 'heroEyebrow',   label: 'Hero - eyebrow',       type: 'text',     default: 'Architecture Portfolio' },
-  { key: 'heroNameFirst', label: 'Hero - first name',    type: 'text',     default: 'Lientjie' },
-  { key: 'heroNameLast',  label: 'Hero - last name',     type: 'text',     default: 'Meiring' },
+  { key: 'heroNameFirst', label: 'Big name on home page - first name', type: 'text', default: 'Lientjie' },
+  { key: 'heroNameLast',  label: 'Big name on home page - last name',  type: 'text', default: 'Meiring' },
   { key: 'heroBio',       label: 'Hero - bio',           type: 'textarea', default: 'A third-year architecture student at the University of Johannesburg, fascinated by how space shapes the way we feel, move, and belong.' },
   { key: 'heroCtaPrimary',   label: 'Hero - primary button',   type: 'text', default: 'Explore Work' },
   { key: 'heroCtaSecondary', label: 'Hero - secondary button', type: 'text', default: 'My Story' },
