@@ -4,7 +4,7 @@ import { useInView } from '../../hooks'
  * Reveals its children once, when they first scroll into view.
  *
  * Renders as whatever element you pass via `as` (default `div`) so it can drop
- * into a grid without adding a wrapper that breaks `grid-column` placement —
+ * into a grid without adding a wrapper that breaks `grid-column` placement -
  * the extra div was the reason the previous version could not be used inside
  * the twelve-column grid without a second child element.
  *

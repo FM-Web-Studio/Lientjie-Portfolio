@@ -73,7 +73,7 @@
 }
 
 .titleBtn {
-  /* A button reset — this must look like a heading, not a control. */
+  /* A button reset - this must look like a heading, not a control. */
   appearance: none;
   background: none;
   border: 0;
@@ -165,9 +165,9 @@
 }
 
 /* ── Stacked ────────────────────────────────────────────────────────────────
-   Below 900px the twelve-column grid collapses. The image keeps bleeding —
+   Below 900px the twelve-column grid collapses. The image keeps bleeding -
    full-bleed imagery is the point of the design and it survives the collapse
-   — but it now bleeds off BOTH edges, and the caption sits under it on the
+   - but it now bleeds off BOTH edges, and the caption sits under it on the
    gutter. */
 @media (max-width: 900px) {
   .row,

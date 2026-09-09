@@ -6,7 +6,7 @@
 
    Scroll-driven CSS animations are the more elegant mechanism, but they are
    still unsupported in Safari and Firefox at the time of writing, which means
-   maintaining a JS fallback anyway — and two mechanisms that must agree on the
+   maintaining a JS fallback anyway - and two mechanisms that must agree on the
    same start state is how elements end up permanently invisible in one engine.
    One observer-driven path behaves identically everywhere.
 
@@ -16,8 +16,8 @@
    ========================================================================== */
 
 /* The element's resting (revealed) state is its natural one, and the hidden
-   state is the override. Written this way round so that if JS never runs — a
-   failed chunk, a crawler, a reader with scripting off — the content is
+   state is the override. Written this way round so that if JS never runs - a
+   failed chunk, a crawler, a reader with scripting off - the content is
    visible rather than permanently transparent. */
 [data-reveal] {
   opacity: 1;
@@ -66,7 +66,7 @@
 
    The scale this replaces was the single worst performance problem on the
    site: hovering a project row produced 200ms frames and made every
-   subsequent hover — on a button, a link, anything — lag behind the pointer,
+   subsequent hover - on a button, a link, anything - lag behind the pointer,
    because the compositor was still re-rasterising a 70-megapixel bitmap. See
    the note on `.fade` above.
 
@@ -92,7 +92,7 @@
        hints should not be left on permanently.
 
        Without it this overlay shares a compositing layer with the image, so
-       animating its opacity invalidates that region — and repainting the
+       animating its opacity invalidates that region - and repainting the
        region means re-rasterising the image underneath it. On a 7016x9933
        source that measured p95 187.8ms with 47 frames over 100ms, i.e. the
        opacity fade was just as expensive as the scale it replaced.

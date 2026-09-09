@@ -6,7 +6,7 @@ import styles from './Figure.module.css'
  *
  * This exists because the layout is full-bleed. An image that is missing, or
  * whose Storage URL has expired, leaves a hole the width of the viewport and
- * several hundred pixels tall — the page does not just look unstyled, it looks
+ * several hundred pixels tall - the page does not just look unstyled, it looks
  * broken. Project imagery is admin-uploaded, so a missing `coverImage` is a
  * normal state (a project added before its renders are ready), not an edge
  * case.
@@ -52,7 +52,7 @@ export default function Figure({
           alt={alt}
           className={styles.img}
           /* The hero image is the largest contentful paint on the home page,
-             so it must not be lazy — deferring it delays LCP by a round trip.
+             so it must not be lazy - deferring it delays LCP by a round trip.
              Everything below the fold is lazy and low priority. */
           loading={priority ? 'eager' : 'lazy'}
           fetchPriority={priority ? 'high' : 'low'}

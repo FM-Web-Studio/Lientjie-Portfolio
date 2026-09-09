@@ -18,7 +18,7 @@ function Arrow() {
  * Rows alternate: even rows put the image on the left, running off the left
  * edge of the viewport, with the metadata on the type grid to the right; odd
  * rows mirror it. That alternation is the whole structure of the page, so the
- * side is derived from `index` rather than passed in — a caller that got it
+ * side is derived from `index` rather than passed in - a caller that got it
  * wrong would break the rhythm silently.
  *
  * The clickable element is the title button, not the row. Making the whole row

@@ -53,7 +53,7 @@ export default function ProfileSection() {
           wrong one. */}
       <p className={styles.intro}>
         Changing the large name on the <strong>home page</strong>? That one lives under{' '}
-        <strong>Site Copy → Home → &ldquo;Hero — first name&rdquo; / &ldquo;Hero — last name&rdquo;</strong>.
+        <strong>Site Copy → Home → &ldquo;Hero - first name&rdquo; / &ldquo;Hero - last name&rdquo;</strong>.
       </p>
       <form className={styles.formCard} onSubmit={handleSave}>
         <div className={styles.grid2}>
@@ -63,12 +63,24 @@ export default function ProfileSection() {
           <div className={`${styles.field} ${styles.span2}`}><label>Bio</label><textarea rows={5} value={form.bio} onChange={set('bio')} placeholder="Short professional bio shown on the About page…" /></div>
           <div className={`${styles.field} ${styles.span2}`}>
             <label>Profile Image</label>
-            {form.profileImage && <img src={form.profileImage} alt="Profile" className={styles.imgPreview} onError={e => { e.currentTarget.style.display = 'none' }} />}
-            <input value={form.profileImage} onChange={set('profileImage')} placeholder="https://… (paste URL or upload below)" />
-            <label className={`${styles.btn} ${styles.btnOutline} ${styles.btnSm} ${styles.uploadBtn}`} style={{ alignSelf: 'flex-start', marginTop: '0.5rem' }}>
-              {uploading ? 'Uploading…' : 'Upload image'}
-              <input type="file" accept="image/*" ref={fileRef} onChange={handleImage} hidden disabled={uploading} />
-            </label>
+            {form.profileImage
+              ? <img src={form.profileImage} alt="Profile" className={styles.imgPreview} onError={e => { e.currentTarget.style.display = 'none' }} />
+              : <p className={styles.uploadMsg}>No profile image yet.</p>}
+            <div className={styles.imgRow}>
+              <label className={`${styles.btn} ${styles.btnOutline} ${styles.btnSm} ${styles.uploadBtn}`}>
+                {uploading ? 'Uploading…' : form.profileImage ? 'Replace image' : 'Upload image'}
+                <input type="file" accept="image/*" ref={fileRef} onChange={handleImage} hidden disabled={uploading} />
+              </label>
+              {form.profileImage && (
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnOutline} ${styles.btnSm}`}
+                  onClick={() => setForm(f => ({ ...f, profileImage: '' }))}
+                >
+                  Remove image
+                </button>
+              )}
+            </div>
           </div>
         </div>
         <div className={styles.formActions}>

@@ -5,8 +5,32 @@ import { useInView } from '../../hooks'
 import { useContent } from '../../context/ContentContext'
 import styles from './About.module.css'
 
-// The four bio documents, each on its own live listener.
-const BIO_SECTIONS = ['profile', 'education', 'experience', 'skills']
+// The bio documents, each on its own live listener.
+const BIO_SECTIONS = ['profile', 'education', 'experience', 'achievements', 'skills']
+
+/*
+ * A link typed into the admin panel is usually written the way it is spoken -
+ * "lientjiepetsitting.co.za", no scheme. Handed to href verbatim that is a
+ * RELATIVE path, so the browser resolves it against this site and the link
+ * lands on a 404 instead of the other site. Anything without a scheme (and
+ * that is not a mailto/tel or a deliberate root-relative path) gets https://.
+ */
+function externalHref(raw) {
+  const url = (raw ?? '').trim()
+  if (!url) return null
+  if (/^(https?:|mailto:|tel:)/i.test(url)) return url
+  if (url.startsWith('/')) return url
+  return `https://${url}`
+}
+
+/** The bare domain, for display - a full URL as link text reads as clutter. */
+function linkLabel(href) {
+  try {
+    return new URL(href, window.location.origin).hostname.replace(/^www\./, '')
+  } catch {
+    return href
+  }
+}
 
 /** Numbered section opener, matching the home page. */
 function Marker({ num, children }) {
@@ -23,7 +47,9 @@ function Marker({ num, children }) {
  * metadata and the substance sits to its right, so the whole section reads as
  * an index rather than as a stack of cards.
  */
-function Entry({ period, role, place, description, index }) {
+function Entry({ period, role, place, description, link, index }) {
+  const href = externalHref(link)
+
   return (
     <Reveal className={styles.entry} variant="rise-sm" index={index} amount={0.2}>
       <p className={styles.entryPeriod}>{period}</p>
@@ -31,6 +57,27 @@ function Entry({ period, role, place, description, index }) {
         <h3 className={styles.entryRole}>{role}</h3>
         {place && <p className={styles.entryPlace}>{place}</p>}
         {description && <p className={styles.entryDesc}>{description}</p>}
+        {href && (
+          /* Its own line rather than a linked heading: the heading is the role,
+             and a reader scanning the timeline should be able to see that a
+             link exists without hovering every title to find out. */
+          <p className={styles.entryLinkRow}>
+            <a
+              className={styles.entryLink}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${linkLabel(href)} (opens in a new tab)`}
+            >
+              {linkLabel(href)}
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M7 17 17 7" />
+                <path d="M8 7h9v9" />
+              </svg>
+            </a>
+          </p>
+        )}
       </div>
     </Reveal>
   )
@@ -73,8 +120,8 @@ export default function About() {
   /*
    * One listener per bio document. The loading flag clears once every one has
    * reported at least once, tracked with a Set of section names rather than a
-   * counter: a listener that fires twice before its siblings fire at all —
-   * which happens whenever one document is edited during first paint — would
+   * counter: a listener that fires twice before its siblings fire at all -
+   * which happens whenever one document is edited during first paint - would
    * push a counter to 4 early and reveal the page with empty sections.
    */
   useEffect(() => {
@@ -94,18 +141,19 @@ export default function About() {
     return () => unsubs.forEach(u => u && u())
   }, [])
 
-  const { profile, education, experience, skills } = bio
+  const { profile, education, experience, achievements, skills } = bio
 
   /* Falls back to the editable copy defaults rather than to a skeleton. The
      name and title can therefore be rendered on the very first paint, which
      keeps the header the same height before and after the bio snapshot lands
-     — swapping a placeholder for a two-line name grew the header and shoved
+     - swapping a placeholder for a two-line name grew the header and shoved
      the page down, measured at CLS 0.085 on this route. */
   const name  = profile?.name  ?? t.fallbackName
   const title = profile?.title ?? t.fallbackTitle
 
   const eduItems = education?.items ?? []
   const expItems = experience?.items ?? []
+  const achItems = achievements?.items ?? []
   const skillCats = skills?.categories ?? []
 
   /* Sections are numbered in the order they actually render, so hiding
@@ -114,6 +162,11 @@ export default function About() {
     { id: 'profile',   label: t.sectionProfile,    show: true },
     { id: 'education', label: t.sectionEducation,  show: loading || eduItems.length > 0 },
     { id: 'experience',label: t.sectionExperience, show: loading || expItems.length > 0 },
+    /* Unlike the others this one is hidden while loading too: it is new, so
+       most visits have no achievements document at all, and reserving a
+       numbered slot for it would renumber Skills the moment the snapshot
+       landed empty. */
+    { id: 'achievements', label: t.sectionAchievements, show: achItems.length > 0 },
     { id: 'skills',    label: t.sectionSkills,     show: loading || skillCats.length > 0 },
   ].filter(s => s.show)
 
@@ -263,6 +316,34 @@ export default function About() {
                   role={item.role}
                   place={item.company}
                   description={item.description}
+                  link={item.link}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ════ ACHIEVEMENTS ══════════════════════════════════════════════════
+          On the plain ground rather than a colour band: it sits between the
+          mint Experience section and the deep Skills section, so a third
+          colour in a row would leave no quiet step anywhere on the page. */}
+      {shows('achievements') && (
+        <section className={`section tone-base ${styles.sectionAlt}`}>
+          <div className="grid12">
+            <Reveal className={styles.marker} variant="rise-sm">
+              <Marker num={numOf('achievements')}>{t.sectionAchievements}</Marker>
+            </Reveal>
+            <div className={styles.timeline}>
+              {achItems.map((item, i) => (
+                <Entry
+                  key={`${item.period}-${item.title}`}
+                  index={i}
+                  period={item.period}
+                  role={item.title}
+                  place={item.issuer}
+                  description={item.description}
+                  link={item.link}
                 />
               ))}
             </div>

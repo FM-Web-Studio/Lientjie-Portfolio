@@ -8,7 +8,7 @@
  * keeps flipping with the theme.
  *
  * The aliases sit on `:root`, which has lower specificity than the
- * `[data-theme='...']` blocks in Theme.css — so a name that exists in BOTH
+ * `[data-theme='...']` blocks in Theme.css - so a name that exists in BOTH
  * files resolves to the theme's value, not to an alias here. That is why
  * --accent-hover is deliberately absent below: Theme.css owns it now, and
  * re-declaring it here would create a self-referencing cycle with --accent-h.
@@ -83,7 +83,7 @@
 
   /* ── Radii ────────────────────────────────────────────────────────────────
      The public design is square, so Theme.css keeps only 0 / 2px / 4px / full.
-     The admin keeps a softer geometry — it is a tool, not a portfolio page —
+     The admin keeps a softer geometry - it is a tool, not a portfolio page -
      so the larger steps are defined here rather than in the theme. */
   --r-md: 8px;
   --r-lg: 12px;
@@ -151,7 +151,7 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Scrollbar — no track, floating brass thumb ─────────────────────────── */
+/* ── Scrollbar - no track, floating brass thumb ─────────────────────────── */
 .admin-scope ::-webkit-scrollbar,
 .admin-modal ::-webkit-scrollbar {
   width: 10px;

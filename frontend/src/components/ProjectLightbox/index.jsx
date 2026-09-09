@@ -79,7 +79,7 @@ export default function ProjectLightbox({ project, onClose }) {
     const img = imgRef.current
     if (!view || !img) return { x: 0, y: 0 }
     /* Measured against the viewport's content box, not the stage, so the
-       bound matches the area the image is actually laid out in — gutters
+       bound matches the area the image is actually laid out in - gutters
        excluded. offsetWidth/Height are layout sizes and so are unaffected by
        the CSS transform we are about to change. */
     return {
@@ -95,7 +95,7 @@ export default function ProjectLightbox({ project, onClose }) {
 
   /*
    * Zoom about a point. `focus` is in stage coordinates measured from the
-   * stage centre — which is also the transform origin — so the pixel under
+   * stage centre - which is also the transform origin - so the pixel under
    * the cursor stays under the cursor as the scale changes. The buttons and
    * the keyboard pass {0,0} and so zoom about the middle.
    */
@@ -227,8 +227,8 @@ export default function ProjectLightbox({ project, onClose }) {
     /*
      * Capture ONLY once a gesture has actually begun.
      *
-     * Capturing on every pointerdown retargets the whole sequence — the
-     * closing click included — to the stage, so a press on the prev/next
+     * Capturing on every pointerdown retargets the whole sequence - the
+     * closing click included - to the stage, so a press on the prev/next
      * arrows fired a click on the stage instead of on the button and the
      * arrows silently stopped working. At 1x there is nothing to pan
      * (the bounds are zero), so there is nothing to capture for either.
@@ -366,7 +366,8 @@ export default function ProjectLightbox({ project, onClose }) {
           </div>
         </div>
 
-        {/* ── Stage ───────────────────────────────────────────────────── */}
+        {/* ── Body: stage on the left, text rail on the right ─────────── */}
+        <div className={styles.body}>
         <div
           ref={stageRef}
           className={styles.stage}
@@ -389,7 +390,7 @@ export default function ProjectLightbox({ project, onClose }) {
                 ref={imgRef}
                 key={idx}
                 src={images[idx]}
-                alt={`${project.title} — image ${idx + 1} of ${count}`}
+                alt={`${project.title} - image ${idx + 1} of ${count}`}
                 className={styles.img}
                 decoding="async"
                 draggable={false}
@@ -413,7 +414,7 @@ export default function ProjectLightbox({ project, onClose }) {
                 className={`${styles.nav} ${styles.navPrev}`}
                 onClick={prev}
                 /* Two quick taps on an arrow are impatience, not a request to
-                   zoom — keep the gesture from reaching the stage. */
+                   zoom - keep the gesture from reaching the stage. */
                 onDoubleClick={e => e.stopPropagation()}
                 aria-label="Previous image"
               >
@@ -432,8 +433,11 @@ export default function ProjectLightbox({ project, onClose }) {
           )}
         </div>
 
-        {/* ── Bottom bar ──────────────────────────────────────────────── */}
-        <div className={styles.bottom}>
+        {/* ── Side rail ───────────────────────────────────────────────
+            Beside the image rather than under it, so the stage keeps the full
+            height of the panel and the photograph is as large as the screen
+            allows. Scrolls on its own; the stage never does. */}
+        <aside className={styles.rail} data-lenis-prevent>
           <div className={styles.info}>
             <h2 className={styles.title}>{project.title}</h2>
             {(project.longDescription || project.description) && (
@@ -477,6 +481,7 @@ export default function ProjectLightbox({ project, onClose }) {
               </>
             )}
           </div>
+        </aside>
         </div>
       </div>
     </div>

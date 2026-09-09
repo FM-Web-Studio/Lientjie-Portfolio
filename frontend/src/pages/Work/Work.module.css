@@ -8,7 +8,7 @@
 
 .head {
   /* Clears the fixed nav, then a generous block so the title has air without
-     needing a full viewport of it — a 100vh header on an index page costs the
+     needing a full viewport of it - a 100vh header on an index page costs the
      reader a scroll before they see a single project. */
   padding-top: calc(var(--nav-h) + clamp(48px, 9vh, 112px));
   padding-bottom: clamp(40px, 6vh, 72px);
@@ -49,7 +49,7 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  /* Optical alignment against the gutter — see .display in global.css. */
+  /* Optical alignment against the gutter - see .display in global.css. */
   margin-left: -0.045em;
 }
 
@@ -109,7 +109,7 @@
 
 /* ── Sticky filter strip ────────────────────────────────────────────────────
    `top` is the nav height so it parks directly beneath it. This works only
-   because <html> uses `overflow-x: clip` rather than `hidden` — `hidden`
+   because <html> uses `overflow-x: clip` rather than `hidden` - `hidden`
    would make <html> a scroll container and silently break the stickiness. */
 .filterBar {
   position: sticky;

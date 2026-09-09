@@ -68,12 +68,12 @@
 .userEmail   { font-size: var(--font-size-sm); color: var(--secondary-text-color); }
 
 /* =============================================================================
-   BUTTONS — four tiers, told apart by WEIGHT not just colour
+   BUTTONS - four tiers, told apart by WEIGHT not just colour
    -----------------------------------------------------------------------------
    The old set was hard to tell apart for two reasons, both fixed here.
 
    1. The base class carried `background: var(--background-2)`, so a button with
-      no variant was already a filled grey slab — which looked almost identical
+      no variant was already a filled grey slab - which looked almost identical
       to an outline button on hover. The base is now completely neutral and
       every tier declares its own fill and border, so the tiers cannot blur
       into each other.
@@ -127,7 +127,7 @@
   font-size: var(--font-size-xs);
 }
 
-/* ── 1. Primary — solid accent ─────────────────────────────────────────────
+/* ── 1. Primary - solid accent ─────────────────────────────────────────────
    The only filled-accent control on screen, so there is never a question
    which action is the main one. 14.26:1 dark / 6.97:1 light. */
 .btnPrimary {
@@ -140,7 +140,7 @@
   border-color: var(--accent-hover);
 }
 
-/* ── 2. Outline — bordered, unfilled ──────────────────────────────────────── */
+/* ── 2. Outline - bordered, unfilled ──────────────────────────────────────── */
 .btnOutline {
   background: transparent;
   border-color: var(--edge);
@@ -152,7 +152,7 @@
   background: var(--accent-sub);
 }
 
-/* ── 3. Danger — tinted fill, so it is destructive at a glance ─────────────
+/* ── 3. Danger - tinted fill, so it is destructive at a glance ─────────────
    Tinted from the start rather than only on hover: a transparent danger
    button is indistinguishable from an outline button until you point at it,
    which is exactly backwards for the one action that cannot be undone. */
@@ -167,7 +167,7 @@
   color: var(--background-1);
 }
 
-/* ── 4. Ghost — lowest weight ─────────────────────────────────────────────── */
+/* ── 4. Ghost - lowest weight ─────────────────────────────────────────────── */
 .btnGhost {
   background: transparent;
   border-color: transparent;
@@ -481,6 +481,81 @@
 .imgPreview { max-width: 200px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: var(--spacing-xs); }
 .uploadBtn { cursor: pointer; display: inline-flex; align-items: center; }
 .uploadMsg { color: var(--tertiary-text-color); font-size: var(--font-size-sm); margin-top: var(--spacing-xs); }
+
+/* ── Image manager ─────────────────────────────────────────────────────────
+   Replaces the raw URL fields. The storage path is an implementation detail
+   nobody editing the site needs to read, but removing and reordering is not -
+   the textarea used to be the only way to do either, so the controls that
+   replace it have to carry both. */
+.imgRow { display: flex; align-items: center; gap: var(--spacing-sm); flex-wrap: wrap; margin-top: var(--spacing-xs); }
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+}
+
+.galleryItem {
+  position: relative;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--background-2);
+  aspect-ratio: 4 / 3;
+}
+
+.galleryItem img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* The controls sit on the thumbnail rather than beside it, so a long gallery
+   stays compact. They are always visible, not hover-only: this panel is used
+   on a tablet as often as with a mouse, and a hover-only control is invisible
+   to a touch user until they guess it is there. */
+.galleryBar {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 2px;
+  padding: 3px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.72));
+}
+
+.galleryBtn {
+  appearance: none;
+  border: 0;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  border-radius: var(--radius-xs);
+  width: 26px;
+  height: 24px;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 120ms ease, opacity 120ms ease;
+}
+
+.galleryBtn:hover:not(:disabled) { background: rgba(0, 0, 0, 0.85); }
+.galleryBtn:disabled { opacity: 0.3; cursor: default; }
+.galleryBtnDanger:hover:not(:disabled) { background: var(--state-err, #9C1111); }
+
+/* Marks which frame is the cover, since the cover is chosen from this grid. */
+.galleryFlag {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: var(--accent-1);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
 
 /* ── Skills editor ─────────────────────────────────────────────────────────── */
 .skillCat { border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--spacing-md); margin-bottom: var(--spacing-md); background: var(--background-1); }

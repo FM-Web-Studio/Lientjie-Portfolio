@@ -1,21 +1,21 @@
 import { useState, useEffect, useMemo } from 'react'
 import { getProjects, createProject, updateProject, deleteProject, uploadMultiple } from '../../../firebase'
 import { useToast } from '../../../context/ToastContext'
+import { useContent } from '../../../context/ContentContext'
 import Modal from '../../../components/Modal/Modal'
-import SearchableDropdown from '../../../components/SearchableDropdown/SearchableDropdown'
 import styles from '../Admin.module.css'
 
 /*
- * Seed categories only. The dropdown is creatable, so anything typed into it
- * becomes a category — this list exists so a fresh install is not staring at
- * an empty menu, not to fence the options in.
+ * Last-resort seeds, used ONLY on a site that has neither configured filter
+ * categories nor a single project filed under anything. Once either exists,
+ * these are dropped rather than appended: leaving six unrelated defaults under
+ * the real taxonomy is what made the menu look like it could not be changed.
  */
 const SEED_CATEGORIES = ['academic', 'installation', 'structural', 'urban', 'residential', 'competition']
-const opt = (v) => ({ value: v, label: v })
 
 const BLANK = {
   title: '', description: '', longDescription: '', year: new Date().getFullYear(),
-  category: 'academic', tags: '', coverImage: '', images: '', featured: false, order: 99,
+  category: '', tags: '', coverImage: '', images: [], featured: false, order: 99,
   hidden: false,
 }
 
@@ -23,6 +23,12 @@ const slug = (s) => (s || 'untitled').toLowerCase().replace(/[^\w]+/g, '-').repl
 
 export default function ProjectsSection() {
   const { addToast } = useToast()
+  /* The Work page's own filter list. It is the taxonomy visitors actually see,
+     so it has to be the first thing offered here - previously the two were
+     configured in different places and never met, and the categories on the
+     live site could not be picked from this dropdown at all. */
+  const { copy } = useContent()
+  const configured = copy('work').categories
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(null) // { mode, id? }
@@ -34,25 +40,40 @@ export default function ProjectsSection() {
   useEffect(() => { load() }, [])
 
   /*
-   * The seeds plus every category already in use, so a category invented once
-   * is offered from then on instead of having to be retyped. Deduped without
-   * regard to case, keeping the first spelling seen, so "Urban" typed on top
-   * of the "urban" seed does not split the menu in two.
+   * The filter categories from Site Copy first, in their configured order, then
+   * anything a project already uses that is not among them. Deduped without
+   * regard to case, keeping the first spelling seen, so a configured "Urban"
+   * and a stored "urban" do not split the menu in two - and the configured
+   * spelling wins, which is the one the Work page prints on its chips.
    */
   const categoryOptions = useMemo(() => {
     const seen = new Map()
-    for (const c of [...SEED_CATEGORIES, ...projects.map(p => p.category)]) {
+    const add = c => {
       const v = (c ?? '').trim()
       if (v && !seen.has(v.toLowerCase())) seen.set(v.toLowerCase(), v)
     }
-    return [...seen.values()].map(opt)
-  }, [projects])
+    for (const c of (configured ?? '').split(',')) add(c)
+    for (const p of projects) add(p.category)
+    if (seen.size === 0) SEED_CATEGORIES.forEach(add)
+    return [...seen.values()]
+  }, [configured, projects])
 
   const set = (f) => (e) => setForm(prev => ({ ...prev, [f]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
 
-  function openNew() { setForm({ ...BLANK, order: projects.length + 1 }); setModal({ mode: 'add' }) }
+  /* A new project opens on the first configured category rather than on a
+     hardcoded default, which would otherwise file it under a name that has no
+     filter chip on the Work page. */
+  function openNew() {
+    setForm({ ...BLANK, category: categoryOptions[0] ?? '', order: projects.length + 1 })
+    setModal({ mode: 'add' })
+  }
   function openEdit(p) {
-    setForm({ ...BLANK, ...p, tags: Array.isArray(p.tags) ? p.tags.join(', ') : '', images: Array.isArray(p.images) ? p.images.join('\n') : '' })
+    setForm({
+      ...BLANK,
+      ...p,
+      tags: Array.isArray(p.tags) ? p.tags.join(', ') : '',
+      images: Array.isArray(p.images) ? p.images : [],
+    })
     setModal({ mode: 'edit', id: p.id })
   }
   const close = () => setModal(null)
@@ -74,10 +95,29 @@ export default function ProjectsSection() {
     setUploading(true)
     try {
       const urls = await uploadMultiple(files, `portfolio/projects/${slug(form.title)}`)
-      setForm(f => ({ ...f, images: f.images ? `${f.images}\n${urls.join('\n')}` : urls.join('\n') }))
+      setForm(f => ({ ...f, images: [...f.images, ...urls] }))
     } catch { addToast({ type: 'error', title: 'Image upload failed' }) }
     finally { setUploading(false) }
   }
+
+  /*
+   * Gallery editing. Removing an image here unlinks it from the project; the
+   * file itself is left in Storage, matching what deleting a whole project
+   * already does. Re-uploading is cheap, and a delete that reaches into
+   * Storage would silently break any other project reusing the same file.
+   */
+  const removeImage = (i) =>
+    setForm(f => ({ ...f, images: f.images.filter((_, idx) => idx !== i) }))
+
+  const moveImage = (i, delta) => setForm(f => {
+    const j = i + delta
+    if (j < 0 || j >= f.images.length) return f
+    const next = [...f.images]
+    ;[next[i], next[j]] = [next[j], next[i]]
+    return { ...f, images: next }
+  })
+
+  const makeCover = (url) => setForm(f => ({ ...f, coverImage: url }))
 
   async function save(e) {
     e.preventDefault()
@@ -90,7 +130,7 @@ export default function ProjectsSection() {
         year: Number(form.year) || new Date().getFullYear(),
         order: Number(form.order) || 0,
         tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
-        images: form.images.split('\n').map(u => u.trim()).filter(Boolean),
+        images: form.images.filter(Boolean),
       }
       if (modal.mode === 'add') await createProject(data)
       else await updateProject(modal.id, data)
@@ -203,18 +243,30 @@ export default function ProjectsSection() {
             <div className={`${styles.field} ${styles.span2}`}><label>Long Description</label><textarea rows={4} value={form.longDescription} onChange={set('longDescription')} placeholder="Full description shown in the lightbox" /></div>
             <div className={styles.field}><label>Year</label><input type="number" value={form.year} onChange={set('year')} min="2000" max="2099" /></div>
             <div className={styles.field}>
-              <label>Category</label>
-              <SearchableDropdown
-                creatable
-                options={categoryOptions}
-                value={form.category ? opt(form.category) : null}
-                onChange={o => setForm(f => ({ ...f, category: (o?.value || '').trim() }))}
-                placeholder="Choose or type a new category…"
-                formatCreateLabel={input => `Add category "${input}"`}
+              <label htmlFor="pf-category">Category</label>
+              {/*
+                A plain text box with a <datalist> of what already exists, rather
+                than a select. Typing is the primary action and the suggestions
+                are only a shortcut, which is the opposite of how a dropdown
+                behaves: the old creatable select made you pick an "Add category"
+                row before it would accept what you had already typed.
+              */}
+              <input
+                id="pf-category"
+                list="pf-category-options"
+                value={form.category}
+                onChange={set('category')}
+                placeholder="Type a category, or pick an existing one"
+                autoComplete="off"
               />
+              <datalist id="pf-category-options">
+                {categoryOptions.map(c => <option key={c} value={c} />)}
+              </datalist>
               <p className={styles.hint}>
-                Type a new name and pick “Add category …” to create one. New categories
-                appear as a filter on the Work page automatically.
+                Free text. The suggestions are the filter categories from{' '}
+                <strong>Site Copy → Work</strong> plus any already used by a project.
+                Anything new you type here appears as a filter on the Work page
+                automatically.
               </p>
             </div>
             <div className={styles.field}><label>Order</label><input type="number" value={form.order} onChange={set('order')} min="0" /></div>
@@ -226,22 +278,77 @@ export default function ProjectsSection() {
             <div className={`${styles.field} ${styles.span2}`}><label>Tags (comma-separated)</label><input value={form.tags} onChange={set('tags')} placeholder="structural, campus, 2025" /></div>
 
             <div className={`${styles.field} ${styles.span2}`}>
-              <label>Cover Image URL</label>
-              <input value={form.coverImage} onChange={set('coverImage')} placeholder="https://… or /images/…" />
-              {form.coverImage && <img src={form.coverImage} alt="Cover" className={styles.imgPreview} />}
-              <label className={`${styles.btn} ${styles.btnOutline} ${styles.btnSm} ${styles.uploadBtn}`} style={{ alignSelf: 'flex-start', marginTop: '0.5rem' }}>
-                {uploading ? 'Uploading…' : 'Upload cover'}
-                <input type="file" accept="image/*" onChange={handleCoverUpload} hidden disabled={uploading} />
-              </label>
+              <label>Cover image</label>
+              <p className={styles.hint}>Used on the Work page and, when featured, the home page.</p>
+              {form.coverImage
+                ? <img src={form.coverImage} alt="Cover" className={styles.imgPreview} />
+                : <p className={styles.uploadMsg}>No cover chosen yet.</p>}
+              <div className={styles.imgRow}>
+                <label className={`${styles.btn} ${styles.btnOutline} ${styles.btnSm} ${styles.uploadBtn}`}>
+                  {uploading ? 'Uploading…' : form.coverImage ? 'Replace cover' : 'Upload cover'}
+                  <input type="file" accept="image/*" onChange={handleCoverUpload} hidden disabled={uploading} />
+                </label>
+                {form.coverImage && (
+                  <button
+                    type="button"
+                    className={`${styles.btn} ${styles.btnOutline} ${styles.btnSm}`}
+                    onClick={() => setForm(f => ({ ...f, coverImage: '' }))}
+                  >
+                    Remove cover
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className={`${styles.field} ${styles.span2}`}>
-              <label>Image URLs (one per line)</label>
-              <textarea rows={4} value={form.images} onChange={set('images')} placeholder={'/images/Projects/Folly/1.jpeg\n/images/Projects/Folly/2.jpeg'} />
-              <label className={`${styles.btn} ${styles.btnOutline} ${styles.btnSm} ${styles.uploadBtn}`} style={{ alignSelf: 'flex-start', marginTop: '0.5rem' }}>
-                {uploading ? 'Uploading…' : 'Upload images'}
-                <input type="file" accept="image/*" multiple onChange={handleImagesUpload} hidden disabled={uploading} />
-              </label>
+              <label>Gallery images</label>
+              <p className={styles.hint}>
+                Shown in the project viewer, in this order. Use ‹ › to reorder,
+                ★ to make one the cover image, and ✕ to remove.
+              </p>
+              {form.images.length > 0 && (
+                <div className={styles.gallery}>
+                  {form.images.map((url, i) => (
+                    <div key={`${url}-${i}`} className={styles.galleryItem}>
+                      <img src={url} alt={`Image ${i + 1}`} />
+                      {url === form.coverImage && <span className={styles.galleryFlag}>Cover</span>}
+                      <div className={styles.galleryBar}>
+                        <button
+                          type="button" className={styles.galleryBtn}
+                          onClick={() => moveImage(i, -1)} disabled={i === 0}
+                          aria-label={`Move image ${i + 1} earlier`}
+                        >‹</button>
+                        <button
+                          type="button" className={styles.galleryBtn}
+                          onClick={() => makeCover(url)} disabled={url === form.coverImage}
+                          aria-label={`Use image ${i + 1} as the cover`} title="Use as cover"
+                        >★</button>
+                        <button
+                          type="button" className={styles.galleryBtn}
+                          onClick={() => moveImage(i, 1)} disabled={i === form.images.length - 1}
+                          aria-label={`Move image ${i + 1} later`}
+                        >›</button>
+                        <button
+                          type="button" className={`${styles.galleryBtn} ${styles.galleryBtnDanger}`}
+                          onClick={() => removeImage(i)}
+                          aria-label={`Remove image ${i + 1}`}
+                        >✕</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className={styles.imgRow}>
+                <label className={`${styles.btn} ${styles.btnOutline} ${styles.btnSm} ${styles.uploadBtn}`}>
+                  {uploading ? 'Uploading…' : 'Add images'}
+                  <input type="file" accept="image/*" multiple onChange={handleImagesUpload} hidden disabled={uploading} />
+                </label>
+                {form.images.length > 0 && (
+                  <span className={styles.uploadMsg}>
+                    {form.images.length} image{form.images.length === 1 ? '' : 's'}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <div className={styles.formActions}>

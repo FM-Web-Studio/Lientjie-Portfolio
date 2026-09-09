@@ -33,7 +33,7 @@ export default function Work() {
    * site-copy field was edited too, and the projects filed under it would be
    * reachable only through "All".
    *
-   * Matched case-insensitively — the filter compares that way as well — so a
+   * Matched case-insensitively - the filter compares that way as well - so a
    * configured "Urban" and a stored "urban" stay one chip.
    */
   const CATS = useMemo(() => {
@@ -59,15 +59,15 @@ export default function Work() {
   ), [projects, filter])
 
   /* The year range across everything published, not across the current
-     filter — it is a fact about the body of work, so it should not change as
+     filter - it is a fact about the body of work, so it should not change as
      the reader filters. Guarded because `Math.min()` of an empty list is
-     Infinity, which would render as "Infinity—-Infinity" on a fresh install. */
+     Infinity, which would render as "Infinity--Infinity" on a fresh install. */
   const span = useMemo(() => {
     const years = projects.map(p => Number(p.year)).filter(Number.isFinite)
     if (years.length === 0) return null
     const lo = Math.min(...years)
     const hi = Math.max(...years)
-    return lo === hi ? String(lo) : `${lo}—${hi}`
+    return lo === hi ? String(lo) : `${lo}-${hi}`
   }, [projects])
 
   const count = String(visible.length).padStart(2, '0')
@@ -111,7 +111,7 @@ export default function Work() {
 
       {/* ════ FILTER ════════════════════════════════════════════════════════
           Sticky under the nav. A ruled strip of inline filters on the left and
-          the live count on the right — no pills, no cards. */}
+          the live count on the right - no pills, no cards. */}
       <div className={styles.filterBar}>
         <div className={`grid12 ${styles.filterInner}`}>
           <div className={styles.filters} role="group" aria-label="Filter by category">
@@ -129,7 +129,7 @@ export default function Work() {
           </div>
 
           <p className={styles.count} aria-live="polite">
-            {loading ? '—' : count}
+            {loading ? '-' : count}
             <span className={styles.countUnit}>
               {visible.length === 1 ? 'project' : 'projects'}
             </span>
@@ -151,7 +151,7 @@ export default function Work() {
           /* Keyed on the filter so the reveal animation replays when the list
              changes. Without the key React reuses the same DOM nodes, which
              are already marked revealed, and the new set appears instantly
-             while the old set fades — reading as a glitch rather than a
+             while the old set fades - reading as a glitch rather than a
              transition. */
           <div key={filter}>
             {visible.map((p, i) => (

@@ -4,7 +4,7 @@
    Chrome lives on the top and bottom edges; the photograph owns the middle.
 
    The surface follows the theme: near-black in dark, and the identity sheet's
-   own #E6E6E6 in light — the same grey the logo and every page ground sit on,
+   own #E6E6E6 in light - the same grey the logo and every page ground sit on,
    so opening a project no longer punches a dark hole through a light page.
 
    Every colour below therefore goes through a local token rather than a literal.
@@ -23,7 +23,7 @@
      reads as the image itself moving. */
   animation: lbIn 240ms var(--ease-out);
 
-  /* Dark — the default. */
+  /* Dark - the default. */
   --lb-ground: rgba(8, 8, 8, 0.96);
   --lb-ink:         #F4F4F4;
   --lb-ink-soft:    rgba(244, 244, 244, 0.72);   /* description, tags        */
@@ -39,7 +39,7 @@
 }
 
 /*
- * Light — the sheet grey, with the ink inverted.
+ * Light - the sheet grey, with the ink inverted.
  *
  * The alphas are NOT the dark ones reused: dark ink on a light ground loses
  * contrast far faster as alpha drops, so the muted tier is carried at 0.66
@@ -51,7 +51,7 @@
 [data-theme='light'] .backdrop {
   /* Opaque, unlike the dark ground's 0.96. A near-black veil over a dark page
      hides what is behind it; a grey veil over a grey page does not, and the
-     Work list ghosted straight through — the title appeared twice on screen. */
+     Work list ghosted straight through - the title appeared twice on screen. */
   --lb-ground: #E6E6E6;
   --lb-ink:         #1A1A1A;
   --lb-ink-soft:    rgba(26, 26, 26, 0.80);
@@ -199,16 +199,16 @@
 .stage[data-zoomed='true']  { cursor: grab; }
 .stage[data-dragging='true'] { cursor: grabbing; }
 
-/* The transformed layer. It fills the stage so its centre — the transform
-   origin — coincides with the stage centre, which is what the zoom-to-cursor
+/* The transformed layer. It fills the stage so its centre - the transform
+   origin - coincides with the stage centre, which is what the zoom-to-cursor
    maths in the component assumes. */
 .viewport {
   position: absolute;
   inset: 0;
   /* Flex, NOT grid. The image caps itself with `max-height: 100%`, and a
      percentage max-height only resolves against a definite height. A grid
-     item measures against its grid area — here an auto-sized row that is
-     itself sized to the image — so the cap resolved to the image's own
+     item measures against its grid area - here an auto-sized row that is
+     itself sized to the image - so the cap resolved to the image's own
      height and did nothing, and tall images ran under the bottom bar. */
   display: flex;
   align-items: center;
@@ -227,7 +227,7 @@
 }
 
 /* `contain`, not `cover`: this is the one place in the site where the whole
-   frame matters more than filling the box — the reader has opened the image
+   frame matters more than filling the box - the reader has opened the image
    deliberately, so it must not be cropped. */
 .img {
   max-width: 100%;
@@ -238,7 +238,7 @@
   animation: imgIn 320ms var(--ease-out);
 }
 
-/* On the grey ground a drawing scanned on white has no edge at all — it bleeds
+/* On the grey ground a drawing scanned on white has no edge at all - it bleeds
    into the surface. A soft shadow gives it one without drawing a literal frame,
    which would fight the photographs. Light only: on near-black there is nothing
    for a shadow to darken. */
@@ -277,8 +277,8 @@
   color: var(--lb-ink-mute);
 }
 
-/* Navigation. The hit area is deliberately tall — the full height of the
-   stage — so the arrows are easy to hit without drawing large controls over
+/* Navigation. The hit area is deliberately tall - the full height of the
+   stage - so the arrows are easy to hit without drawing large controls over
    the photograph. */
 .nav {
   position: absolute;
@@ -309,23 +309,43 @@
 .navPrev { left: 0;  --nav-dir: to right; }
 .navNext { right: 0; --nav-dir: to left;  }
 
-/* ── Bottom bar ─────────────────────────────────────────────────────────── */
-.bottom {
+/* ── Body: stage beside the rail ────────────────────────────────────────── */
+.body {
+  flex: 1;
+  min-height: 0;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: clamp(24px, 5vw, 72px);
-  padding: var(--sp-6) var(--gutter) var(--sp-8);
-  flex-shrink: 0;
-  border-top: 1px solid var(--lb-line);
+  align-items: stretch;
 }
 
+/* ── Side rail ──────────────────────────────────────────────────────────────
+   The text used to sit in a bar under the image, which cost the photograph
+   200-300px of height on a laptop. Beside it, the stage keeps the full height
+   of the panel, which is the whole point of opening a project.
+
+   Width is capped in ch as well as px: past about 46 characters a measure
+   stops being comfortable to read, and the space is better given to the
+   image. */
+.rail {
+  flex: 0 0 clamp(260px, 24vw, 380px);
+  max-width: 46ch;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--lb-line);
+  padding: var(--sp-2) var(--gutter) 0 clamp(20px, 2.5vw, 40px);
+}
+
+/* The rail itself does not scroll: only the prose does. A long description
+   would otherwise push the thumbnail strip out of sight, and the reader has
+   no way to know it is down there. */
 .info {
   min-width: 0;
-  /* Caps the block so a long description cannot push the thumbnail strip off
-     the screen; it scrolls inside itself instead. */
-  max-height: 34vh;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding-bottom: var(--sp-6);
 }
 
 .title {
@@ -365,13 +385,18 @@
   border-radius: var(--r-xs);
 }
 
+/* Pinned to the foot of the rail, so the image count and the thumbnails stay
+   on screen however long the description runs. */
 .gallery {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: var(--sp-4);
+  align-items: flex-start;
+  gap: var(--sp-3);
   flex-shrink: 0;
+  padding: var(--sp-4) 0 var(--sp-6);
 }
+
+.gallery:not(:empty) { border-top: 1px solid var(--lb-line); }
 
 .counter {
   display: flex;
@@ -385,16 +410,14 @@
 
 .counterSep { color: var(--lb-ink-faint); }
 
+/* Wraps in the rail rather than scrolling sideways: the rail is narrow and
+   already scrolls vertically, and a second scroll axis inside it is a trap. */
 .thumbs {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--sp-2);
-  max-width: min(46vw, 520px);
-  overflow-x: auto;
-  padding-bottom: 2px;
-  scrollbar-width: none;
+  width: 100%;
 }
-
-.thumbs::-webkit-scrollbar { display: none; }
 
 .thumb {
   appearance: none;
@@ -433,23 +456,27 @@
 
 /* ── Narrow ─────────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
-  .bottom {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--sp-5);
+  /* Too narrow for two columns: the rail goes back under the stage, but as a
+     capped, scrolling block rather than something that can push the image off
+     the screen. */
+  .body { flex-direction: column; }
+
+  .rail {
+    flex: 0 0 auto;
+    max-width: none;
+    max-height: 40vh;
+    border-left: 0;
+    border-top: 1px solid var(--lb-line);
+    padding: var(--sp-5) var(--gutter) 0;
   }
 
-  .gallery {
-    align-items: flex-start;
-    width: 100%;
-  }
+  .info { padding-bottom: var(--sp-4); }
+  .gallery { padding-bottom: var(--sp-5); }
 
-  .thumbs { max-width: 100%; }
-
-  .info { max-height: 26vh; }
+  .gallery { width: 100%; }
 
   /* The tall side hit-areas overlap the image badly on a phone. Swipe is not
-     implemented, so the arrows stay — but as small controls pinned to the
+     implemented, so the arrows stay - but as small controls pinned to the
      vertical centre rather than full-height panels. */
   .nav {
     top: 50%;

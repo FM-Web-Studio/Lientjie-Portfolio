@@ -18,7 +18,7 @@ function validate(data) {
   if (!data.name.trim())  e.name  = 'Required'
   if (!data.email.trim()) e.email = 'Required'
   /* Deliberately permissive. A strict RFC-5322 pattern rejects valid
-     addresses, and the real check is whether the reply arrives — this only
+     addresses, and the real check is whether the reply arrives - this only
      catches obvious typos before the message is written to Firestore. */
   else if (!/\S+@\S+\.\S+/.test(data.email)) e.email = 'Not a valid address'
   if (!data.message.trim()) e.message = 'Required'

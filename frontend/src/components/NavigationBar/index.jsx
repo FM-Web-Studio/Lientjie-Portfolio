@@ -50,8 +50,8 @@ export default function NavigationBar() {
    *
    * A transparent bar draws its type in the THEME's text colour, which is only
    * legible over the theme's own ground. Most pages now open with a
-   * full-strength brand band — the Contact header is mint, which is a light
-   * surface in both themes — and bone-white nav type over mint is unreadable.
+   * full-strength brand band - the Contact header is mint, which is a light
+   * surface in both themes - and bone-white nav type over mint is unreadable.
    *
    * Rather than teach the nav about individual routes, the section that wants
    * to be floated over declares it with `data-nav-overlay` (currently only the

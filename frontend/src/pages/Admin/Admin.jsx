@@ -8,6 +8,7 @@ import ContactInfoSection from './sections/ContactInfoSection'
 import SiteCopySection from './sections/SiteCopySection'
 import EducationSection from './sections/EducationSection'
 import ExperienceSection from './sections/ExperienceSection'
+import AchievementsSection from './sections/AchievementsSection'
 import SkillsSection from './sections/SkillsSection'
 import ProjectsSection from './sections/ProjectsSection'
 import MessagesSection from './sections/MessagesSection'
@@ -22,6 +23,7 @@ const SECTIONS = [
   { id: 'copy',       group: 'Content',  title: 'Site Copy',    icon: '📝' },
   { id: 'education',  group: 'Content',  title: 'Education',    icon: '🎓' },
   { id: 'experience', group: 'Content',  title: 'Experience',   icon: '💼' },
+  { id: 'achievements', group: 'Content', title: 'Achievements', icon: '🏆' },
   { id: 'skills',     group: 'Content',  title: 'Skills',       icon: '📊' },
   { id: 'projects',   group: 'Work',     title: 'Projects',     icon: '🏛️' },
   { id: 'messages',   group: 'Inbox',    title: 'Messages',     icon: '✉️' },
@@ -104,6 +106,7 @@ export default function Admin() {
       case 'copy':       return <SiteCopySection />
       case 'education':  return <EducationSection />
       case 'experience': return <ExperienceSection />
+      case 'achievements': return <AchievementsSection />
       case 'skills':     return <SkillsSection />
       case 'projects':   return <ProjectsSection />
       case 'messages':   return <MessagesSection />

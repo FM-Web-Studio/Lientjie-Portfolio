@@ -6,7 +6,7 @@
 
    Every block is placed on the twelve-column grid by explicit column number.
    Nothing uses `margin: auto`, and there is no centred container anywhere in
-   this file — that was the specific problem with the previous layout.
+   this file - that was the specific problem with the previous layout.
    ========================================================================== */
 
 /* ── Hero ───────────────────────────────────────────────────────────────────
@@ -199,7 +199,7 @@
 
 /* ── Hero without a background image ────────────────────────────────────────
    The default state. A ruled drafting ground instead of a photograph, and the
-   type reverts to the THEME colours — the --on-image tokens are fixed light
+   type reverts to the THEME colours - the --on-image tokens are fixed light
    values for use over a dark scrim, so leaving them in place here would put
    near-white type on an alabaster background in light mode. */
 .heroGrid {
@@ -252,7 +252,7 @@
 .statementMarker { grid-column: 1 / 4; }
 
 /* Column 4 onward, so the statement is set well off the left edge without
-   being centred — the asymmetry is the point. */
+   being centred - the asymmetry is the point. */
 .statementBody {
   grid-column: 4 / 12;
   min-width: 0;

@@ -32,7 +32,7 @@
 }
 
 /* The accent hairline under the bar. A pseudo-element rather than the
-   border-bottom it replaces, because it needs to fade in with the ground — a
+   border-bottom it replaces, because it needs to fade in with the ground - a
    border cannot transition from "no border" without shifting layout, whereas
    opacity on an absolutely-positioned line costs nothing. */
 .bar::after {

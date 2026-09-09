@@ -4,7 +4,8 @@
  * Cover images straight off a camera or a render can be 7000px+ on the long
  * edge. The browser has to decode the whole thing to a bitmap before it can
  * paint a 344px-wide card, and a 70-megapixel decode stalls the main thread
- * for roughly a second - which is what made scrolling stutter.
+ * for roughly a second - which is what made scrolling stutter. The cap below
+ * is the balance between that cost and staying sharp under the viewer's zoom.
  *
  * WebP is the output format because it keeps alpha, so a transparent PNG does
  * not come back with a black background the way it would through JPEG.
@@ -13,9 +14,25 @@
  * problem can never block an upload.
  */
 
-const MAX_EDGE     = 2000   // plenty for a full-bleed lightbox on a retina display
-const QUALITY      = 0.86
-const SKIP_BYTES   = 600 * 1024
+/*
+ * Sized for the lightbox's zoom, not just for a full-bleed view.
+ *
+ * 2000px was chosen when the viewer only ever showed an image fit to the
+ * screen. The viewer now zooms to 6x, and the work being shown is dense
+ * presentation boards whose value is in the small text and linework - at
+ * 2000px those turn to mush as soon as anyone zooms in, which is exactly what
+ * the images are there for.
+ *
+ * 3200px is roughly 2.5x the pixels of the old cap while staying well under
+ * the decode cost that made scrolling stutter in the first place. Quality is
+ * up too: 0.86 WebP puts visible ringing around fine black linework on white,
+ * which is most of a drawing sheet.
+ */
+const MAX_EDGE     = 3200
+const QUALITY      = 0.92
+// Anything already under this in both dimensions and weight is passed through
+// untouched, so a photo that is already web-sized is never re-encoded.
+const SKIP_BYTES   = 1500 * 1024
 
 /** Draw `bitmap` into a canvas scaled to fit MAX_EDGE and return a WebP blob. */
 function toScaledBlob(bitmap, width, height) {

@@ -1,5 +1,5 @@
 /* =============================================================================
-   DESIGN TOKENS — JBM Architex
+   DESIGN TOKENS - JBM Architex
    -----------------------------------------------------------------------------
    Palette taken from the JBM Architex identity sheet: mint green and coral on a
    neutral grey ground, with a peach ribbon as the third note.
@@ -14,7 +14,7 @@
    On a dark ground they are excellent (14.26:1 and 6.48:1), and as BAND
    BACKGROUNDS with dark type they are excellent in either theme (14.26:1 and
    6.48:1). So this palette wants the brand colours on surfaces, not on type.
-   Where an accent must be text — a link, an 11px label — the light theme uses a
+   Where an accent must be text - a link, an 11px label - the light theme uses a
    deep derivative of the same hue instead. Each is noted where it appears.
 
    Every ratio in the comments below is computed, not estimated.
@@ -24,12 +24,12 @@
   /* ── Brand pigments ───────────────────────────────────────────────────────
      The raw values sampled from the identity sheet. Kept as their own tokens
      so the source of every derived colour is traceable, and referenced only by
-     the theme blocks below — never used directly by a component, because none
+     the theme blocks below - never used directly by a component, because none
      of them is safe as text on every surface. */
   --brand-mint:  #B0EFC3;
   --brand-coral: #EC7373;
   --brand-peach: #D6BEAD;
-  --brand-grey:  #808080;   /* the wordmark grey — decorative only */
+  --brand-grey:  #808080;   /* the wordmark grey - decorative only */
   --brand-sheet: #E6E6E6;   /* the sheet background                */
 
   /* ── Type families ────────────────────────────────────────────────────────
@@ -46,17 +46,17 @@
      Editorial rather than uniform: the display sizes are deliberately far
      apart from the body sizes, because the layout leans on that jump for
      hierarchy instead of on boxes and borders. */
-  --text-2xs:  0.6875rem;   /* 11px — mono metadata, letterspaced          */
+  --text-2xs:  0.6875rem;   /* 11px - mono metadata, letterspaced          */
   --text-xs:   0.75rem;
   --text-sm:   0.875rem;
   --text-base: 1rem;
-  --text-md:   1.0625rem;   /* body copy — 17px reads better at long measure */
+  --text-md:   1.0625rem;   /* body copy - 17px reads better at long measure */
   --text-lg:   1.25rem;
   --text-xl:   1.5rem;
   --text-2xl:  clamp(1.75rem, 2.6vw, 2.25rem);
   --text-3xl:  clamp(2.25rem, 4.4vw, 3.5rem);
   --text-4xl:  clamp(3rem, 7vw, 5.5rem);
-  /* The one true display size — hero and page titles only. */
+  /* The one true display size - hero and page titles only. */
   --text-display: clamp(3.25rem, 12vw, 12rem);
 
   --leading-display: 0.88;  /* tight enough that two lines lock together */
@@ -90,7 +90,7 @@
      There is no page-wide max-width token here on purpose. The old layout
      centred every section inside a 1200px column, which on a wide display is
      a narrow ribbon of content with several hundred pixels of dead margin
-     either side — that reads as "everything is centred" no matter how the
+     either side - that reads as "everything is centred" no matter how the
      inside of the section is gridded. Sections are full-bleed now; only
      individual text blocks are measured, and they are measured in `ch` so the
      constraint follows the font rather than the viewport. */
@@ -133,34 +133,34 @@
 }
 
 /* =============================================================================
-   DARK — neutral graphite, sheet white, mint
+   DARK - neutral graphite, sheet white, mint
    -----------------------------------------------------------------------------
    The greys are true neutrals, matching the identity sheet's own neutral grey
    character; the mint and coral supply all the colour. Dark is the primary
-   mode, and it is the mode this palette was born for — both brand colours are
+   mode, and it is the mode this palette was born for - both brand colours are
    light, so they sit on a dark ground without alteration.
    ========================================================================== */
 [data-theme='dark'] {
   --bg-0: #121212;   /* page                                    */
-  --bg-1: #191919;   /* raised — cards, form fields             */
-  --bg-2: #202020;   /* raised further — hover, inset panels    */
-  --bg-3: #272727;   /* highest — active states                 */
+  --bg-1: #191919;   /* raised - cards, form fields             */
+  --bg-2: #202020;   /* raised further - hover, inset panels    */
+  --bg-3: #272727;   /* highest - active states                 */
 
   /* Primary text is the identity sheet's own #E6E6E6, so the site's type and
      the brand sheet are literally the same value. 15.01:1 on bg-0. */
   --fg-1: #E6E6E6;
   --fg-2: #CCCCCC;   /* 11.02:1 on bg-0 */
   --fg-3: #949494;   /*  5.83:1 on bg-0, and still 4.99:1 on bg-3 */
-  --fg-4: #6E6E6E;   /* decorative numerals, disabled — never body text */
+  --fg-4: #6E6E6E;   /* decorative numerals, disabled - never body text */
 
   /* Mint, used exactly as supplied. 14.26:1 on the page and ~12.8:1 on the
-     highest surface, so it is safe for body-size text and 11px labels alike —
+     highest surface, so it is safe for body-size text and 11px labels alike -
      which is only true in dark mode. See the light block for the alternative. */
   --accent:       #B0EFC3;
   --accent-hover: #C6F5D5;
   --accent-dim:   rgba(176, 239, 195, 0.13);
   --accent-line:  rgba(176, 239, 195, 0.32);
-  --accent-ink:   #121212;   /* text ON mint — 14.26:1 */
+  --accent-ink:   #121212;   /* text ON mint - 14.26:1 */
   --accent-rgb:   176, 239, 195;
 
   /* Two divider tokens, because one value cannot do both jobs.
@@ -170,7 +170,7 @@
      apply to purely decorative lines, so this is compliant as well as being
      the effect the design wants.
 
-     --edge is the boundary of something you can actually operate — a text
+     --edge is the boundary of something you can actually operate - a text
      input, a select, a checkbox. That IS covered (WCAG 1.4.11) and must clear
      3:1. At 3.20:1 against the bg-2 that form fields sit on, --edge does; the
      decorative value would have failed it by a wide margin, and you would not
@@ -205,19 +205,19 @@
 }
 
 /* =============================================================================
-   LIGHT — the identity sheet's grey, with a deep mint
+   LIGHT - the identity sheet's grey, with a deep mint
    -----------------------------------------------------------------------------
    The page ground is #E6E6E6, the sheet's own background, rather than white.
 
    The accent CANNOT be the brand mint here: #B0EFC3 on #E6E6E6 is 1.05:1, so
    a mint link would be invisible. The accent is instead a deep derivative of
    the same hue (138°), which keeps the brand's colour identity while being
-   usable for text. The literal mint still appears throughout this theme — as
+   usable for text. The literal mint still appears throughout this theme - as
    band backgrounds, where it belongs (see .tone-accent).
    ========================================================================== */
 [data-theme='light'] {
   --bg-0: #E6E6E6;   /* the identity sheet's grey */
-  --bg-1: #F2F2F2;   /* raised — cards, form fields */
+  --bg-1: #F2F2F2;   /* raised - cards, form fields */
   --bg-2: #DCDCDC;
   --bg-3: #D2D2D2;
 
@@ -229,16 +229,16 @@
   --fg-3: #555555;   /*  4.93:1 */
   --fg-4: #767676;   /* decorative only */
 
-  /* Deep mint — the brand hue at L=0.22. 5.16:1 on the worst surface. */
+  /* Deep mint - the brand hue at L=0.22. 5.16:1 on the worst surface. */
   --accent:       #115F29;
   --accent-hover: #0E4E21;
   --accent-dim:   rgba(17, 95, 41, 0.10);
   --accent-line:  rgba(17, 95, 41, 0.26);
-  --accent-ink:   #F2F2F2;   /* text ON deep mint — 8.9:1 */
+  --accent-ink:   #F2F2F2;   /* text ON deep mint - 8.9:1 */
   --accent-rgb:   17, 95, 41;
 
-  --rule: #D2D2D2;   /* decorative — deliberately faint */
-  --edge: #767676;   /* interactive boundary — 4.06:1 on bg-1 */
+  --rule: #D2D2D2;   /* decorative - deliberately faint */
+  --edge: #767676;   /* interactive boundary - 4.06:1 on bg-1 */
 
   /* The scrim stays dark in light mode. Photography is photography: a light
      scrim over an unknown image cannot guarantee legibility for dark type,
@@ -248,7 +248,7 @@
   --on-image:   #F4F4F4;
   --on-image-dim: rgba(244, 244, 244, 0.74);
 
-  /* Deep derivatives again — the brand coral is 2.32:1 here and cannot be an
+  /* Deep derivatives again - the brand coral is 2.32:1 here and cannot be an
      error colour that anyone can read. #9C1111 is the same hue at 5.55:1. */
   --state-ok:   #1A6B33;
   --state-warn: #7A4A1E;
@@ -266,7 +266,7 @@
    SECTION TONES
    -----------------------------------------------------------------------------
    Each section can sit on a different ground. A tone class does NOT just set a
-   background — it REDEFINES the surface and text tokens on that section, so
+   background - it REDEFINES the surface and text tokens on that section, so
    every component inside it (rules, markers, buttons, tags, inputs) recolours
    itself with no per-component overrides. A page module that already says
    `background: var(--bg-0)` keeps working untouched, because --bg-0 is what the
@@ -277,7 +277,7 @@
    be a self-referencing cycle and resolve to nothing.
 
    This is where the brand colours do their real work. Mint and coral are both
-   light, so each is a band GROUND with dark type — and identical in both
+   light, so each is a band GROUND with dark type - and identical in both
    themes, since a light ground needs dark type either way. That is why the
    mint and coral blocks below are not split by theme.
    ========================================================================== */
@@ -313,7 +313,7 @@
    The brand coral, unaltered.
 
    NOTE ON HIERARCHY: coral is the weakest ground in the palette. Dark type is
-   6.48:1 and the second tier is 4.90:1 — the third would be 3.76:1, a fail. So
+   6.48:1 and the second tier is 4.90:1 - the third would be 3.76:1, a fail. So
    fg-3 is set equal to fg-2 rather than lighter, and this band deliberately
    carries one less level of text hierarchy than the others. Deepening the
    coral does not help: it moves the ground toward the type and costs headroom
@@ -326,8 +326,8 @@
 
   --fg-1: #121212;   /* 6.48:1 */
   --fg-2: #2B2B2B;   /* 4.90:1 */
-  --fg-3: #2B2B2B;   /* same as fg-2 on purpose — see note above */
-  --fg-4: #3D3D3D;   /* 3.76:1 — decorative numerals only, never text */
+  --fg-3: #2B2B2B;   /* same as fg-2 on purpose - see note above */
+  --fg-4: #3D3D3D;   /* 3.76:1 - decorative numerals only, never text */
 
   --rule: rgba(18, 18, 18, 0.20);
   --edge: rgba(18, 18, 18, 0.58);
@@ -342,7 +342,7 @@
 
 /* ── Brand tint ─────────────────────────────────────────────────────────────
    The brand as a ground WASH rather than at full strength, and the one accent
-   treatment that keeps the page's normal text colours — the tint is far enough
+   treatment that keeps the page's normal text colours - the tint is far enough
    from the brand values that fg-1/2/3 all still clear 4.5:1 on it.
 
    Dark mode tints toward the mint; light mode uses the sheet's peach ribbon,
@@ -370,7 +370,7 @@
 
 /* ── Inverted ground ────────────────────────────────────────────────────────
    Flips the page: a light band in dark mode, a dark band in light mode. The
-   accent has to swap with it — the literal mint is 13.24:1 on a near-black
+   accent has to swap with it - the literal mint is 13.24:1 on a near-black
    band but 1.05:1 on a near-white one, so each direction borrows the other
    theme's accent value. */
 [data-theme='dark'] .tone-invert {
@@ -387,7 +387,7 @@
   --rule: rgba(18, 18, 18, 0.14);
   --edge: rgba(18, 18, 18, 0.45);
 
-  --accent:       #115F29;   /* deep mint — 6.25:1 here */
+  --accent:       #115F29;   /* deep mint - 6.25:1 here */
   --accent-hover: #0E4E21;
   --accent-ink:   #F2F2F2;
   --accent-dim:   rgba(17, 95, 41, 0.10);
@@ -409,7 +409,7 @@
   --rule: rgba(230, 230, 230, 0.14);
   --edge: rgba(230, 230, 230, 0.45);
 
-  --accent:       #B0EFC3;   /* the literal mint — 13.24:1 here */
+  --accent:       #B0EFC3;   /* the literal mint - 13.24:1 here */
   --accent-hover: #C6F5D5;
   --accent-ink:   #121212;
   --accent-dim:   rgba(176, 239, 195, 0.13);

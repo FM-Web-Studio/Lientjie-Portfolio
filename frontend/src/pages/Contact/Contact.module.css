@@ -43,7 +43,7 @@
   font-weight: 400;
   color: var(--fg-1);
   margin: 0;
-  /* Optical alignment against the gutter — see .display in global.css. */
+  /* Optical alignment against the gutter - see .display in global.css. */
   margin-left: -0.045em;
   max-width: 14ch;
 }
@@ -135,7 +135,7 @@
 }
 
 /* The focus ring would sit around a borderless box and read as a stray
-   rectangle, so focus is expressed with the underline instead — but only for
+   rectangle, so focus is expressed with the underline instead - but only for
    pointer focus. Keyboard focus keeps a real ring, because the underline
    alone is too quiet to track when tabbing. */
 .input:focus-visible {
@@ -216,7 +216,7 @@
 
 /* ── Details rail ───────────────────────────────────────────────────────── */
 /* A coral panel rather than a bare rail. `align-self: start` keeps it the
-   height of its content — stretched to the form's full height it became a
+   height of its content - stretched to the form's full height it became a
    several-hundred-pixel slab of coral, which overwhelmed the form beside it. */
 .detailsCol {
   grid-column: 9 / 13;

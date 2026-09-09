@@ -23,8 +23,8 @@ function getInitial() {
   const saved = localStorage.getItem(STORAGE_KEY)
   if (saved === 'light' || saved === 'dark') return saved
   /* Dark is the default when the OS expresses no preference. The palette is
-     designed dark-first — the photography is the subject and a dark ground
-     lets it carry — so falling back to light would show most first-time
+     designed dark-first - the photography is the subject and a dark ground
+     lets it carry - so falling back to light would show most first-time
      visitors the secondary treatment. */
   return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
 }
@@ -44,7 +44,7 @@ export function ThemeProvider({ children }) {
    * The transition lives in a class that is added for the length of one
    * transition and then removed, rather than sitting permanently on `*`.
    * A permanent colour transition would make every hover state on the site
-   * lag by the same duration, and would also fire on first paint — so the
+   * lag by the same duration, and would also fire on first paint - so the
    * whole page would fade in from the wrong palette on load.
    *
    * The class goes on BEFORE data-theme changes. Applying both in the same

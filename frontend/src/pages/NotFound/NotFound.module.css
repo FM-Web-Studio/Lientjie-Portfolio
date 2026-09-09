@@ -44,7 +44,7 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  /* Optical alignment against the gutter — see .display in global.css. */
+  /* Optical alignment against the gutter - see .display in global.css. */
   margin-left: -0.045em;
 }
 
@@ -68,7 +68,7 @@
   margin-top: clamp(28px, 4vh, 44px);
 }
 
-/* Two repeating gradients rather than an asset — no request, and it scales
+/* Two repeating gradients rather than an asset - no request, and it scales
    with the column for free. */
 .plate {
   grid-column: 9 / 13;

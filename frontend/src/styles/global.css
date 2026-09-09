@@ -1,6 +1,6 @@
 /* Fonts are NOT imported here. An @import nested inside a stylesheet is
-   fetched serially — it cannot begin until this file has been downloaded and
-   parsed — which put the webfonts a full round-trip later than necessary and
+   fetched serially - it cannot begin until this file has been downloaded and
+   parsed - which put the webfonts a full round-trip later than necessary and
    made them swap in mid-scroll. They are declared as a <link> in index.html
    so the preload scanner picks them up alongside the HTML. */
 @import './Theme.css';
@@ -9,7 +9,7 @@
 /* ── Metric-matched font fallbacks ───────────────────────────────────────────
    The webfonts load with `display: swap`, so the page first paints in a
    fallback and then swaps. If the fallback's metrics differ from the real
-   face, that swap RE-LAYS-OUT every line of text on the page — measured at
+   face, that swap RE-LAYS-OUT every line of text on the page - measured at
    CLS 0.094 on the old home page, against 0.0007 with the webfonts blocked
    entirely.
 
@@ -58,7 +58,7 @@
 
 html {
   /* MUST stay `auto`. Lenis interpolates scrolling itself, and native smooth
-     scrolling fights that interpolation — the two run at different rates on
+     scrolling fights that interpolation - the two run at different rates on
      the same scrollTop and the result reads as stutter, not smoothness. */
   scroll-behavior: auto;
   -webkit-text-size-adjust: 100%;
@@ -66,7 +66,7 @@ html {
 
   /* `clip`, not `hidden`. overflow-x:hidden silently turns <html> into a
      scroll container, and a scroll container clips position:sticky
-     descendants — which would break every sticky element in this layout,
+     descendants - which would break every sticky element in this layout,
      including the Work page's filter bar and the About page's metadata rails.
      `clip` suppresses horizontal overflow without creating a scroll
      container. The `hidden` line first is the fallback for Safari < 16,
@@ -178,7 +178,7 @@ img, video {
 
 /* The grid every section lays its content on. `--gutter` is the page margin;
    columns are equal fractions of what is left. Named lines are deliberately
-   NOT used — the fractional grid keeps `grid-column: 3 / 9` readable, which
+   NOT used - the fractional grid keeps `grid-column: 3 / 9` readable, which
    is how the page modules address it. */
 .grid12 {
   display: grid;
@@ -189,7 +189,7 @@ img, video {
 }
 
 /* Content that should reach the page margin but no further. Used for text
-   blocks and metadata rails — never for imagery. */
+   blocks and metadata rails - never for imagery. */
 .pad {
   padding-inline: var(--gutter);
   width: 100%;
@@ -223,7 +223,7 @@ img, video {
   padding-block: var(--section-y);
 }
 
-/* A section that shares an edge with a full-bleed image needs no top padding —
+/* A section that shares an edge with a full-bleed image needs no top padding -
    the image provides the break. */
 .section-tight { padding-block: clamp(48px, 6vh, 88px); }
 
@@ -250,7 +250,7 @@ img, video {
 /* Hairline seams between adjacent grounds. Without these two neighbouring
    surfaces a single step apart (bg-0 against bg-2) read as a rendering seam
    rather than as a deliberate change of ground. The accent and inverted bands
-   need no line — the change of value is already unmistakable. */
+   need no line - the change of value is already unmistakable. */
 .tone-raised,
 .tone-deep,
 .tone-accent-soft {
@@ -258,7 +258,7 @@ img, video {
 }
 
 /* ── Section marker ─────────────────────────────────────────────────────────
-   The numbered label that opens each section ("03 — Selected Work"). This is
+   The numbered label that opens each section ("03 - Selected Work"). This is
    what makes the page read as a sequence of named sections rather than as a
    continuous scroll, which was the central complaint about the old layout. */
 .marker {
@@ -362,7 +362,7 @@ img, video {
 .link:focus-visible::after { transform: scaleX(1); }
 
 /* ── Button ─────────────────────────────────────────────────────────────────
-   One button, two weights. Square, mono, letterspaced — it reads as a label
+   One button, two weights. Square, mono, letterspaced - it reads as a label
    with a border rather than as a UI control, which keeps the chrome quiet. */
 .btn {
   display: inline-flex;
@@ -407,7 +407,7 @@ img, video {
 .on-image-dim { color: var(--on-image-dim); }
 
 @media (max-width: 900px) {
-  /* Below this width a 12-column grid stops being useful — there is not
+  /* Below this width a 12-column grid stops being useful - there is not
      enough room for a block to start at column 3 and still hold a sensible
      measure. Sections collapse to a single column and the asymmetry is
      carried by scale and rules instead of by position. */

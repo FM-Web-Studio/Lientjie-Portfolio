@@ -232,6 +232,36 @@
   max-width: var(--measure);
 }
 
+.entryLinkRow {
+  margin: var(--sp-3) 0 0;
+}
+
+/* Mono and uppercase, like the period opposite it, so the link reads as
+   another piece of the entry's metadata rather than as body copy. The rule
+   under it is drawn with a border rather than text-decoration so it can sit
+   clear of the descenders and thicken on hover. */
+.entryLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono);
+  color: var(--accent);
+  text-decoration: none;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--accent-line);
+  transition: color var(--t-fast), border-color var(--t-fast);
+}
+
+.entryLink:hover {
+  color: var(--accent-hover);
+  border-bottom-color: currentColor;
+}
+
+.entryLink svg { flex-shrink: 0; }
+
 /* ── Skills ─────────────────────────────────────────────────────────────── */
 .skillsGrid {
   grid-column: 4 / 13;
@@ -334,7 +364,7 @@
 
   .nameLast { margin-left: 0.08em; }
 
-  /* Sticky markers do not work once the grid is a single column — the marker
+  /* Sticky markers do not work once the grid is a single column - the marker
      would pin over the content it labels. */
   .marker {
     position: static;

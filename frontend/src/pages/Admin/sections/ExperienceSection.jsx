@@ -4,7 +4,7 @@ import { useToast } from '../../../context/ToastContext'
 import Modal from '../../../components/Modal/Modal'
 import styles from '../Admin.module.css'
 
-const BLANK = { company: '', role: '', period: '', description: '' }
+const BLANK = { company: '', role: '', period: '', description: '', link: '' }
 
 export default function ExperienceSection() {
   const { addToast } = useToast()
@@ -20,7 +20,10 @@ export default function ExperienceSection() {
 
   const set = (f) => (e) => setForm(prev => ({ ...prev, [f]: e.target.value }))
   const openAdd = () => { setForm(BLANK); setModal({ mode: 'add' }) }
-  const openEdit = (i) => { setForm(items[i]); setModal({ mode: 'edit', index: i }) }
+  /* Spread over BLANK, not used raw: entries saved before a field existed
+     have no key for it, and feeding undefined into a controlled input makes
+     React switch it to uncontrolled and warn. */
+  const openEdit = (i) => { setForm({ ...BLANK, ...items[i] }); setModal({ mode: 'edit', index: i }) }
   const close = () => setModal(null)
 
   async function persist(next) {
@@ -75,6 +78,14 @@ export default function ExperienceSection() {
             <div className={styles.field}><label>Role / Position *</label><input value={form.role} onChange={set('role')} placeholder="Job Shadow" /></div>
             <div className={`${styles.field} ${styles.span2}`}><label>Period</label><input value={form.period} onChange={set('period')} placeholder="2023" /></div>
             <div className={`${styles.field} ${styles.span2}`}><label>Description</label><textarea rows={3} value={form.description} onChange={set('description')} placeholder="Brief description…" /></div>
+            <div className={`${styles.field} ${styles.span2}`}>
+              <label>Website link (optional)</label>
+              <input value={form.link} onChange={set('link')} placeholder="lientjiepetsitting.co.za" />
+              <p className={styles.hint}>
+                Shown as a clickable link under the entry on the About page.
+                You can leave off the “https://” - it is added for you.
+              </p>
+            </div>
           </div>
           <div className={styles.formActions}>
             <button type="button" className={`${styles.btn} ${styles.btnOutline}`} onClick={close}>Cancel</button>

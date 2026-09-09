@@ -166,7 +166,7 @@ export default function Home() {
       </section>
 
 
-      {/* ════ 01 — STATEMENT ════════════════════════════════════════════════
+      {/* ════ 01 - STATEMENT ════════════════════════════════════════════════
           One large statement, set on the grid from column 4 so it is
           emphatically not centred, with the facts row as a ruled band under
           it. */}
@@ -195,7 +195,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ════ 02 — SELECTED WORK ════════════════════════════════════════════
+      {/* ════ 02 - SELECTED WORK ════════════════════════════════════════════
           The core of the layout: alternating full-bleed rows. */}
       <section className={`tone-base ${styles.work}`}>
         <div className={`grid12 ${styles.workHead}`}>
@@ -235,7 +235,7 @@ export default function Home() {
         )}
       </section>
 
-      {/* ════ 03 — APPROACH ═════════════════════════════════════════════════
+      {/* ════ 03 - APPROACH ═════════════════════════════════════════════════
           Four numbered columns on a ruled grid. Each cell is top-ruled, so the
           section reads as a table of contents rather than as four cards. */}
       <section className={`section tone-accent ${styles.approach}`}>
@@ -278,7 +278,7 @@ export default function Home() {
         </section>
       )}
 
-      {/* ════ 04 — CONTACT ══════════════════════════════════════════════════ */}
+      {/* ════ 04 - CONTACT ══════════════════════════════════════════════════ */}
       <section className={`section tone-accent-deep ${styles.cta}`}>
         <div className="grid12">
           <Reveal className={styles.ctaMarker} variant="rise-sm">
