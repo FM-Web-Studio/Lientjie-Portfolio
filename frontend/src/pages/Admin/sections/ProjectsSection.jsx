@@ -1,11 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { getProjects, createProject, updateProject, deleteProject, uploadMultiple } from '../../../firebase'
 import { useToast } from '../../../context/ToastContext'
 import Modal from '../../../components/Modal/Modal'
 import SearchableDropdown from '../../../components/SearchableDropdown/SearchableDropdown'
 import styles from '../Admin.module.css'
 
-const CATEGORIES = ['academic', 'installation', 'structural', 'urban', 'residential', 'competition']
+/*
+ * Seed categories only. The dropdown is creatable, so anything typed into it
+ * becomes a category — this list exists so a fresh install is not staring at
+ * an empty menu, not to fence the options in.
+ */
+const SEED_CATEGORIES = ['academic', 'installation', 'structural', 'urban', 'residential', 'competition']
 const opt = (v) => ({ value: v, label: v })
 
 const BLANK = {
@@ -27,6 +32,21 @@ export default function ProjectsSection() {
 
   const load = () => getProjects().then(setProjects).finally(() => setLoading(false))
   useEffect(() => { load() }, [])
+
+  /*
+   * The seeds plus every category already in use, so a category invented once
+   * is offered from then on instead of having to be retyped. Deduped without
+   * regard to case, keeping the first spelling seen, so "Urban" typed on top
+   * of the "urban" seed does not split the menu in two.
+   */
+  const categoryOptions = useMemo(() => {
+    const seen = new Map()
+    for (const c of [...SEED_CATEGORIES, ...projects.map(p => p.category)]) {
+      const v = (c ?? '').trim()
+      if (v && !seen.has(v.toLowerCase())) seen.set(v.toLowerCase(), v)
+    }
+    return [...seen.values()].map(opt)
+  }, [projects])
 
   const set = (f) => (e) => setForm(prev => ({ ...prev, [f]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
 
@@ -184,7 +204,18 @@ export default function ProjectsSection() {
             <div className={styles.field}><label>Year</label><input type="number" value={form.year} onChange={set('year')} min="2000" max="2099" /></div>
             <div className={styles.field}>
               <label>Category</label>
-              <SearchableDropdown options={CATEGORIES.map(opt)} value={opt(form.category)} onChange={o => setForm(f => ({ ...f, category: o?.value || 'academic' }))} />
+              <SearchableDropdown
+                creatable
+                options={categoryOptions}
+                value={form.category ? opt(form.category) : null}
+                onChange={o => setForm(f => ({ ...f, category: (o?.value || '').trim() }))}
+                placeholder="Choose or type a new category…"
+                formatCreateLabel={input => `Add category "${input}"`}
+              />
+              <p className={styles.hint}>
+                Type a new name and pick “Add category …” to create one. New categories
+                appear as a filter on the Work page automatically.
+              </p>
             </div>
             <div className={styles.field}><label>Order</label><input type="number" value={form.order} onChange={set('order')} min="0" /></div>
             <div className={`${styles.field} ${styles.checkField}`}><input type="checkbox" checked={form.featured} onChange={set('featured')} id="pf-featured" /><label htmlFor="pf-featured">Show on home page (featured)</label></div>

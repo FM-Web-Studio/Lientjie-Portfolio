@@ -1,4 +1,5 @@
 import Select from 'react-select'
+import CreatableSelect from 'react-select/creatable'
 import './SearchableDropdown.css'
 
 // Structural layout only - state styles (hover/focus/selected) live in the CSS
@@ -57,10 +58,16 @@ const customStyles = {
 
 export default function SearchableDropdown({
   options, value, onChange, placeholder,
-  isClearable = false, isDisabled = false, ...props
+  isClearable = false, isDisabled = false,
+  // `creatable` swaps in react-select's Creatable variant, which offers
+  // whatever the user has typed as a new option. Same styling either way.
+  creatable = false,
+  ...props
 }) {
+  const Component = creatable ? CreatableSelect : Select
+
   return (
-    <Select
+    <Component
       options={options}
       value={value}
       onChange={onChange}

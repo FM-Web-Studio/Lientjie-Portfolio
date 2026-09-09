@@ -376,6 +376,14 @@
   letter-spacing: 0.06em;
   color: var(--tertiary-text-color);
 }
+/* Sentence-case help under a control, deliberately unlike the shouty labels
+   above it so it reads as an aside rather than another field. */
+.hint {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  line-height: 1.45;
+  color: var(--tertiary-text-color);
+}
 .field input,
 .field select,
 .field textarea {

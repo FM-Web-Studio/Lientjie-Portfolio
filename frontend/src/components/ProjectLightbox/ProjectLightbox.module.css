@@ -2,20 +2,70 @@
    PROJECT LIGHTBOX
    -----------------------------------------------------------------------------
    Chrome lives on the top and bottom edges; the photograph owns the middle.
-   The whole surface is fixed dark in BOTH themes — a light lightbox around an
-   architectural photograph washes it out, and the reader has explicitly asked
-   to look at the image rather than at the page.
+
+   The surface follows the theme: near-black in dark, and the identity sheet's
+   own #E6E6E6 in light — the same grey the logo and every page ground sit on,
+   so opening a project no longer punches a dark hole through a light page.
+
+   Every colour below therefore goes through a local token rather than a literal.
+   These are declared on .backdrop, not :root, so they cannot leak into the rest
+   of the site, and the light block further down is the only place that has to
+   be kept in step.
    ========================================================================== */
 
 .backdrop {
   position: fixed;
   inset: 0;
   z-index: var(--z-modal);
-  background: rgba(8, 8, 8, 0.96);
+  background: var(--lb-ground);
   display: flex;
   /* Fades in only; no scale. A scaling modal over a full-bleed photograph
      reads as the image itself moving. */
   animation: lbIn 240ms var(--ease-out);
+
+  /* Dark — the default. */
+  --lb-ground: rgba(8, 8, 8, 0.96);
+  --lb-ink:         #F4F4F4;
+  --lb-ink-soft:    rgba(244, 244, 244, 0.72);   /* description, tags        */
+  --lb-ink-mute:    rgba(244, 244, 244, 0.55);   /* labels, idle arrows      */
+  --lb-ink-faint:   rgba(244, 244, 244, 0.40);   /* the counter's slash      */
+  --lb-ghost:       rgba(244, 244, 244, 0.22);   /* the fallback initial     */
+  --lb-line:        rgba(244, 244, 244, 0.12);   /* hairlines                */
+  --lb-line-strong: rgba(244, 244, 244, 0.20);   /* control outlines         */
+  --lb-tint:        rgba(244, 244, 244, 0.08);   /* thumbnail ground         */
+  --lb-tint-strong: rgba(244, 244, 244, 0.14);   /* hover wash               */
+  --lb-veil:        rgba(8, 8, 8, 0.50);         /* scrim under a control    */
+  --lb-veil-strong: rgba(8, 8, 8, 0.75);
+}
+
+/*
+ * Light — the sheet grey, with the ink inverted.
+ *
+ * The alphas are NOT the dark ones reused: dark ink on a light ground loses
+ * contrast far faster as alpha drops, so the muted tier is carried at 0.66
+ * (5.1:1 on this ground) where dark can afford 0.55.
+ *
+ * [data-theme] is an attribute selector, so CSS Modules leaves it alone and it
+ * still matches the <html> element the theme hook writes to.
+ */
+[data-theme='light'] .backdrop {
+  /* Opaque, unlike the dark ground's 0.96. A near-black veil over a dark page
+     hides what is behind it; a grey veil over a grey page does not, and the
+     Work list ghosted straight through — the title appeared twice on screen. */
+  --lb-ground: #E6E6E6;
+  --lb-ink:         #1A1A1A;
+  --lb-ink-soft:    rgba(26, 26, 26, 0.80);
+  --lb-ink-mute:    rgba(26, 26, 26, 0.66);
+  --lb-ink-faint:   rgba(26, 26, 26, 0.42);
+  --lb-ghost:       rgba(26, 26, 26, 0.16);
+  --lb-line:        rgba(26, 26, 26, 0.16);
+  --lb-line-strong: rgba(26, 26, 26, 0.28);
+  --lb-tint:        rgba(26, 26, 26, 0.08);
+  --lb-tint-strong: rgba(26, 26, 26, 0.13);
+  /* The veils tint towards the ground, not away from it, so the arrow scrim
+     still reads as "the surface showing through" rather than as a shadow. */
+  --lb-veil:        rgba(230, 230, 230, 0.62);
+  --lb-veil-strong: rgba(230, 230, 230, 0.82);
 }
 
 @keyframes lbIn {
@@ -33,9 +83,7 @@
   flex-direction: column;
   width: 100%;
   height: 100%;
-  /* Fixed light values, not --on-image: this surface is dark regardless of
-     theme, so a theme-flipping token would put charcoal on near-black. */
-  color: #F4F4F4;
+  color: var(--lb-ink);
 }
 
 /* ── Top bar ────────────────────────────────────────────────────────────── */
@@ -53,7 +101,7 @@
   font-size: var(--text-2xs);
   text-transform: uppercase;
   letter-spacing: var(--tracking-mono);
-  color: rgba(244, 244, 244, 0.6);
+  color: var(--lb-ink-mute);
   margin: 0;
 }
 
@@ -69,12 +117,69 @@
   font-size: var(--text-2xs);
   text-transform: uppercase;
   letter-spacing: var(--tracking-mono);
-  color: #F4F4F4;
+  color: var(--lb-ink);
   cursor: pointer;
   transition: color var(--t-fast);
 }
 
 .close:hover { color: var(--accent); }
+
+/* Zoom controls sit beside Close, in the same quiet mono register as the rest
+   of the chrome so they read as instruments rather than buttons. */
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 3vw, 32px);
+}
+
+.zoomBar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1, 4px);
+  border: 1px solid var(--lb-line-strong);
+  border-radius: var(--r-full);
+  padding: 2px;
+}
+
+.zoomBtn,
+.zoomLevel {
+  appearance: none;
+  background: none;
+  border: 0;
+  color: var(--lb-ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-full);
+  transition: background-color var(--t-fast), color var(--t-fast), opacity var(--t-fast);
+}
+
+.zoomBtn { width: 30px; height: 26px; }
+
+.zoomLevel {
+  min-width: 52px;
+  height: 26px;
+  padding: 0 var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.zoomBtn:hover:not(:disabled),
+.zoomLevel:hover:not(:disabled) {
+  background: var(--lb-tint-strong);
+  color: var(--accent);
+}
+
+/* Dimmed rather than hidden: a control that disappears at the limits makes the
+   bar jump width, and the reader loses the anchor they were aiming at. */
+.zoomBtn:disabled,
+.zoomLevel:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
 
 /* ── Stage ──────────────────────────────────────────────────────────────── */
 .stage {
@@ -85,6 +190,34 @@
   align-items: center;
   justify-content: center;
   padding-inline: var(--gutter);
+  overflow: hidden;
+  /* The stage owns every gesture on it: without this the browser claims the
+     pinch as a page zoom and the drag as a scroll, and neither reaches us. */
+  touch-action: none;
+}
+
+.stage[data-zoomed='true']  { cursor: grab; }
+.stage[data-dragging='true'] { cursor: grabbing; }
+
+/* The transformed layer. It fills the stage so its centre — the transform
+   origin — coincides with the stage centre, which is what the zoom-to-cursor
+   maths in the component assumes. */
+.viewport {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding-inline: var(--gutter);
+  will-change: transform;
+  transition: transform 180ms var(--ease-out);
+}
+
+/* Dragging and pinching must track the finger exactly; an eased transform
+   there feels like the image is on elastic. */
+.viewport[data-instant='true'] { transition: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .viewport { transition: none; }
 }
 
 /* `contain`, not `cover`: this is the one place in the site where the whole
@@ -94,7 +227,17 @@
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
   animation: imgIn 320ms var(--ease-out);
+}
+
+/* On the grey ground a drawing scanned on white has no edge at all — it bleeds
+   into the surface. A soft shadow gives it one without drawing a literal frame,
+   which would fight the photographs. Light only: on near-black there is nothing
+   for a shadow to darken. */
+[data-theme='light'] .img {
+  box-shadow: 0 2px 40px rgba(26, 26, 26, 0.16);
 }
 
 @keyframes imgIn {
@@ -117,7 +260,7 @@
   font-family: var(--font-serif);
   font-size: clamp(4rem, 14vw, 9rem);
   line-height: 1;
-  color: rgba(244, 244, 244, 0.22);
+  color: var(--lb-ghost);
 }
 
 .fallbackText {
@@ -125,7 +268,7 @@
   font-size: var(--text-2xs);
   text-transform: uppercase;
   letter-spacing: var(--tracking-mono);
-  color: rgba(244, 244, 244, 0.45);
+  color: var(--lb-ink-mute);
 }
 
 /* Navigation. The hit area is deliberately tall — the full height of the
@@ -141,18 +284,18 @@
   border: 0;
   display: grid;
   place-items: center;
-  color: rgba(244, 244, 244, 0.55);
+  color: var(--lb-ink-mute);
   cursor: pointer;
   transition: color var(--t-base), background-color var(--t-base);
 }
 
 .nav:hover {
-  color: #F4F4F4;
+  color: var(--lb-ink);
   /* A whisper of a gradient rather than a solid panel, so the photograph is
      never obscured by the control that sits over it. */
   background: linear-gradient(
     var(--nav-dir, to right),
-    rgba(8, 8, 8, 0.5),
+    var(--lb-veil),
     transparent
   );
 }
@@ -168,7 +311,7 @@
   gap: clamp(24px, 5vw, 72px);
   padding: var(--sp-6) var(--gutter) var(--sp-8);
   flex-shrink: 0;
-  border-top: 1px solid rgba(244, 244, 244, 0.12);
+  border-top: 1px solid var(--lb-line);
 }
 
 .info {
@@ -184,14 +327,14 @@
   font-size: var(--text-2xl);
   line-height: var(--leading-snug);
   font-weight: 400;
-  color: #F4F4F4;
+  color: var(--lb-ink);
   margin: 0 0 var(--sp-3);
 }
 
 .desc {
   font-size: var(--text-sm);
   line-height: var(--leading-relaxed);
-  color: rgba(244, 244, 244, 0.72);
+  color: var(--lb-ink-soft);
   margin: 0;
   max-width: 64ch;
   white-space: pre-line;
@@ -210,9 +353,9 @@
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
   letter-spacing: 0.06em;
-  color: rgba(244, 244, 244, 0.66);
+  color: var(--lb-ink-soft);
   padding: 3px 9px;
-  border: 1px solid rgba(244, 244, 244, 0.2);
+  border: 1px solid var(--lb-line-strong);
   border-radius: var(--r-xs);
 }
 
@@ -230,11 +373,11 @@
   gap: var(--sp-2);
   font-family: var(--font-mono);
   font-size: var(--text-sm);
-  color: #F4F4F4;
+  color: var(--lb-ink);
   margin: 0;
 }
 
-.counterSep { color: rgba(244, 244, 244, 0.4); }
+.counterSep { color: var(--lb-ink-faint); }
 
 .thumbs {
   display: flex;
@@ -252,7 +395,7 @@
   padding: 0;
   border: 1px solid transparent;
   border-radius: var(--r-xs);
-  background: rgba(244, 244, 244, 0.08);
+  background: var(--lb-tint);
   width: 56px;
   height: 42px;
   flex-shrink: 0;
@@ -279,7 +422,7 @@
   display: block;
   width: 100%;
   height: 100%;
-  background: rgba(244, 244, 244, 0.12);
+  background: var(--lb-tint-strong);
 }
 
 /* ── Narrow ─────────────────────────────────────────────────────────────── */
@@ -308,9 +451,9 @@
     transform: translateY(-50%);
     width: 44px;
     height: 44px;
-    background: rgba(8, 8, 8, 0.55);
+    background: var(--lb-veil);
     border-radius: var(--r-full);
   }
 
-  .nav:hover { background: rgba(8, 8, 8, 0.75); }
+  .nav:hover { background: var(--lb-veil-strong); }
 }

@@ -84,7 +84,7 @@ export const WORK_FIELDS = [
   { key: 'heading1',   label: 'Hero - heading top',  type: 'text',     default: 'All' },
   { key: 'heading2',   label: 'Hero - heading emphasis', type: 'text', default: 'Work' },
   { key: 'sub',        label: 'Hero - sub',          type: 'textarea', default: 'Architecture projects spanning academic studios, structural studies, and urban installations.' },
-  { key: 'categories', label: 'Filter categories (comma-separated, "All" is added automatically)', type: 'text', default: 'Academic, Installation, Structural, Urban' },
+  { key: 'categories', label: 'Filter categories - sets the order and spelling of the first chips. "All" is added automatically, and any other category used by a project is appended on its own.', type: 'text', default: 'Academic, Installation, Structural, Urban' },
   { key: 'emptyText',  label: 'Empty state text',    type: 'text',     default: 'No projects in this category yet.' },
 ]
 

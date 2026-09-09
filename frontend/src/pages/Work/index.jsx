@@ -26,10 +26,31 @@ export default function Work() {
     return unsubscribe
   }, [])
 
-  const CATS = useMemo(
-    () => ['All', ...t.categories.split(',').map(c => c.trim()).filter(Boolean)],
-    [t.categories],
-  )
+  /*
+   * The configured list sets the order and the preferred spelling; anything a
+   * project actually uses is appended after it. Without that second half a
+   * category invented in the admin panel would be invisible here until the
+   * site-copy field was edited too, and the projects filed under it would be
+   * reachable only through "All".
+   *
+   * Matched case-insensitively — the filter compares that way as well — so a
+   * configured "Urban" and a stored "urban" stay one chip.
+   */
+  const CATS = useMemo(() => {
+    const seen = new Map()
+    const add = c => {
+      const v = (c ?? '').trim()
+      if (v && !seen.has(v.toLowerCase())) seen.set(v.toLowerCase(), v)
+    }
+    for (const c of (t.categories ?? '').split(',')) add(c)
+    // Sentence case, because stored categories are lowercase by convention
+    // while the configured ones are written for display.
+    for (const p of projects) {
+      const v = (p.category ?? '').trim()
+      if (v) add(v.charAt(0).toUpperCase() + v.slice(1))
+    }
+    return ['All', ...seen.values()]
+  }, [t.categories, projects])
 
   const visible = useMemo(() => (
     filter === 'All'
