@@ -205,8 +205,14 @@
 .viewport {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
+  /* Flex, NOT grid. The image caps itself with `max-height: 100%`, and a
+     percentage max-height only resolves against a definite height. A grid
+     item measures against its grid area — here an auto-sized row that is
+     itself sized to the image — so the cap resolved to the image's own
+     height and did nothing, and tall images ran under the bottom bar. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding-inline: var(--gutter);
   will-change: transform;
   transition: transform 180ms var(--ease-out);

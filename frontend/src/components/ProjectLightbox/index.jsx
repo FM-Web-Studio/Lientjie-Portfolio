@@ -223,16 +223,26 @@ export default function ProjectLightbox({ project, onClose }) {
   const onPointerDown = e => {
     if (e.button != null && e.button !== 0) return
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
-    e.currentTarget.setPointerCapture?.(e.pointerId)
 
+    /*
+     * Capture ONLY once a gesture has actually begun.
+     *
+     * Capturing on every pointerdown retargets the whole sequence — the
+     * closing click included — to the stage, so a press on the prev/next
+     * arrows fired a click on the stage instead of on the button and the
+     * arrows silently stopped working. At 1x there is nothing to pan
+     * (the bounds are zero), so there is nothing to capture for either.
+     */
     if (pointers.current.size === 2) {
       const [a, b] = [...pointers.current.values()]
       pinchRef.current = { dist: Math.hypot(a.x - b.x, a.y - b.y) || 1, scale }
       panRef.current = null
       setDragging(false)
+      e.currentTarget.setPointerCapture?.(e.pointerId)
     } else if (scale > 1) {
       panRef.current = { x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y }
       setDragging(true)
+      e.currentTarget.setPointerCapture?.(e.pointerId)
     }
   }
 
