@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useTheme } from '../../hooks'
 import { useContent } from '../../context/ContentContext'
+import { subscribeInterests } from '../../firebase'
 import styles from './NavigationBar.module.css'
 
 const LINKS = [
-  { label: 'Work',    to: '/work'    },
-  { label: 'About',   to: '/about'   },
-  { label: 'Contact', to: '/contact' },
+  { label: 'Work',      to: '/work'      },
+  { label: 'Interests', to: '/interests' },
+  { label: 'About',     to: '/about'     },
+  { label: 'Contact',   to: '/contact'   },
 ]
 
 function SunIcon() {
@@ -44,6 +46,23 @@ export default function NavigationBar() {
      section beneath is a dark scrim over imagery in BOTH themes, so the bar
      must use fixed light type regardless of theme. */
   const [overlay, setOverlay] = useState('ground')
+
+  /* Whether the Interests tab should appear at all. Starts true so a site
+     that already has interests never flashes the link away and back on
+     first paint; the listener flips it to false only once it has actually
+     confirmed the list is empty. A subscribe error fails open (stays true)
+     rather than hiding a real tab over a transient network hiccup. */
+  const [hasInterests, setHasInterests] = useState(true)
+
+  useEffect(() => {
+    const unsubscribe = subscribeInterests(
+      items => setHasInterests(items.length > 0),
+      () => setHasInterests(true),
+    )
+    return unsubscribe
+  }, [])
+
+  const links = LINKS.filter(l => l.to !== '/interests' || hasInterests)
 
   /*
    * Whether the bar may be transparent at all on this route.
@@ -129,7 +148,7 @@ export default function NavigationBar() {
           </Link>
 
           <nav className={styles.links} aria-label="Main">
-            {LINKS.map(({ label, to }) => (
+            {links.map(({ label, to }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -186,7 +205,7 @@ export default function NavigationBar() {
         </div>
 
         <nav className={styles.overlayNav} aria-label="Main">
-          {[{ label: 'Index', to: '/' }, ...LINKS].map(({ label, to }, i) => (
+          {[{ label: 'Index', to: '/' }, ...links].map(({ label, to }, i) => (
             <NavLink key={to} to={to} className={styles.overlayLink}>
               <span className={styles.overlayNum}>
                 {String(i).padStart(2, '0')}

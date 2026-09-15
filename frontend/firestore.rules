@@ -25,7 +25,8 @@ service cloud.firestore {
     }
 
     // ── Portfolio ─────────────────────────────────────────────────────────────
-    match /portfolio_projects/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /portfolio_projects/{id}  { allow read: if true; allow write: if isAdmin(); }
+    match /portfolio_interests/{id} { allow read: if true; allow write: if isAdmin(); }
     match /portfolio_bio/{id}      { allow read: if true; allow write: if isAdmin(); }
     match /portfolio_messages/{id} {
       allow create: if true;

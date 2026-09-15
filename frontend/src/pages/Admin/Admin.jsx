@@ -11,6 +11,7 @@ import ExperienceSection from './sections/ExperienceSection'
 import AchievementsSection from './sections/AchievementsSection'
 import SkillsSection from './sections/SkillsSection'
 import ProjectsSection from './sections/ProjectsSection'
+import InterestsSection from './sections/InterestsSection'
 import MessagesSection from './sections/MessagesSection'
 import styles from './Admin.module.css'
 import '../../styles/admin.css'
@@ -26,6 +27,7 @@ const SECTIONS = [
   { id: 'achievements', group: 'Content', title: 'Achievements', icon: '🏆' },
   { id: 'skills',     group: 'Content',  title: 'Skills',       icon: '📊' },
   { id: 'projects',   group: 'Work',     title: 'Projects',     icon: '🏛️' },
+  { id: 'interests',  group: 'Work',     title: 'Interests',    icon: '🎨' },
   { id: 'messages',   group: 'Inbox',    title: 'Messages',     icon: '✉️' },
 ]
 
@@ -109,6 +111,7 @@ export default function Admin() {
       case 'achievements': return <AchievementsSection />
       case 'skills':     return <SkillsSection />
       case 'projects':   return <ProjectsSection />
+      case 'interests':  return <InterestsSection />
       case 'messages':   return <MessagesSection />
       default:           return null
     }

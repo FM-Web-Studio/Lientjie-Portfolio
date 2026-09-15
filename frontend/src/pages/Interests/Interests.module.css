@@ -1,0 +1,184 @@
+/* =============================================================================
+   INTERESTS
+   -----------------------------------------------------------------------------
+   Header matches Work's: title on the gutter, supporting text opposite. Below
+   it, a plain masonry-free grid of tiles - unlike Work's alternating bleed
+   rows, these are personal snapshots rather than presentation sheets, so they
+   read better as an even grid than as full-bleed editorial spreads.
+   ========================================================================== */
+
+.head {
+  padding-top: calc(var(--nav-h) + clamp(48px, 9vh, 112px));
+  padding-bottom: clamp(40px, 6vh, 72px);
+}
+
+.headMain {
+  grid-column: 1 / 8;
+  min-width: 0;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono);
+  color: var(--fg-3);
+  margin: 0 0 var(--sp-6);
+}
+
+.eyebrow::before {
+  content: '';
+  width: 40px;
+  height: 1px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: var(--text-display);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+  font-weight: 400;
+  color: var(--fg-1);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  margin-left: -0.045em;
+}
+
+.title em { font-style: italic; font-weight: 300; }
+.titleLast { margin-left: 0.14em; }
+
+.headMeta {
+  grid-column: 9 / 13;
+  align-self: end;
+  min-width: 0;
+  padding-bottom: var(--sp-3);
+}
+
+.sub {
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+  color: var(--fg-2);
+  margin: 0;
+  max-width: 36ch;
+}
+
+/* ── Grid ───────────────────────────────────────────────────────────────── */
+.section {
+  padding-top: var(--sp-8);
+  padding-bottom: var(--section-y);
+}
+
+.grid {
+  grid-column: 1 / 13;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(180px, 22vw, 280px), 1fr));
+  gap: clamp(16px, 2vw, 28px);
+}
+
+/* ── Tile ───────────────────────────────────────────────────────────────── */
+.tile {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.tileMedia {
+  position: relative;
+  overflow: hidden;
+}
+
+.tileMedia img {
+  transition: transform var(--t-slow, 0.6s) var(--ease-out, ease);
+}
+
+.tile:hover .tileMedia img,
+.tile:focus-visible .tileMedia img {
+  transform: scale(1.045);
+}
+
+/* Bottom scrim so the foot's mono metadata reads clearly over busy photos,
+   without needing a solid caption bar that would flatten the image. */
+.tileScrim {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 42%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.32), transparent);
+  opacity: 0;
+  transition: opacity var(--t-base);
+  pointer-events: none;
+}
+
+.tile:hover .tileScrim,
+.tile:focus-visible .tileScrim {
+  opacity: 1;
+}
+
+.tileFoot {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--sp-3);
+  row-gap: 2px;
+  align-items: baseline;
+}
+
+.tileNum {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--accent);
+  letter-spacing: var(--tracking-mono);
+}
+
+.tileName {
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  color: var(--fg-1);
+  line-height: 1.15;
+}
+
+.tileCount {
+  grid-column: 2;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono);
+  color: var(--fg-3);
+}
+
+/* ── Skeleton ───────────────────────────────────────────────────────────── */
+.skelMedia {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  background: var(--bg-2);
+}
+
+.skelLine {
+  display: block;
+  height: 0.9em;
+  background: var(--bg-2);
+  border-radius: var(--r-xs);
+}
+
+@media (max-width: 900px) {
+  .headMeta {
+    align-self: start;
+    padding-bottom: 0;
+    margin-top: var(--sp-10);
+    grid-column: 1 / 13;
+  }
+  .sub { max-width: var(--measure); }
+  .titleLast { margin-left: 0.08em; }
+}

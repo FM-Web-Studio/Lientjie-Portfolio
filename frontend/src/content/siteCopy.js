@@ -88,6 +88,13 @@ export const WORK_FIELDS = [
   { key: 'emptyText',  label: 'Empty state text',    type: 'text',     default: 'No projects in this category yet.' },
 ]
 
+export const INTERESTS_FIELDS = [
+  { key: 'eyebrow',   label: 'Hero - eyebrow',     type: 'text',     default: 'Beyond Architecture' },
+  { key: 'heading1',  label: 'Hero - heading top', type: 'text',     default: 'My' },
+  { key: 'heading2',  label: 'Hero - heading emphasis', type: 'text', default: 'Interests' },
+  { key: 'sub',       label: 'Hero - sub',         type: 'textarea', default: 'A few of the things I love outside the studio, in pictures.' },
+]
+
 export const ABOUT_FIELDS = [
   { key: 'eyebrow',          label: 'Hero - eyebrow',    type: 'text', default: 'About' },
   { key: 'fallbackName',     label: 'Fallback name',     type: 'text', default: 'Lientjie Meiring' },
@@ -125,6 +132,7 @@ export const COPY_SCHEMA = [
   { key: 'brand',       label: 'Brand & Footer', fields: BRAND_FIELDS },
   { key: 'home',        label: 'Home',           fields: HOME_FIELDS },
   { key: 'work',        label: 'Work',           fields: WORK_FIELDS },
+  { key: 'interests',   label: 'Interests',      fields: INTERESTS_FIELDS },
   { key: 'about',       label: 'About',          fields: ABOUT_FIELDS },
   { key: 'contactPage', label: 'Contact page',   fields: CONTACT_PAGE_FIELDS },
 ]
@@ -133,6 +141,7 @@ export const GROUP_FIELDS = {
   brand:       BRAND_FIELDS,
   home:        HOME_FIELDS,
   work:        WORK_FIELDS,
+  interests:   INTERESTS_FIELDS,
   about:       ABOUT_FIELDS,
   contactPage: CONTACT_PAGE_FIELDS,
   contact:     CONTACT_INFO_FIELDS,
