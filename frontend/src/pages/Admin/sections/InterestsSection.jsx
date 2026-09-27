@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
-import { getInterests, createInterest, updateInterest, deleteInterest, uploadMultiple } from '../../../firebase'
+import {
+  getInterests, createInterest, updateInterest, deleteInterest, uploadMultiple,
+  pruneUnusedImages, storageUrlsIn,
+} from '../../../firebase'
 import { useToast } from '../../../context/ToastContext'
 import Modal from '../../../components/Modal/Modal'
 import styles from '../Admin.module.css'
@@ -79,6 +82,10 @@ export default function InterestsSection() {
     e.preventDefault()
     if (!form.name.trim()) { addToast({ type: 'error', title: 'Name is required' }); return }
     setSaving(true)
+    // Dropped images are deleted after the save, so Cancel leaves them alone.
+    const previous = modal.mode === 'edit'
+      ? storageUrlsIn(interests.find(i => i.id === modal.id) || {})
+      : []
     try {
       const { id, ...rest } = form
       const data = {
@@ -91,6 +98,7 @@ export default function InterestsSection() {
       addToast({ type: 'success', title: modal.mode === 'add' ? 'Interest created' : 'Interest updated' })
       close()
       load()
+      await pruneUnusedImages(previous)
     } catch (err) {
       addToast({ type: 'error', title: 'Save failed', message: err?.message })
     } finally { setSaving(false) }
@@ -98,9 +106,11 @@ export default function InterestsSection() {
 
   async function remove(i) {
     if (!window.confirm(`Delete "${i.name}"? This cannot be undone.`)) return
+    const previous = storageUrlsIn(i)
     await deleteInterest(i.id)
     setInterests(is => is.filter(x => x.id !== i.id))
     addToast({ type: 'success', title: 'Interest deleted' })
+    await pruneUnusedImages(previous)
   }
 
   async function saveOrder(i, order) {

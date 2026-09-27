@@ -130,70 +130,78 @@
   flex: 1;
   min-height: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-inline: var(--gutter);
   overflow: hidden;
 }
 
 /* `contain`, not `cover`: this is the one place in the site where the whole
    frame matters more than filling the box - the reader has opened the image
    deliberately, so it must not be cropped. */
-/* Wraps the image so the hint can sit on its corner rather than the stage's. */
-.imgLink {
-  position: relative;
-  display: inline-flex;
-  max-width: 100%;
-  max-height: 100%;
+/* The scrolling box the image sits in. Zooming sets a width on the image and
+   lets this overflow, so panning, momentum and pinch are all the browser's. */
+.scroller {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  overflow: hidden;
   cursor: zoom-in;
+  padding-inline: var(--gutter);
 }
 
+.scroller[data-zoomed='true'] {
+  overflow: auto;
+  cursor: grab;
+  padding-inline: 0;
+  /* Let a finger pan and pinch here rather than scrolling the page. */
+  touch-action: pan-x pan-y pinch-zoom;
+  overscroll-behavior: contain;
+}
+
+.scroller[data-zoomed='true']:active { cursor: grabbing; }
+
+/* `margin: auto` rather than justify-content, which would pin the overflow to
+   one side and make the left and top of a zoomed image unreachable. */
 .img {
+  margin: auto;
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+  user-select: none;
   animation: imgIn 320ms var(--ease-out);
 }
 
-/* Quiet until it is wanted. Touch has no hover, so it stays legible there. */
-.imgHint {
+.scroller[data-zoomed='true'] .img {
+  max-width: none;
+  max-height: none;
+  height: auto;
+}
+
+/* Sits on the stage, not the scroller, so it holds its corner while the image
+   moves underneath it. */
+.zoomBtn {
   position: absolute;
-  right: var(--sp-3);
+  right: calc(var(--gutter) + var(--sp-3));
   bottom: var(--sp-3);
+  z-index: 1;
+  appearance: none;
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
-  padding: 5px 10px;
+  padding: 6px 11px;
+  border: 1px solid var(--lb-line-strong);
   border-radius: var(--r-full);
   background: var(--lb-veil-strong);
   color: var(--lb-ink);
+  cursor: pointer;
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
   text-transform: uppercase;
   letter-spacing: var(--tracking-mono);
-  opacity: 0.55;
-  transition: opacity var(--t-base);
+  opacity: 0.6;
+  transition: opacity var(--t-base), color var(--t-fast);
 }
 
-.imgLink:hover .imgHint,
-.imgLink:focus-visible .imgHint { opacity: 1; }
-
-/* On the grey ground a drawing scanned on white has no edge at all - it bleeds
-   into the surface. A soft shadow gives it one without drawing a literal frame,
-   which would fight the photographs. Light only: on near-black there is nothing
-   for a shadow to darken. */
-[data-theme='light'] .img {
-  box-shadow: 0 2px 40px rgba(26, 26, 26, 0.16);
-}
-
-@keyframes imgIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .img { animation: none; }
-}
+.zoomBtn:hover,
+.zoomBtn:focus-visible { opacity: 1; color: var(--accent); }
 
 .fallback {
   display: flex;
@@ -248,6 +256,18 @@
 
 .navPrev { left: 0;  --nav-dir: to right; }
 .navNext { right: 0; --nav-dir: to left;  }
+
+/* While zoomed the tall hit areas would swallow a drag, so they shrink to
+   pills at the vertical centre and keep out of the way. */
+.stage:has(.scroller[data-zoomed='true']) .nav {
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  background: var(--lb-veil);
+  border-radius: var(--r-full);
+}
 
 /* ── Body: stage beside the rail ────────────────────────────────────────── */
 .body {

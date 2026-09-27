@@ -27,10 +27,92 @@ service cloud.firestore {
     // ── Portfolio ─────────────────────────────────────────────────────────────
     match /portfolio_projects/{id}  { allow read: if true; allow write: if isAdmin(); }
     match /portfolio_interests/{id} { allow read: if true; allow write: if isAdmin(); }
-    match /portfolio_bio/{id}      { allow read: if true; allow write: if isAdmin(); }
+    match /portfolio_bio/{id}       { allow read: if true; allow write: if isAdmin(); }
     match /portfolio_messages/{id} {
       allow create: if true;
       allow read, update, delete: if isAdmin();
+    }
+
+    // ── Petsitting: reviews ─────────────────────────────────────────────────
+    // The only collection anonymous visitors may WRITE to, so it carries the
+    // full validation. Three invariants matter:
+    //   1. Nothing is publicly readable until an admin sets approved = true.
+    //   2. A new document must arrive unapproved, unliked, and server-stamped.
+    //   3. The only field an anonymous visitor may change afterwards is `likes`,
+    //      by exactly one, on an already-published document.
+
+    function reviewShapeOk(d) {
+      return d.authorName is string && d.authorName.size() >= 2 && d.authorName.size() <= 60
+        && d.rating is int && d.rating >= 1 && d.rating <= 5
+        && d.body is string && d.body.size() >= 10 && d.body.size() <= 2000
+        && d.title is string && d.title.size() <= 100
+        && d.petName is string && d.petName.size() <= 60
+        && d.serviceUsed is string && d.serviceUsed.size() <= 80;
+    }
+
+    function newPublicPost(d, requiredKeys) {
+      // createdAt == request.time forces serverTimestamp(): a client cannot
+      // backdate itself to the top of the list or forge an older review.
+      return d.keys().hasOnly(requiredKeys)
+        && d.approved == false
+        && d.likes == 0
+        && d.createdAt == request.time;
+    }
+
+    // A ±1 nudge of `likes` and nothing else, on a published document. Without
+    // accounts this is the strongest guarantee available - it cannot stop a
+    // determined person clicking twice, but it stops `likes` being set to
+    // 999999 or used to smuggle an edit into any other field.
+    function likeDeltaOnly() {
+      return resource.data.approved == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
+        && request.resource.data.likes is int
+        && request.resource.data.likes >= 0
+        && (request.resource.data.likes == resource.data.likes + 1
+            || request.resource.data.likes == resource.data.likes - 1);
+    }
+
+    match /petsitting_reviews/{reviewId} {
+      // Rules are evaluated per returned document, so a list query that does not
+      // filter on approved == true will include a pending review and be rejected
+      // as a whole. That is intentional - it is what stops the moderation queue
+      // leaking through an unfiltered query.
+      allow read: if resource.data.approved == true || isAdmin();
+
+      allow create: if newPublicPost(
+                         request.resource.data,
+                         ['authorName', 'rating', 'title', 'body', 'petName', 'serviceUsed', 'approved', 'likes', 'createdAt'])
+                     && reviewShapeOk(request.resource.data);
+
+      allow update: if isAdmin() || likeDeltaOnly();
+      allow delete: if isAdmin();
+
+      match /petsitting_review_comments/{commentId} {
+        allow read: if resource.data.approved == true || isAdmin();
+
+        allow create: if newPublicPost(
+                           request.resource.data,
+                           ['authorName', 'body', 'approved', 'likes', 'createdAt'])
+                       && request.resource.data.authorName is string
+                       && request.resource.data.authorName.size() >= 2
+                       && request.resource.data.authorName.size() <= 60
+                       && request.resource.data.body is string
+                       && request.resource.data.body.size() >= 2
+                       && request.resource.data.body.size() <= 700
+                       // Don't let comments accumulate on a review that is not
+                       // (or is no longer) public.
+                       && get(/databases/$(database)/documents/petsitting_reviews/$(reviewId)).data.approved == true;
+
+        allow update: if isAdmin() || likeDeltaOnly();
+        allow delete: if isAdmin();
+      }
+    }
+
+    // The Reviews page fetches every published comment in one collection-group
+    // read. Collection-group queries are matched by this recursive path, not by
+    // the nested rule above, so it needs its own read rule.
+    match /{path=**}/petsitting_review_comments/{commentId} {
+      allow read: if resource.data.approved == true || isAdmin();
     }
 
     // ── Petsitting ──────────────────────────────────────────────────────────

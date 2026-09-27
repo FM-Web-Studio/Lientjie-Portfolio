@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { getBioProfile, updateBioSection, uploadFile } from '../../../firebase'
+import { getBioProfile, updateBioSection, uploadFile, pruneUnusedImages } from '../../../firebase'
 import { useToast } from '../../../context/ToastContext'
 import styles from '../Admin.module.css'
 
@@ -11,9 +11,15 @@ export default function ProfileSection() {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef()
+  // The image Firestore currently holds, so a replaced one can be cleaned up.
+  const savedImage = useRef('')
 
   useEffect(() => {
-    getBioProfile().then(p => { if (p) setForm({ ...BLANK, ...p }) })
+    getBioProfile().then(p => {
+      if (!p) return
+      setForm({ ...BLANK, ...p })
+      savedImage.current = p.profileImage || ''
+    })
   }, [])
 
   const set = (f) => (e) => setForm(prev => ({ ...prev, [f]: e.target.value }))
@@ -21,9 +27,12 @@ export default function ProfileSection() {
   async function handleSave(e) {
     e.preventDefault()
     setSaving(true)
+    const previous = savedImage.current
     try {
       await updateBioSection('profile', form)
+      savedImage.current = form.profileImage || ''
       addToast({ type: 'success', title: 'Profile saved' })
+      await pruneUnusedImages([previous])
     } catch { addToast({ type: 'error', title: 'Save failed' }) }
     finally { setSaving(false) }
   }

@@ -23,9 +23,15 @@ function Chevron({ dir }) {
 export default function ProjectLightbox({ project, onClose }) {
   const [idx, setIdx] = useState(0)
   const [failed, setFailed] = useState({})
+  const [zoomed, setZoomed] = useState(false)
 
   const panelRef = useRef(null)
   const closeRef = useRef(null)
+  const scrollRef = useRef(null)
+  const imgRef = useRef(null)
+  // Set while a drag is panning, so the pointerup does not read as a click
+  // and toggle the zoom straight back off.
+  const dragRef = useRef(null)
 
   const images = project.images?.length
     ? project.images
@@ -43,6 +49,67 @@ export default function ProjectLightbox({ project, onClose }) {
     () => setIdx(i => (count ? (i + 1) % count : 0)),
     [count],
   )
+
+  // A new image always starts fitted. Carrying a zoom across would drop the
+  // reader into the corner of a picture they have not seen yet.
+  useEffect(() => { setZoomed(false) }, [idx])
+
+  /*
+   * Zoom is a width on the image inside a scrolling box, not a transform.
+   * The browser then owns panning, momentum and the scrollbars, which is why
+   * this stays smooth and needs no gesture maths.
+   *
+   * 1:1 pixels is the target, held between twice the fitted size so the step
+   * is always worth making, and five times it so an enormous sheet does not
+   * leave the reader lost in a corner.
+   */
+  const zoomWidth = () => {
+    const img = imgRef.current
+    if (!img) return 0
+    const fit = img.getBoundingClientRect().width
+    return Math.round(Math.min(Math.max(img.naturalWidth, fit * 2), fit * 5))
+  }
+
+  // Zoom about the point that was clicked, so that point stays under the
+  // cursor rather than the reader landing in the middle of the sheet.
+  const toggleZoom = e => {
+    const box = scrollRef.current
+    const img = imgRef.current
+    if (!box || !img) return
+    if (zoomed) { setZoomed(false); return }
+
+    const r = img.getBoundingClientRect()
+    const rx = e ? (e.clientX - r.left) / r.width : 0.5
+    const ry = e ? (e.clientY - r.top) / r.height : 0.5
+    setZoomed(true)
+    requestAnimationFrame(() => {
+      box.scrollLeft = rx * box.scrollWidth - box.clientWidth / 2
+      box.scrollTop = ry * box.scrollHeight - box.clientHeight / 2
+    })
+  }
+
+  /* Drag to pan. Touch gets this free from the scroll box, a mouse does not. */
+  const onPointerDown = e => {
+    if (!zoomed || e.button !== 0) return
+    const box = scrollRef.current
+    dragRef.current = { x: e.clientX, y: e.clientY, left: box.scrollLeft, top: box.scrollTop, moved: false }
+  }
+
+  const onPointerMove = e => {
+    const d = dragRef.current
+    if (!d) return
+    const dx = e.clientX - d.x
+    const dy = e.clientY - d.y
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) d.moved = true
+    scrollRef.current.scrollLeft = d.left - dx
+    scrollRef.current.scrollTop = d.top - dy
+  }
+
+  const onPointerUp = e => {
+    const d = dragRef.current
+    dragRef.current = null
+    if (!d?.moved) toggleZoom(e)
+  }
 
   /* The class goes on <html>, not <body>: Lenis drives scrolling from the root
      element, so `body { overflow: hidden }` alone leaves the page gliding
@@ -65,7 +132,13 @@ export default function ProjectLightbox({ project, onClose }) {
 
   useEffect(() => {
     const onKey = e => {
-      if (e.key === 'Escape') { onClose(); return }
+      // Zoomed in, the first Escape backs out of the zoom. Closing the whole
+      // project is almost never what that press means.
+      if (e.key === 'Escape') {
+        if (zoomed) { setZoomed(false); return }
+        onClose()
+        return
+      }
       if (e.key === 'ArrowLeft')  prev()
       if (e.key === 'ArrowRight') next()
 
@@ -89,7 +162,7 @@ export default function ProjectLightbox({ project, onClose }) {
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [onClose, prev, next])
+  }, [onClose, prev, next, zoomed])
 
   const markFailed = i => setFailed(p => ({ ...p, [i]: true }))
   const spec = [project.category, project.year].filter(Boolean).join(' · ')
@@ -135,33 +208,27 @@ export default function ProjectLightbox({ project, onClose }) {
         <div className={styles.body}>
         <div className={styles.stage}>
           {showImage ? (
-            /* The image links to itself. Opened on its own the browser shows
-               it as a plain image, where zoom is the device's own and works
-               the same on a phone and on a desktop. */
-            <a
-              className={styles.imgLink}
-              href={images[idx]}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Open this image full size in a new tab"
+            <div
+              ref={scrollRef}
+              className={styles.scroller}
+              data-zoomed={zoomed ? 'true' : undefined}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerLeave={() => { dragRef.current = null }}
             >
               <img
+                ref={imgRef}
                 key={idx}
                 src={images[idx]}
                 alt={`${project.title} - image ${idx + 1} of ${count}`}
                 className={styles.img}
+                style={zoomed ? { width: zoomWidth() } : undefined}
                 decoding="async"
+                draggable={false}
                 onError={() => markFailed(idx)}
               />
-              <span className={styles.imgHint} aria-hidden="true">
-                Full size
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="8 4 20 4 20 16" />
-                  <line x1="20" y1="4" x2="5" y2="19" />
-                </svg>
-              </span>
-            </a>
+            </div>
           ) : (
             <div className={styles.fallback}>
               <span className={styles.fallbackMark}>{project.title.charAt(0)}</span>
@@ -169,6 +236,27 @@ export default function ProjectLightbox({ project, onClose }) {
             </div>
           )}
 
+          {showImage && (
+            <button
+              type="button"
+              className={styles.zoomBtn}
+              onClick={() => toggleZoom()}
+              aria-label={zoomed ? 'Fit image to screen' : 'Zoom in on image'}
+            >
+              {zoomed ? 'Fit' : 'Zoom'}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" />
+                <line x1="16.5" y1="16.5" x2="21" y2="21" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+                {!zoomed && <line x1="11" y1="8" x2="11" y2="14" />}
+              </svg>
+            </button>
+          )}
+
+          {/* The arrows shrink to pills while zoomed so most of the sheet stays
+              draggable, but they never disappear: switching image is still one
+              click away. */}
           {count > 1 && (
             <>
               <button

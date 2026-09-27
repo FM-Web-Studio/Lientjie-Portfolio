@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
-import { getProjects, createProject, updateProject, deleteProject, uploadMultiple } from '../../../firebase'
+import {
+  getProjects, createProject, updateProject, deleteProject, uploadMultiple,
+  pruneUnusedImages, storageUrlsIn,
+} from '../../../firebase'
 import { useToast } from '../../../context/ToastContext'
 import { useContent } from '../../../context/ContentContext'
 import Modal from '../../../components/Modal/Modal'
@@ -101,10 +104,9 @@ export default function ProjectsSection() {
   }
 
   /*
-   * Gallery editing. Removing an image here unlinks it from the project; the
-   * file itself is left in Storage, matching what deleting a whole project
-   * already does. Re-uploading is cheap, and a delete that reaches into
-   * Storage would silently break any other project reusing the same file.
+   * Gallery editing. Removing an image here only unlinks it from the form.
+   * The file goes on save, and only once Firestore confirms nothing else
+   * points at it, so cancelling the modal still leaves it untouched.
    */
   const removeImage = (i) =>
     setForm(f => ({ ...f, images: f.images.filter((_, idx) => idx !== i) }))
@@ -123,6 +125,11 @@ export default function ProjectsSection() {
     e.preventDefault()
     if (!form.title.trim()) { addToast({ type: 'error', title: 'Title is required' }); return }
     setSaving(true)
+    // What this project pointed at before the edit. Anything dropped from the
+    // list is deleted after the save, not now, so Cancel is still safe.
+    const previous = modal.mode === 'edit'
+      ? storageUrlsIn(projects.find(p => p.id === modal.id) || {})
+      : []
     try {
       const { id, ...rest } = form
       const data = {
@@ -137,6 +144,7 @@ export default function ProjectsSection() {
       addToast({ type: 'success', title: modal.mode === 'add' ? 'Project created' : 'Project updated' })
       close()
       load()
+      await pruneUnusedImages(previous)
     } catch (err) {
       addToast({ type: 'error', title: 'Save failed', message: err?.message })
     } finally { setSaving(false) }
@@ -144,9 +152,11 @@ export default function ProjectsSection() {
 
   async function remove(p) {
     if (!window.confirm(`Delete "${p.title}"? This cannot be undone.`)) return
+    const previous = storageUrlsIn(p)
     await deleteProject(p.id)
     setProjects(ps => ps.filter(x => x.id !== p.id))
     addToast({ type: 'success', title: 'Project deleted' })
+    await pruneUnusedImages(previous)
   }
 
   async function saveOrder(p, order) {
