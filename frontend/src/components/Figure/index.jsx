@@ -55,7 +55,9 @@ export default function Figure({
              so it must not be lazy - deferring it delays LCP by a round trip.
              Everything below the fold is lazy and low priority. */
           loading={priority ? 'eager' : 'lazy'}
-          fetchPriority={priority ? 'high' : 'low'}
+          /* Lowercase on purpose. React 18 does not recognise the camelCase
+             prop and drops it with a warning; this spelling reaches the DOM. */
+          fetchpriority={priority ? 'high' : 'low'}
           decoding="async"
           onError={() => setFailed(true)}
         />
