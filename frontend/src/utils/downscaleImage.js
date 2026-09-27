@@ -14,29 +14,31 @@
  * problem can never block an upload.
  */
 
-/*
- * Sized for the lightbox's zoom, not just for a full-bleed view.
- *
- * 2000px was chosen when the viewer only ever showed an image fit to the
- * screen. The viewer now zooms to 6x, and the work being shown is dense
- * presentation boards whose value is in the small text and linework - at
- * 2000px those turn to mush as soon as anyone zooms in, which is exactly what
- * the images are there for.
- *
- * 3200px is roughly 2.5x the pixels of the old cap while staying well under
- * the decode cost that made scrolling stutter in the first place. Quality is
- * up too: 0.86 WebP puts visible ringing around fine black linework on white,
- * which is most of a drawing sheet.
- */
-const MAX_EDGE     = 3200
-const QUALITY      = 0.92
-// Anything already under this in both dimensions and weight is passed through
-// untouched, so a photo that is already web-sized is never re-encoded.
-const SKIP_BYTES   = 1500 * 1024
+// 4096 on the long edge: the browser's own pinch-zoom goes well past a
+// fit-to-screen view, and presentation boards are read through their linework.
+// Earlier caps of 2000 and 3200 softened it as soon as anyone zoomed in.
+const MAX_EDGE = 4096
 
-/** Draw `bitmap` into a canvas scaled to fit MAX_EDGE and return a WebP blob. */
+// Mobile Safari silently hands back a blank canvas past ~16.7 megapixels, so
+// area is capped too, below that limit.
+const MAX_PIXELS = 12_000_000
+
+// 0.95, not 0.92: black hairlines on white are the worst case for a lossy
+// codec, and the ringing it leaves is what reads as a compressed image.
+const QUALITY = 0.95
+
+// An image already inside the caps is passed through untouched however heavy.
+// Re-encoding it would cost a generation of quality and save nothing visible.
+// Past this it is re-encoded at its own size, where bandwidth wins.
+const HUGE_BYTES = 12 * 1024 * 1024
+
+/** Draw `bitmap` into a canvas scaled to fit both caps and return a WebP blob. */
 function toScaledBlob(bitmap, width, height) {
-  const scale = Math.min(1, MAX_EDGE / Math.max(width, height))
+  const scale = Math.min(
+    1,
+    MAX_EDGE / Math.max(width, height),
+    Math.sqrt(MAX_PIXELS / (width * height)),
+  )
   const w = Math.round(width * scale)
   const h = Math.round(height * scale)
 
@@ -82,15 +84,21 @@ export default async function downscaleImage(file) {
     const height = bitmap.height ?? bitmap.naturalHeight
     if (!width || !height) return file
 
-    // Already modest in both dimensions and weight - leave it alone.
-    if (Math.max(width, height) <= MAX_EDGE && file.size <= SKIP_BYTES) {
+    // Within both caps: leave it alone rather than spend a generation of
+    // quality on an image that needs no resizing.
+    const withinCaps =
+      Math.max(width, height) <= MAX_EDGE && width * height <= MAX_PIXELS
+    if (withinCaps && file.size <= HUGE_BYTES) {
       bitmap.close?.()
       return file
     }
 
     const blob = await toScaledBlob(bitmap, width, height)
     bitmap.close?.()
-    if (!blob || blob.size >= file.size) return file
+    if (!blob) return file
+    // Rejecting a heavier re-encode only makes sense when nothing was
+    // resized; over the caps, the smaller bitmap is the whole point.
+    if (withinCaps && blob.size >= file.size) return file
 
     const name = (file.name || 'image').replace(/\.[^.]+$/, '') + '.webp'
     return new File([blob], name, { type: 'image/webp', lastModified: Date.now() })

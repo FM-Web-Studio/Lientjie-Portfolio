@@ -124,63 +124,6 @@
 
 .close:hover { color: var(--accent); }
 
-/* Zoom controls sit beside Close, in the same quiet mono register as the rest
-   of the chrome so they read as instruments rather than buttons. */
-.topActions {
-  display: flex;
-  align-items: center;
-  gap: clamp(16px, 3vw, 32px);
-}
-
-.zoomBar {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-1, 4px);
-  border: 1px solid var(--lb-line-strong);
-  border-radius: var(--r-full);
-  padding: 2px;
-}
-
-.zoomBtn,
-.zoomLevel {
-  appearance: none;
-  background: none;
-  border: 0;
-  color: var(--lb-ink);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--r-full);
-  transition: background-color var(--t-fast), color var(--t-fast), opacity var(--t-fast);
-}
-
-.zoomBtn { width: 30px; height: 26px; }
-
-.zoomLevel {
-  min-width: 52px;
-  height: 26px;
-  padding: 0 var(--sp-2);
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  letter-spacing: var(--tracking-mono);
-  font-variant-numeric: tabular-nums;
-}
-
-.zoomBtn:hover:not(:disabled),
-.zoomLevel:hover:not(:disabled) {
-  background: var(--lb-tint-strong);
-  color: var(--accent);
-}
-
-/* Dimmed rather than hidden: a control that disappears at the limits makes the
-   bar jump width, and the reader loses the anchor they were aiming at. */
-.zoomBtn:disabled,
-.zoomLevel:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
 /* ── Stage ──────────────────────────────────────────────────────────────── */
 .stage {
   position: relative;
@@ -191,52 +134,49 @@
   justify-content: center;
   padding-inline: var(--gutter);
   overflow: hidden;
-  /* The stage owns every gesture on it: without this the browser claims the
-     pinch as a page zoom and the drag as a scroll, and neither reaches us. */
-  touch-action: none;
-}
-
-.stage[data-zoomed='true']  { cursor: grab; }
-.stage[data-dragging='true'] { cursor: grabbing; }
-
-/* The transformed layer. It fills the stage so its centre - the transform
-   origin - coincides with the stage centre, which is what the zoom-to-cursor
-   maths in the component assumes. */
-.viewport {
-  position: absolute;
-  inset: 0;
-  /* Flex, NOT grid. The image caps itself with `max-height: 100%`, and a
-     percentage max-height only resolves against a definite height. A grid
-     item measures against its grid area - here an auto-sized row that is
-     itself sized to the image - so the cap resolved to the image's own
-     height and did nothing, and tall images ran under the bottom bar. */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-inline: var(--gutter);
-  will-change: transform;
-  transition: transform 180ms var(--ease-out);
-}
-
-/* Dragging and pinching must track the finger exactly; an eased transform
-   there feels like the image is on elastic. */
-.viewport[data-instant='true'] { transition: none; }
-
-@media (prefers-reduced-motion: reduce) {
-  .viewport { transition: none; }
 }
 
 /* `contain`, not `cover`: this is the one place in the site where the whole
    frame matters more than filling the box - the reader has opened the image
    deliberately, so it must not be cropped. */
+/* Wraps the image so the hint can sit on its corner rather than the stage's. */
+.imgLink {
+  position: relative;
+  display: inline-flex;
+  max-width: 100%;
+  max-height: 100%;
+  cursor: zoom-in;
+}
+
 .img {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  user-select: none;
-  -webkit-user-drag: none;
   animation: imgIn 320ms var(--ease-out);
 }
+
+/* Quiet until it is wanted. Touch has no hover, so it stays legible there. */
+.imgHint {
+  position: absolute;
+  right: var(--sp-3);
+  bottom: var(--sp-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 5px 10px;
+  border-radius: var(--r-full);
+  background: var(--lb-veil-strong);
+  color: var(--lb-ink);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono);
+  opacity: 0.55;
+  transition: opacity var(--t-base);
+}
+
+.imgLink:hover .imgHint,
+.imgLink:focus-visible .imgHint { opacity: 1; }
 
 /* On the grey ground a drawing scanned on white has no edge at all - it bleeds
    into the surface. A soft shadow gives it one without drawing a literal frame,
