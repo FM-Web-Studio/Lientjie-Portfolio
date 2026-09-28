@@ -136,32 +136,36 @@
 /* `contain`, not `cover`: this is the one place in the site where the whole
    frame matters more than filling the box - the reader has opened the image
    deliberately, so it must not be cropped. */
-/* The scrolling box the image sits in. Zooming sets a width on the image and
-   lets this overflow, so panning, momentum and pinch are all the browser's. */
-.scroller {
+.zoomArea {
   position: absolute;
   inset: 0;
-  display: flex;
+}
+
+/* The zoom surface. It fills the stage so the transform origin and the
+   stage centre agree, which is what the click-to-zoom maths assumes. */
+.stageView {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   cursor: zoom-in;
+}
+
+.stageView:active { cursor: grabbing; }
+
+/* Flex, not grid: the image caps itself with max-height 100%, and a
+   percentage max-height only resolves against a definite height. */
+.stageContent {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding-inline: var(--gutter);
 }
 
-.scroller[data-zoomed='true'] {
-  overflow: auto;
-  cursor: grab;
-  padding-inline: 0;
-  /* Let a finger pan and pinch here rather than scrolling the page. */
-  touch-action: pan-x pan-y pinch-zoom;
-  overscroll-behavior: contain;
-}
-
-.scroller[data-zoomed='true']:active { cursor: grabbing; }
-
-/* `margin: auto` rather than justify-content, which would pin the overflow to
-   one side and make the left and top of a zoomed image unreachable. */
 .img {
-  margin: auto;
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
@@ -169,14 +173,8 @@
   animation: imgIn 320ms var(--ease-out);
 }
 
-.scroller[data-zoomed='true'] .img {
-  max-width: none;
-  max-height: none;
-  height: auto;
-}
-
-/* Sits on the stage, not the scroller, so it holds its corner while the image
-   moves underneath it. */
+/* Sits on the stage, not on the zoom surface, so it holds its corner while
+   the image moves underneath it. */
 .zoomBtn {
   position: absolute;
   right: calc(var(--gutter) + var(--sp-3));
@@ -196,6 +194,7 @@
   font-size: var(--text-2xs);
   text-transform: uppercase;
   letter-spacing: var(--tracking-mono);
+  font-variant-numeric: tabular-nums;
   opacity: 0.6;
   transition: opacity var(--t-base), color var(--t-fast);
 }
@@ -259,7 +258,7 @@
 
 /* While zoomed the tall hit areas would swallow a drag, so they shrink to
    pills at the vertical centre and keep out of the way. */
-.stage:has(.scroller[data-zoomed='true']) .nav {
+.stage[data-zoomed='true'] .nav {
   top: 50%;
   bottom: auto;
   transform: translateY(-50%);

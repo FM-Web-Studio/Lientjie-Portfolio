@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
 import styles from './ProjectLightbox.module.css'
+
+/* PhotoSwipe's defaults, which are what readers have been trained on: a click
+   or double tap goes to 2.5x the fitted size, and a wheel, trackpad or pinch
+   goes on up to 4x. Both are multiples of the fit, never of the source, so
+   every image in a gallery zooms by the same amount. */
+const CLICK_ZOOM = 2.5
+const MAX_ZOOM = 4
 
 function Chevron({ dir }) {
   return (
@@ -16,22 +24,26 @@ function Chevron({ dir }) {
  * Chrome is kept to the edges so the photograph occupies the centre of the
  * screen uninterrupted, which is the same principle as the page layout.
  *
- * There is no zoom of its own: the image is served at full resolution and the
- * browser's own pinch-to-zoom does the job, which is the gesture a reader
- * already knows and which never fights the page.
+ * Zoom follows the convention every image viewer shares: click or double tap
+ * to go in, wheel, trackpad or pinch for finer control, drag to pan, Escape
+ * to come back out. The gesture handling is react-zoom-pan-pinch rather than
+ * hand-rolled, because velocity, bounds and touch are where hand-rolled
+ * viewers come apart.
  */
 export default function ProjectLightbox({ project, onClose }) {
   const [idx, setIdx] = useState(0)
   const [failed, setFailed] = useState({})
-  const [zoomed, setZoomed] = useState(false)
+  const [scale, setScale] = useState(1)
 
   const panelRef = useRef(null)
   const closeRef = useRef(null)
-  const scrollRef = useRef(null)
-  const imgRef = useRef(null)
-  // Set while a drag is panning, so the pointerup does not read as a click
-  // and toggle the zoom straight back off.
-  const dragRef = useRef(null)
+  const zoomRef = useRef(null)
+  const zoomAreaRef = useRef(null)
+  const unsubRef = useRef(null)
+  const touchRef = useRef(null)
+  // Where the pointer went down, so a drag that ends over the image is not
+  // mistaken for a click and does not toggle the zoom.
+  const downRef = useRef(null)
 
   const images = project.images?.length
     ? project.images
@@ -50,65 +62,59 @@ export default function ProjectLightbox({ project, onClose }) {
     [count],
   )
 
+  useEffect(() => () => unsubRef.current?.(), [])
+
   // A new image always starts fitted. Carrying a zoom across would drop the
   // reader into the corner of a picture they have not seen yet.
-  useEffect(() => { setZoomed(false) }, [idx])
+  useEffect(() => { zoomRef.current?.resetTransform(0) }, [idx])
 
-  /*
-   * Zoom is a width on the image inside a scrolling box, not a transform.
-   * The browser then owns panning, momentum and the scrollbars, which is why
-   * this stays smooth and needs no gesture maths.
-   *
-   * 1:1 pixels is the target, held between twice the fitted size so the step
-   * is always worth making, and five times it so an enormous sheet does not
-   * leave the reader lost in a corner.
-   */
-  const zoomWidth = () => {
-    const img = imgRef.current
-    if (!img) return 0
-    const fit = img.getBoundingClientRect().width
-    return Math.round(Math.min(Math.max(img.naturalWidth, fit * 2), fit * 5))
-  }
+  // Read from the library, not from React state: the decision is made inside
+  // a pointer handler, before any re-render has happened.
+  const isZoomed = () => (zoomRef.current?.state?.scale ?? 1) > 1.01
+  const zoomed = scale > 1.01
 
-  // Zoom about the point that was clicked, so that point stays under the
-  // cursor rather than the reader landing in the middle of the sheet.
-  const toggleZoom = e => {
-    const box = scrollRef.current
-    const img = imgRef.current
-    if (!box || !img) return
-    if (zoomed) { setZoomed(false); return }
+  // The fitted state is exactly scale 1 at the origin, so go there explicitly
+  // rather than trusting a reset to land on it.
+  const toFit = () => zoomRef.current?.setTransform(0, 0, 1, 200)
 
-    const r = img.getBoundingClientRect()
-    const rx = e ? (e.clientX - r.left) / r.width : 0.5
-    const ry = e ? (e.clientY - r.top) / r.height : 0.5
-    setZoomed(true)
-    requestAnimationFrame(() => {
-      box.scrollLeft = rx * box.scrollWidth - box.clientWidth / 2
-      box.scrollTop = ry * box.scrollHeight - box.clientHeight / 2
-    })
-  }
+  // zoomToPoint keeps the clicked point under the cursor, the same anchoring
+  // a wheel zoom does.
+  const zoomAt = (clientX, clientY) =>
+    zoomRef.current?.zoomToPoint(CLICK_ZOOM, clientX, clientY, 200)
 
-  /* Drag to pan. Touch gets this free from the scroll box, a mouse does not. */
-  const onPointerDown = e => {
-    if (!zoomed || e.button !== 0) return
-    const box = scrollRef.current
-    dragRef.current = { x: e.clientX, y: e.clientY, left: box.scrollLeft, top: box.scrollTop, moved: false }
-  }
+  const toggleAt = (x, y) => (isZoomed() ? toFit() : zoomAt(x, y))
 
-  const onPointerMove = e => {
-    const d = dragRef.current
-    if (!d) return
-    const dx = e.clientX - d.x
-    const dy = e.clientY - d.y
-    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) d.moved = true
-    scrollRef.current.scrollLeft = d.left - dx
-    scrollRef.current.scrollTop = d.top - dy
-  }
+  const onPointerDown = e => { downRef.current = { x: e.clientX, y: e.clientY } }
 
   const onPointerUp = e => {
-    const d = dragRef.current
-    dragRef.current = null
-    if (!d?.moved) toggleZoom(e)
+    const d = downRef.current
+    downRef.current = null
+    // Touch is handled below. The library consumes touch events before they
+    // become clicks, and a tap would otherwise never reach here.
+    if (e.pointerType === 'touch') return
+    // A pan is a drag, not a click. 5px of slop covers a shaky hand.
+    if (!d || Math.abs(e.clientX - d.x) > 5 || Math.abs(e.clientY - d.y) > 5) return
+    toggleAt(e.clientX, e.clientY)
+  }
+
+  const onTouchStart = e => {
+    touchRef.current = e.touches.length === 1
+      ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      : null
+  }
+
+  const onTouchEnd = e => {
+    const t = touchRef.current
+    touchRef.current = null
+    // Only a clean single-finger tap: a pinch or a pan is not a tap. 8px of
+    // slop, because a finger is less precise than a cursor.
+    if (!t || e.touches.length) return
+    const point = e.changedTouches[0]
+    if (!point || Math.abs(point.clientX - t.x) > 8 || Math.abs(point.clientY - t.y) > 8) return
+    // A frame later, so the library's own touch-end handling has settled.
+    // Called inline it lands first and is immediately overwritten.
+    const { clientX, clientY } = point
+    requestAnimationFrame(() => toggleAt(clientX, clientY))
   }
 
   /* The class goes on <html>, not <body>: Lenis drives scrolling from the root
@@ -135,7 +141,7 @@ export default function ProjectLightbox({ project, onClose }) {
       // Zoomed in, the first Escape backs out of the zoom. Closing the whole
       // project is almost never what that press means.
       if (e.key === 'Escape') {
-        if (zoomed) { setZoomed(false); return }
+        if (isZoomed()) { toFit(); return }
         onClose()
         return
       }
@@ -162,7 +168,7 @@ export default function ProjectLightbox({ project, onClose }) {
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [onClose, prev, next, zoomed])
+  }, [onClose, prev, next])
 
   const markFailed = i => setFailed(p => ({ ...p, [i]: true }))
   const spec = [project.category, project.year].filter(Boolean).join(' · ')
@@ -206,28 +212,55 @@ export default function ProjectLightbox({ project, onClose }) {
 
         {/* ── Body: stage on the left, text rail on the right ─────────── */}
         <div className={styles.body}>
-        <div className={styles.stage}>
+        <div className={styles.stage} data-zoomed={zoomed ? 'true' : undefined}>
           {showImage ? (
+            /* The handlers sit here, not on the image: the library's content
+               div is the pointer target, and these catch the bubbled event. */
             <div
-              ref={scrollRef}
-              className={styles.scroller}
-              data-zoomed={zoomed ? 'true' : undefined}
+              ref={zoomAreaRef}
+              className={styles.zoomArea}
               onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
-              onPointerLeave={() => { dragRef.current = null }}
+              onTouchStart={onTouchStart}
+              onTouchEnd={onTouchEnd}
             >
-              <img
-                ref={imgRef}
-                key={idx}
-                src={images[idx]}
-                alt={`${project.title} - image ${idx + 1} of ${count}`}
-                className={styles.img}
-                style={zoomed ? { width: zoomWidth() } : undefined}
-                decoding="async"
-                draggable={false}
-                onError={() => markFailed(idx)}
-              />
+            <TransformWrapper
+              ref={zoomRef}
+              initialScale={1}
+              minScale={1}
+              maxScale={MAX_ZOOM}
+              centerOnInit
+              limitToBounds
+              smooth
+              /* A single click already toggles, so the library's double click
+                 would fire a second toggle and undo it. */
+              doubleClick={{ disabled: true }}
+              wheel={{ step: 0.15 }}
+              pinch={{ step: 5 }}
+              /* Fires for every transform, gestures and programmatic alike,
+                 which is what keeps the button label honest. */
+              onInit={api => {
+                unsubRef.current?.()
+                unsubRef.current = api.instance.onTransform(({ scale: s }) =>
+                  setScale(prev => (Math.round(prev * 100) === Math.round(s * 100) ? prev : s)),
+                )
+              }}
+            >
+              <TransformComponent
+                wrapperClass={styles.stageView}
+                contentClass={styles.stageContent}
+              >
+                <img
+                  key={idx}
+                  src={images[idx]}
+                  alt={`${project.title} - image ${idx + 1} of ${count}`}
+                  className={styles.img}
+                  decoding="async"
+                  draggable={false}
+                  onError={() => markFailed(idx)}
+                />
+              </TransformComponent>
+            </TransformWrapper>
             </div>
           ) : (
             <div className={styles.fallback}>
@@ -240,10 +273,10 @@ export default function ProjectLightbox({ project, onClose }) {
             <button
               type="button"
               className={styles.zoomBtn}
-              onClick={() => toggleZoom()}
+              onClick={() => (zoomed ? toFit() : zoomRef.current?.centerView(CLICK_ZOOM, 200))}
               aria-label={zoomed ? 'Fit image to screen' : 'Zoom in on image'}
             >
-              {zoomed ? 'Fit' : 'Zoom'}
+              {zoomed ? `${Math.round(scale * 100)}%` : 'Zoom'}
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                    strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                 <circle cx="11" cy="11" r="7" />
