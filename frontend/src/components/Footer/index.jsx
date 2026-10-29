@@ -81,6 +81,10 @@ export default function Footer() {
       <div className={styles.bottom}>
         <p className={styles.fine}>&copy; {year} {brand.siteName}</p>
         <p className={styles.fine}>Johannesburg, South Africa</p>
+        <nav className={styles.legal} aria-label="Legal">
+          <Link to="/privacy" className={styles.fine}>Privacy policy</Link>
+          <Link to="/terms" className={styles.fine}>Terms of use</Link>
+        </nav>
       </div>
     </footer>
   )

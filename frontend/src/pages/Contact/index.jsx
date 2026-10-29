@@ -1,5 +1,7 @@
-import { useState } from 'react'
-import { createMessage } from '../../firebase'
+import { useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { createMessage, CONTACT_LIMITS } from '../../firebase'
+import Honeypot, { caughtBot } from '../../components/Honeypot'
 import { Reveal } from '../../components'
 import { useToast } from '../../context/ToastContext'
 import { useContent } from '../../context/ContentContext'
@@ -8,9 +10,9 @@ import styles from './Contact.module.css'
 const EMPTY = { name: '', email: '', subject: '', message: '' }
 
 const FIELDS = [
-  { name: 'name',    label: 'Name',    type: 'text',  autoComplete: 'name',  required: true  },
-  { name: 'email',   label: 'Email',   type: 'email', autoComplete: 'email', required: true  },
-  { name: 'subject', label: 'Subject', type: 'text',  autoComplete: 'off',   required: false },
+  { name: 'name',    label: 'Name',    type: 'text',  autoComplete: 'name',  required: true,  maxLength: CONTACT_LIMITS.name    },
+  { name: 'email',   label: 'Email',   type: 'email', autoComplete: 'email', required: true,  maxLength: CONTACT_LIMITS.email   },
+  { name: 'subject', label: 'Subject', type: 'text',  autoComplete: 'off',   required: false, maxLength: CONTACT_LIMITS.subject },
 ]
 
 function validate(data) {
@@ -19,8 +21,9 @@ function validate(data) {
   if (!data.email.trim()) e.email = 'Required'
   /* Deliberately permissive. A strict RFC-5322 pattern rejects valid
      addresses, and the real check is whether the reply arrives - this only
-     catches obvious typos before the message is written to Firestore. */
-  else if (!/\S+@\S+\.\S+/.test(data.email)) e.email = 'Not a valid address'
+     catches obvious typos before the message is written to Firestore. It is
+     never looser than the pattern firestore.rules checks. */
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) e.email = 'Not a valid address'
   if (!data.message.trim()) e.message = 'Required'
   return e
 }
@@ -55,6 +58,7 @@ export default function Contact() {
   const [errors,  setErrors]  = useState({})
   const [touched, setTouched] = useState({})
   const [status,  setStatus]  = useState('idle')
+  const trap = useRef(null)
 
   function handleChange(e) {
     const { name, value } = e.target
@@ -81,7 +85,7 @@ export default function Contact() {
     }
     setStatus('sending')
     try {
-      await createMessage(form)
+      if (!caughtBot(trap)) await createMessage(form)
       setStatus('sent')
       setForm(EMPTY)
       setTouched({})
@@ -161,6 +165,7 @@ export default function Contact() {
                         onChange={handleChange}
                         onBlur={handleBlur}
                         autoComplete={f.autoComplete}
+                        maxLength={f.maxLength}
                         className={`${styles.input} ${
                           errors[f.name] && touched[f.name] ? styles.inputErr : ''
                         }`}
@@ -189,6 +194,7 @@ export default function Contact() {
                       id="message"
                       name="message"
                       rows={7}
+                      maxLength={CONTACT_LIMITS.message}
                       value={form.message}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -208,6 +214,8 @@ export default function Contact() {
                   </div>
                 </div>
 
+                <Honeypot ref={trap} />
+
                 <div className={styles.actions}>
                   <button
                     type="submit"
@@ -217,6 +225,10 @@ export default function Contact() {
                     {sending ? 'Sending…' : t.submitLabel}
                   </button>
                   <p className={styles.note}>Fields marked * are required.</p>
+                  <p className={styles.privacy}>
+                    Your details are used only to reply to you, and messages are deleted after 12 months.
+                    See the <Link to="/privacy">privacy policy</Link>.
+                  </p>
                 </div>
               </form>
             )}

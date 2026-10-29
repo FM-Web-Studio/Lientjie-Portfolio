@@ -102,6 +102,20 @@
   margin: 0;
 }
 
+.legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-6);
+}
+
+.legal a {
+  color: var(--fg-3);
+  text-decoration: none;
+  transition: color var(--t-fast);
+}
+
+.legal a:hover { color: var(--accent); }
+
 @media (max-width: 900px) {
   .top {
     /* Two columns, not one: the three metadata columns are short enough to

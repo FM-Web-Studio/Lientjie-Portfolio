@@ -12,6 +12,8 @@ const About     = lazy(() => import('./pages/About'))
 const Contact   = lazy(() => import('./pages/Contact'))
 const NotFound  = lazy(() => import('./pages/NotFound/NotFound'))
 const Admin     = lazy(() => import('./pages/Admin/Admin'))
+const Privacy   = lazy(() => import('./pages/Legal').then(m => ({ default: m.Privacy })))
+const Terms     = lazy(() => import('./pages/Legal').then(m => ({ default: m.Terms })))
 
 // Holds the viewport open while a route chunk arrives so the footer does not
 // jump up into view and back down. Deliberately empty of content: the chunks
@@ -63,6 +65,8 @@ export default function App() {
             <Route path="/interests" element={<Interests />} />
             <Route path="/about"     element={<About />} />
             <Route path="/contact"   element={<Contact />} />
+            <Route path="/privacy"   element={<Privacy />} />
+            <Route path="/terms"     element={<Terms />} />
             <Route path="*"        element={<NotFound />} />
           </Route>
         </Routes>

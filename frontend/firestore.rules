@@ -2,34 +2,66 @@ rules_version = '2';
 
 // =============================================================================
 // CANONICAL RULESET for the shared `lientjie-project` Firebase project.
-// Covers BOTH the portfolio and the petsitting site. Keep this file identical
-// to Lientjie-Petsitting/firestore.rules - either repo may run
-// `firebase deploy --only firestore:rules`, and last-write-wins on the project.
+// Covers BOTH the portfolio and the petsitting site. This file must stay
+// byte-identical in Lientjie-Petsitting/firestore.rules and
+// Lientjie-Portfolio/frontend/firestore.rules: either repo may run
+// `firebase deploy --only firestore:rules`, and the last deploy wins.
 // =============================================================================
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // The allow-list is settings/admins { emails: [...] }. storage.rules reads the same doc.
     function isAdmin() {
-      return request.auth != null &&
-        request.auth.token.email in
-          get(/databases/$(database)/documents/settings/admins).data.emails;
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in
+             get(/databases/$(database)/documents/settings/admins).data.emails;
     }
 
     // Shared settings collection - admin allow-list, gallery categories, and the
     // editable site-content docs (portfolio_content, petsitting_content). Public
-    // read so the sites can render; admin-only write.
+    // read so the sites can render; admin-only write. The admin list itself is
+    // readable only by someone on it, which is all the portfolio's admin gate needs.
     match /settings/{docId} {
-      allow read: if true;
+      allow read: if docId != 'admins'
+                  || (request.auth != null && request.auth.token.email in resource.data.emails);
       allow write: if isAdmin();
+    }
+
+    // A contact-form message gets a createdAt stamped by the server and an expireAt
+    // about a year out, which a Firestore TTL policy uses to delete it. The window
+    // allows for a visitor's clock being off.
+    function stampedForTtl(d) {
+      return d.createdAt == request.time
+        && d.expireAt is timestamp
+        && d.expireAt > request.time + duration.value(300, 'd')
+        && d.expireAt < request.time + duration.value(400, 'd');
+    }
+
+    function senderOk(d) {
+      return d.name is string && d.name.size() > 0 && d.name.size() <= 100
+        && d.email is string && d.email.size() <= 254 && d.email.matches('^[^ @]+@[^ @]+[.][^ @]+$')
+        && d.message is string && d.message.size() > 0 && d.message.size() <= 5000
+        && d.read == false;
+    }
+
+    function textUpTo(d, key, max) {
+      return d[key] is string && d[key].size() <= max;
     }
 
     // ── Portfolio ─────────────────────────────────────────────────────────────
     match /portfolio_projects/{id}  { allow read: if true; allow write: if isAdmin(); }
     match /portfolio_interests/{id} { allow read: if true; allow write: if isAdmin(); }
     match /portfolio_bio/{id}       { allow read: if true; allow write: if isAdmin(); }
+
+    // Exactly what Lientjie-Portfolio/frontend/src/firebase/contact.js writes.
     match /portfolio_messages/{id} {
-      allow create: if true;
+      allow create: if request.resource.data.keys().hasOnly(['name', 'email', 'subject', 'message', 'read', 'createdAt', 'expireAt'])
+                    && request.resource.data.keys().hasAll(['name', 'email', 'subject', 'message', 'read', 'createdAt', 'expireAt'])
+                    && senderOk(request.resource.data)
+                    && textUpTo(request.resource.data, 'subject', 150)
+                    && stampedForTtl(request.resource.data);
       allow read, update, delete: if isAdmin();
     }
 
@@ -54,6 +86,7 @@ service cloud.firestore {
       // createdAt == request.time forces serverTimestamp(): a client cannot
       // backdate itself to the top of the list or forge an older review.
       return d.keys().hasOnly(requiredKeys)
+        && d.keys().hasAll(requiredKeys)
         && d.approved == false
         && d.likes == 0
         && d.createdAt == request.time;
@@ -119,12 +152,18 @@ service cloud.firestore {
     match /petsitting_services/{id} { allow read: if true; allow write: if isAdmin(); }
     match /petsitting_albums/{id}   { allow read: if true; allow write: if isAdmin(); }
     match /petsitting_bio/{id}      { allow read: if true; allow write: if isAdmin(); }
+
+    // Exactly what Lientjie-Petsitting/frontend/src/firebase/contact.js writes.
+    // The optional fields always arrive, as empty strings when left blank.
     match /petsitting_messages/{id} {
-      allow create: if
-        request.resource.data.keys().hasAll(['name', 'email', 'message', 'createdAt']) &&
-        request.resource.data.name is string && request.resource.data.name.size() > 0 &&
-        request.resource.data.email is string && request.resource.data.email.size() > 0 &&
-        request.resource.data.message is string && request.resource.data.message.size() > 0;
+      allow create: if request.resource.data.keys().hasOnly(['name', 'email', 'phone', 'petName', 'petType', 'serviceInterest', 'message', 'read', 'createdAt', 'expireAt'])
+                    && request.resource.data.keys().hasAll(['name', 'email', 'phone', 'petName', 'petType', 'serviceInterest', 'message', 'read', 'createdAt', 'expireAt'])
+                    && senderOk(request.resource.data)
+                    && textUpTo(request.resource.data, 'phone', 30)
+                    && textUpTo(request.resource.data, 'petName', 60)
+                    && textUpTo(request.resource.data, 'petType', 40)
+                    && textUpTo(request.resource.data, 'serviceInterest', 100)
+                    && stampedForTtl(request.resource.data);
       allow read, update, delete: if isAdmin();
     }
 

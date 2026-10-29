@@ -1,29 +1,44 @@
 rules_version = '2';
+
+// Shared by both Lientjie sites. Keep byte-identical in Lientjie-Petsitting/storage.rules
+// and Lientjie-Portfolio/frontend/storage.rules: the last deploy from either repo wins.
 service firebase.storage {
   match /b/{bucket}/o {
+
+    // Same allow-list as firestore.rules, read across services from settings/admins.
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in
+             firestore.get(/databases/(default)/documents/settings/admins).data.emails;
+    }
+
+    // create/update and delete are split on purpose. On a delete there is no
+    // incoming file, so request.resource is null and these checks would fail.
+    function isImageUpload() {
+      return request.resource.size < 15 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
     // Portfolio assets
     match /portfolio/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create, update: if isAdmin() && isImageUpload();
+      allow delete: if isAdmin();
     }
 
     // Petsitting assets
-    // create/update and delete are split on purpose. `allow write` covers all
-    // three, and on a delete there is no incoming file, so request.resource is
-    // null and the size check fails. That is what made every delete under this
-    // prefix impossible, including the petsitting admin's own.
     match /petsitting/{allPaths=**} {
       allow read: if true;
-      allow create, update: if request.auth != null
-                            && request.resource.size < 15 * 1024 * 1024
-                            && request.resource.contentType.matches('image/.*');
-      allow delete: if request.auth != null;
+      allow create, update: if isAdmin() && isImageUpload();
+      allow delete: if isAdmin();
     }
 
     // Legacy root folder, uploaded by hand before either admin existed.
     match /profile/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create, update: if isAdmin() && isImageUpload();
+      allow delete: if isAdmin();
     }
 
     // Fallback: deny everything else

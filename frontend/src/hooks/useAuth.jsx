@@ -13,7 +13,8 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     return onAuthStateChanged(auth, async u => {
       setUser(u)
-      if (u?.email) {
+      // Mirrors isAdmin() in firestore.rules: a verified email on settings/admins.
+      if (u?.email && u.emailVerified) {
         const admin = await isAdminEmail(u.email)
         setIsAdmin(admin)
       } else {
