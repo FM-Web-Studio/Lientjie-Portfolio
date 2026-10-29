@@ -21,3 +21,9 @@ scripts/serviceAccountKey.json
 .DS_Store
 Thumbs.db
 *.log
+
+# Firebase CLI
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

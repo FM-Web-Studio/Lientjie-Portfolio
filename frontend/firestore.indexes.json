@@ -41,5 +41,8 @@
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    { "collectionGroup": "petsitting_messages", "fieldPath": "expireAt", "ttl": true, "indexes": [] },
+    { "collectionGroup": "portfolio_messages", "fieldPath": "expireAt", "ttl": true, "indexes": [] }
+  ]
 }
