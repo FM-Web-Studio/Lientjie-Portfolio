@@ -31,10 +31,6 @@ export function subscribeBioSection(section, onData, onError) {
   )
 }
 
-export function subscribeBioProfile(onData, onError) {
-  return subscribeBioSection('profile', onData, onError)
-}
-
 export async function updateBioSection(section, data) {
   return setDoc(doc(db, COL, section), data, { merge: true })
 }

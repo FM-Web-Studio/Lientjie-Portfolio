@@ -1,4 +1,5 @@
 export { ThemeProvider, useTheme } from './useTheme.jsx'
 export { AuthProvider,  useAuth  } from './useAuth.jsx'
 export { useInView } from './useInView'
+export { usePageMeta } from './usePageMeta'
 export { default as useMomentumScroll, getLenis } from './useMomentumScroll'

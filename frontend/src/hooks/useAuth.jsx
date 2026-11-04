@@ -13,7 +13,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     return onAuthStateChanged(auth, async u => {
       setUser(u)
-      // Mirrors isAdmin() in firestore.rules: a verified email on settings/admins.
+      // Mirrors isAdmin() in firestore.rules (in the Lientjie-Petsitting repo): a verified email on settings/admins.
       if (u?.email && u.emailVerified) {
         const admin = await isAdminEmail(u.email)
         setIsAdmin(admin)

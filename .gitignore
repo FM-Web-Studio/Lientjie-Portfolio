@@ -1,29 +1,25 @@
 # Dependencies
 node_modules/
-frontend/node_modules/
-scripts/node_modules/
 
 # Build output
 frontend/dist/
-frontend/build/
 
-# Environment — NEVER commit these
-frontend/.env
-frontend/.env.local
-frontend/.env.*.local
-scripts/.env
+# Environment files, never commit these
+.env
+.env.local
+.env.*.local
 
 # Firebase secrets
-scripts/serviceAccountKey.json
 **/serviceAccountKey.json
-
-# Misc
-.DS_Store
-Thumbs.db
-*.log
 
 # Firebase CLI
 .firebase/
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+
+# Misc
+.DS_Store
+Thumbs.db
+*.log
+.npmrc

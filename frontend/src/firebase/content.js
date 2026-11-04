@@ -9,7 +9,7 @@ import { db } from './app'
  *   settings/portfolio_content -> { brand:{}, home:{}, work:{}, about:{},
  *                                   contactPage:{}, contact:{} }
  *
- * No firestore.rules change is needed: settings/{docId} already allows public
+ * No firestore.rules change (in the Lientjie-Petsitting repo) is needed: settings/{docId} already allows public
  * read and admin-only write.
  */
 const CONTENT_DOC_ID = 'portfolio_content'
@@ -39,9 +39,4 @@ export async function saveContentGroup(group, overrides) {
   } catch {
     await setDoc(ref, { [group]: overrides }, { merge: true })
   }
-}
-
-/** Save many groups at once (merge at the top level). */
-export async function saveContent(data) {
-  return setDoc(contentRef(), data, { merge: true })
 }

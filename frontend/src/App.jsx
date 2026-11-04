@@ -1,19 +1,10 @@
 import { Routes, Route, Outlet } from 'react-router-dom'
-import { Suspense, lazy } from 'react'
+import { Suspense } from 'react'
 import { NavigationBar, Footer, ToastContainer, ScrollToTop } from './components'
 import { ToastProvider } from './context/ToastContext'
 import { ContentProvider } from './context/ContentContext'
-import useMomentumScroll from './hooks/useMomentumScroll'
-
-const Home      = lazy(() => import('./pages/Home'))
-const Work      = lazy(() => import('./pages/Work'))
-const Interests = lazy(() => import('./pages/Interests'))
-const About     = lazy(() => import('./pages/About'))
-const Contact   = lazy(() => import('./pages/Contact'))
-const NotFound  = lazy(() => import('./pages/NotFound/NotFound'))
-const Admin     = lazy(() => import('./pages/Admin/Admin'))
-const Privacy   = lazy(() => import('./pages/Legal').then(m => ({ default: m.Privacy })))
-const Terms     = lazy(() => import('./pages/Legal').then(m => ({ default: m.Terms })))
+import { useMomentumScroll, usePageMeta } from './hooks'
+import { Home, Work, Interests, About, Contact, NotFound, Admin, Privacy, Terms } from './pages'
 
 // Holds the viewport open while a route chunk arrives so the footer does not
 // jump up into view and back down. Deliberately empty of content: the chunks
@@ -48,6 +39,7 @@ function PublicLayout() {
 }
 
 export default function App() {
+  usePageMeta()
   return (
     <ToastProvider>
       <ContentProvider>

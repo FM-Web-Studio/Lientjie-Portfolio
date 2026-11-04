@@ -1,9 +1,8 @@
 /* Public-site component barrel.
  *
- * Admin-only components (Modal, SearchableDropdown) are deliberately NOT
- * exported here. They are imported directly by the admin sections, which keeps
- * them out of any public page's dependency graph - and therefore out of the
- * chunks a visitor downloads. */
+ * The admin-only Modal is deliberately NOT exported here. The admin sections
+ * import it directly, which keeps it out of any public page's dependency
+ * graph - and therefore out of the chunks a visitor downloads. */
 
 export { default as NavigationBar } from './NavigationBar'
 export { default as Footer }        from './Footer'

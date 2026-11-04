@@ -1,4 +1,3 @@
-export { db, auth, storage } from './app'
 export * from './auth'
 export * from './projects'
 export * from './interests'

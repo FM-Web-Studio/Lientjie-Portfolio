@@ -1,7 +1,7 @@
 /* =============================================================================
  * ADMIN COMPAT TOKENS + SCROLLBAR
  * =============================================================================
- * The admin panel (Admin.module.css, Modal, SearchableDropdown) was written
+ * The admin panel (Admin.module.css, Modal) was written
  * against an older token vocabulary. Rather than rewrite four admin files for
  * a public-site redesign, those names are aliased here onto the current
  * Theme.css tokens, so the admin inherits the new palette automatically and

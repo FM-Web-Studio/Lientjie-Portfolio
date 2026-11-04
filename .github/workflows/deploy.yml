@@ -37,6 +37,17 @@ jobs:
           ADMIN_EMAILS:                 ${{ secrets.ADMIN_EMAILS }}
           FIREBASE_APPCHECK_SITE_KEY:   ${{ secrets.FIREBASE_APPCHECK_SITE_KEY }}
 
+      # The contact form posts to the sendMessage function, deployed from the
+      # Lientjie-Petsitting repo. Without it live, the form would break.
+      - name: Check the contact form function is deployed
+        run: |
+          # An empty call is treated as a bot and answered with a quiet success, so nothing is saved.
+          status=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json'             -d '{"data":{}}' https://europe-west1-lientjie-project.cloudfunctions.net/sendMessage)
+          if [ "$status" != "200" ]; then
+            echo "::error::sendMessage answered $status. Deploy functions from the Lientjie-Petsitting repo first, then run this workflow again."
+            exit 1
+          fi
+
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:

@@ -178,15 +178,6 @@
   color: var(--accent-1);
 }
 
-/* Groups a set of related buttons so they read as one control cluster rather
-   than as loose items scattered along a row. */
-.btnRow {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-}
-
 /* ── Shell ─────────────────────────────────────────────────────────────────── */
 .shell {
   flex: 1;
@@ -468,14 +459,6 @@
 .rowHidden .hiddenTag { opacity: 1; }
 .hiddenTag { display: inline-block; margin-left: var(--spacing-xs); padding: 2px 8px; background: var(--warning-sub); color: var(--warning-color); border-radius: var(--radius-full); font-size: var(--font-size-xs); font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; }
 .orderInput { width: 56px; padding: 4px 6px; text-align: center; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--background-1); color: var(--primary-text-color); font-family: var(--font-sans); }
-
-/* ── Chips (tags / includes) ───────────────────────────────────────────────── */
-.chipList { display: flex; flex-direction: column; gap: 0.35rem; margin-top: var(--spacing-xs); }
-.chipRow { display: flex; align-items: center; justify-content: space-between; background: var(--background-2); padding: 0.4rem 0.75rem; border-radius: var(--radius-sm); font-size: var(--font-size-sm); }
-.chipRow button { background: none; border: none; color: var(--tertiary-text-color); cursor: pointer; font-size: 0.85rem; padding: 0.2rem; }
-.chipRow button:hover { color: var(--error-color); }
-.inlineAdd { display: flex; gap: var(--spacing-sm); }
-.inlineAdd input { flex: 1; }
 
 /* ── Photo / image preview ─────────────────────────────────────────────────── */
 .imgPreview { max-width: 200px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: var(--spacing-xs); }

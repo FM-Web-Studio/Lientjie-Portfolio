@@ -9,12 +9,12 @@
  * resolveGroup(fields, overrides) overlays saved overrides onto the defaults.
  */
 
-export const BRAND_FIELDS = [
+const BRAND_FIELDS = [
   { key: 'siteName',      label: 'Name (footer / copyright)', type: 'text',     default: 'Lientjie Meiring' },
   { key: 'footerTagline', label: 'Footer tagline',           type: 'text',     default: 'Architecture Portfolio' },
 ]
 
-export const HOME_FIELDS = [
+const HOME_FIELDS = [
   /*
    * Optional. Leave blank and the hero renders as composed type on a ruled
    * drafting ground, which is always legible.
@@ -79,7 +79,7 @@ export const HOME_FIELDS = [
   { key: 'quote5Author', label: 'Quote 5 - author', type: 'text', default: 'Frank Lloyd Wright' },
 ]
 
-export const WORK_FIELDS = [
+const WORK_FIELDS = [
   { key: 'eyebrow',    label: 'Hero - eyebrow',      type: 'text',     default: 'Portfolio' },
   { key: 'heading1',   label: 'Hero - heading top',  type: 'text',     default: 'All' },
   { key: 'heading2',   label: 'Hero - heading emphasis', type: 'text', default: 'Work' },
@@ -88,14 +88,14 @@ export const WORK_FIELDS = [
   { key: 'emptyText',  label: 'Empty state text',    type: 'text',     default: 'No projects in this category yet.' },
 ]
 
-export const INTERESTS_FIELDS = [
+const INTERESTS_FIELDS = [
   { key: 'eyebrow',   label: 'Hero - eyebrow',     type: 'text',     default: 'Beyond Architecture' },
   { key: 'heading1',  label: 'Hero - heading top', type: 'text',     default: 'My' },
   { key: 'heading2',  label: 'Hero - heading emphasis', type: 'text', default: 'Interests' },
   { key: 'sub',       label: 'Hero - sub',         type: 'textarea', default: 'A few of the things I love outside the studio, in pictures.' },
 ]
 
-export const ABOUT_FIELDS = [
+const ABOUT_FIELDS = [
   { key: 'eyebrow',          label: 'Hero - eyebrow',    type: 'text', default: 'About' },
   { key: 'fallbackName',     label: 'Fallback name',     type: 'text', default: 'Lientjie Meiring' },
   { key: 'fallbackTitle',    label: 'Fallback title',    type: 'text', default: 'Architecture Student' },
@@ -106,7 +106,7 @@ export const ABOUT_FIELDS = [
   { key: 'sectionSkills',    label: 'Section - Skills',     type: 'text', default: 'Skills' },
 ]
 
-export const CONTACT_PAGE_FIELDS = [
+const CONTACT_PAGE_FIELDS = [
   { key: 'eyebrow',      label: 'Hero - eyebrow',   type: 'text',     default: 'Contact' },
   { key: 'heading',      label: 'Hero - heading',   type: 'text',     default: 'Say Hello.' },
   { key: 'sub',          label: 'Hero - sub',       type: 'textarea', default: "Available for studio opportunities, collaborations, and general enquiries. I'd love to hear from you." },

@@ -28,7 +28,7 @@ export async function uploadMultiple(files, path) {
 }
 
 /** The storage path inside a Firebase download URL, or null if it is not one. */
-export function storagePath(url) {
+function storagePath(url) {
   const m = typeof url === 'string' && url.match(/\/o\/([^?]+)\?/)
   return m ? decodeURIComponent(m[1]) : null
 }

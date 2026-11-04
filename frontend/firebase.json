@@ -3,7 +3,16 @@
     "target": "lientjie-portfolio",
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [{ "source": "**", "destination": "/index.html" }],
+    "trailingSlash": false,
+    "rewrites": [
+      { "source": "/work", "destination": "/work.html" },
+      { "source": "/interests", "destination": "/interests.html" },
+      { "source": "/about", "destination": "/about.html" },
+      { "source": "/contact", "destination": "/contact.html" },
+      { "source": "/privacy", "destination": "/privacy.html" },
+      { "source": "/terms", "destination": "/terms.html" },
+      { "source": "/admin", "destination": "/admin.html" }
+    ],
     "headers": [
       {
         "source": "/assets/**",
@@ -31,14 +40,11 @@
       {
         "source": "/admin",
         "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      },
+      {
+        "source": "/admin.html",
+        "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
       }
     ]
-  },
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  },
-  "storage": {
-    "rules": "storage.rules"
   }
 }

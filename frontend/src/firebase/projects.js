@@ -1,5 +1,5 @@
 import {
-  collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc,
+  collection, doc, getDocs, addDoc, updateDoc, deleteDoc,
   query, orderBy, onSnapshot, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from './app'
@@ -16,7 +16,7 @@ const mapDoc = d => ({ id: d.id, ...d.data() })
  * still reads as visible. Inverting it would have hidden the whole portfolio
  * until each project was re-saved.
  */
-export const isProjectVisible = p => p?.hidden !== true
+const isProjectVisible = p => p?.hidden !== true
 
 /**
  * Every project, hidden ones included. This is the admin view - the public
@@ -26,12 +26,6 @@ export async function getProjects() {
   const q = query(collection(db, COL), orderBy('order', 'asc'))
   const snap = await getDocs(q)
   return snap.docs.map(mapDoc)
-}
-
-export async function getFeaturedProjects() {
-  // Filter client-side to avoid composite index requirement
-  const all = await getProjects()
-  return all.filter(p => p.featured === true && isProjectVisible(p))
 }
 
 /**
@@ -77,11 +71,6 @@ export function subscribeFeaturedProjects(onData, onError, fallbackCount = 6) {
     },
     onError,
   )
-}
-
-export async function getProject(id) {
-  const snap = await getDoc(doc(db, COL, id))
-  return snap.exists() ? { id: snap.id, ...snap.data() } : null
 }
 
 export async function createProject(data) {

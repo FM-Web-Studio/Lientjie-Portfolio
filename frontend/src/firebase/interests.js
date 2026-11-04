@@ -1,5 +1,5 @@
 import {
-  collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc,
+  collection, doc, getDocs, addDoc, updateDoc, deleteDoc,
   query, orderBy, onSnapshot, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from './app'
@@ -13,18 +13,13 @@ const mapDoc = d => ({ id: d.id, ...d.data() })
  * projects, so a document written before this field existed still reads as
  * visible rather than disappearing the moment the flag was introduced.
  */
-export const isInterestVisible = i => i?.hidden !== true
+const isInterestVisible = i => i?.hidden !== true
 
 /** Every interest, hidden ones included - the admin view. */
 export async function getInterests() {
   const q = query(collection(db, COL), orderBy('order', 'asc'))
   const snap = await getDocs(q)
   return snap.docs.map(mapDoc)
-}
-
-export async function getInterest(id) {
-  const snap = await getDoc(doc(db, COL, id))
-  return snap.exists() ? { id: snap.id, ...snap.data() } : null
 }
 
 /**
