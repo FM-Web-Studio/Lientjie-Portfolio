@@ -1,38 +1,51 @@
 import { useEffect } from 'react'
 import Lenis from 'lenis'
+import { gsap, ScrollTrigger, reducedMotion } from '../lib/motion'
 
-// Single shared instance so navigation code can drive the same smooth scroller.
 let lenisInstance = null
 export const getLenis = () => lenisInstance
 
-const prefersReduced = () =>
-  typeof window.matchMedia === 'function' &&
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches
+// Smooth scrolling, driven by GSAP's ticker so scroll-linked animations never lag a frame behind.
+export function scrollToTarget(target, options = {}) {
+  const lenis = getLenis()
+  if (lenis) lenis.scrollTo(target, { duration: 1.4, ...options })
+  else if (typeof target === 'number') window.scrollTo({ top: target, behavior: options.immediate ? 'auto' : 'smooth' })
+  else document.querySelector(target)?.scrollIntoView({ behavior: options.immediate ? 'auto' : 'smooth' })
+}
 
-/**
- * Premium momentum scrolling via Lenis (the Francois0203 feel).
- * - Desktop: smooths the wheel for weighty, inertial scrolling.
- * - Touch: left on native scroll so mobile keeps its own momentum.
- * - Disabled entirely when the visitor prefers reduced motion.
- */
-export default function useMomentumScroll() {
+// Content arrives from Firestore after first paint and changes the page height, which would
+// leave every scroll trigger below it in the wrong place. Re-measure whenever the page resizes.
+function useTriggerRefresh() {
   useEffect(() => {
-    if (typeof window === 'undefined' || prefersReduced()) return undefined
-
-    const lenis = new Lenis({
-      lerp: 0.075,
-      smoothWheel: true,
-      wheelMultiplier: 1.25,
-      touchMultiplier: 1.4,
+    let last = document.body.scrollHeight
+    let timer = 0
+    const ro = new ResizeObserver(() => {
+      const h = document.body.scrollHeight
+      if (Math.abs(h - last) < 2) return
+      last = h
+      clearTimeout(timer)
+      timer = setTimeout(() => { ScrollTrigger.sort(); ScrollTrigger.refresh() }, 150)
     })
-    lenisInstance = lenis
+    ro.observe(document.body)
+    return () => { ro.disconnect(); clearTimeout(timer) }
+  }, [])
+}
 
-    let rafId = 0
-    const raf = (time) => { lenis.raf(time); rafId = requestAnimationFrame(raf) }
-    rafId = requestAnimationFrame(raf)
+export default function useMomentumScroll() {
+  useTriggerRefresh()
+  useEffect(() => {
+    if (reducedMotion()) return undefined
+
+    // lerp 0.16 keeps the glide but follows the wheel closely; lower values feel like the page lags.
+    const lenis = new Lenis({ lerp: 0.16, smoothWheel: true, wheelMultiplier: 1, touchMultiplier: 1.2 })
+    lenisInstance = lenis
+    lenis.on('scroll', ScrollTrigger.update)
+    const tick = (time) => lenis.raf(time * 1000)
+    gsap.ticker.add(tick)
+    gsap.ticker.lagSmoothing(0)
 
     return () => {
-      cancelAnimationFrame(rafId)
+      gsap.ticker.remove(tick)
       lenis.destroy()
       if (lenisInstance === lenis) lenisInstance = null
     }

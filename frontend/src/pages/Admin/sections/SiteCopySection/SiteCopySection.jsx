@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { getContent, saveContentGroup } from '../../../../firebase'
 import { COPY_SCHEMA } from '../../../../content/siteCopy'
 import { useToast } from '../../../../context/ToastContext'
+import { SectionHeader, SaveBar, useDirty, cx } from '../../ui'
+import { IconReset } from '../../icons'
 import styles from '../../Admin.module.css'
 
 const buildDraft = (saved = {}) => {
@@ -25,16 +27,24 @@ const overridesFor = (group, draft) => {
   return g
 }
 
+// How many fields in a group differ from their original wording, shown on its tab.
+const changedIn = (group, draft) => group.fields.filter(f => (draft[group.key]?.[f.key] ?? '') !== f.default).length
+
 export default function SiteCopySection() {
   const { addToast } = useToast()
   const [activeGroup, setActiveGroup] = useState(COPY_SCHEMA[0].key)
   const [draft, setDraft] = useState(() => buildDraft({}))
   const [saving, setSaving] = useState(false)
+  const [dirty, markClean] = useDirty(draft)
   const dirtyRef = useRef(false)
 
   useEffect(() => {
-    getContent().then(data => { if (!dirtyRef.current) setDraft(buildDraft(data)) })
-  }, [])
+    getContent().then(data => {
+      const loaded = buildDraft(data)
+      markClean(loaded)
+      if (!dirtyRef.current) setDraft(loaded)
+    })
+  }, [markClean])
 
   const set = (groupKey, fieldKey, value) => {
     dirtyRef.current = true
@@ -50,6 +60,7 @@ export default function SiteCopySection() {
         await saveContentGroup(group.key, overridesFor(group, draft))
       }
       dirtyRef.current = false
+      markClean(draft)
       addToast({ type: 'success', title: 'Site copy updated' })
     } catch { addToast({ type: 'error', title: 'Save failed' }) }
     finally { setSaving(false) }
@@ -59,31 +70,49 @@ export default function SiteCopySection() {
 
   return (
     <div>
-      <p className={styles.intro}>
-        Edit the headings and wording shown across the site. Clear a field to restore its
-        original text.
-      </p>
+      <SectionHeader
+        description={
+          <p>
+            Edit the headings and wording shown across the site. Clear a field, or use reset,
+            to restore its original text. One save covers every page.
+          </p>
+        }
+      />
 
-      <nav className={styles.subTabs}>
-        {COPY_SCHEMA.map(g => (
-          <button key={g.key} type="button" className={`${styles.subTab} ${g.key === activeGroup ? styles.subTabActive : ''}`} onClick={() => setActiveGroup(g.key)}>
-            {g.label}
-          </button>
-        ))}
+      <nav className={styles.subTabs} aria-label="Pages">
+        {COPY_SCHEMA.map(g => {
+          const changed = changedIn(g, draft)
+          return (
+            <button
+              key={g.key}
+              type="button"
+              className="chip"
+              aria-pressed={g.key === activeGroup}
+              onClick={() => setActiveGroup(g.key)}
+            >
+              {g.label}
+              {changed > 0 && <span className="chip-count" title={`${changed} edited`}>{changed}</span>}
+            </button>
+          )
+        })}
       </nav>
 
-      <div className={styles.formCard}>
+      <div key={group.key} className={cx(styles.formCard, styles.copyCard)}>
+        <p className={styles.cardLabel}>{group.label}</p>
         <div className={styles.grid2}>
           {group.fields.map(f => {
             const value = draft[group.key]?.[f.key] ?? ''
             const modified = value !== f.default
             const full = f.type === 'textarea'
             return (
-              <div key={f.key} className={`${styles.field} ${full ? styles.span2 : ''}`}>
+              <div key={f.key} className={cx(styles.field, full && styles.span2)}>
                 <label htmlFor={`copy-${group.key}-${f.key}`}>
+                  {modified && <span className={styles.modDot} aria-hidden="true" />}
                   {f.label}
                   {modified && (
-                    <button type="button" className={styles.resetBtn} onClick={() => resetField(group.key, f)} title="Reset to original">↺ reset</button>
+                    <button type="button" className={styles.resetBtn} onClick={() => resetField(group.key, f)} title="Reset to original">
+                      <IconReset size={11} /> reset
+                    </button>
                   )}
                 </label>
                 {full
@@ -95,9 +124,7 @@ export default function SiteCopySection() {
         </div>
       </div>
 
-      <div className={styles.formActions}>
-        <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSave} disabled={saving}>{saving ? 'Saving…' : 'Save Site Copy'}</button>
-      </div>
+      <SaveBar dirty={dirty} saving={saving} label="Save site copy" onSave={handleSave} />
     </div>
   )
 }

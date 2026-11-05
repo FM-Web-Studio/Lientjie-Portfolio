@@ -24,17 +24,28 @@ date: edit the About content in `/admin` and the next download reflects it. Its
 wording, languages, references and project count are under Site Copy > CV.
 
 The PDF engine (`frontend/src/cv`, react-pdf) is about 460 KB gzipped, so it loads
-only when someone hovers, focuses or clicks the button. Its fonts are bundled copies of
-the site's typefaces. IBM Plex Mono comes from `@ibm/plex-mono` because the Fontsource
-WOFF files for it fail to parse in react-pdf.
+only when someone hovers, focuses or clicks the button. It uses a bundled copy of the
+site's typeface (Inter Tight).
 
-The profile photo appears on the CV only if the Storage bucket allows the site to
-fetch it (CORS). Without that it is left off and the CV still downloads.
+The portrait and project images are fetched from Storage and shrunk before they go into
+the PDF. That needs the bucket's CORS rule in `storage-cors.json` (read-only, the site's
+own origins and `localhost:3000`). It is applied; to change it:
+`gcloud storage buckets update gs://lientjie-project.firebasestorage.app --cors-file=storage-cors.json`.
+If an image cannot be fetched the CV still downloads, with initials or a coloured tile.
+
+## Design and motion
+
+One typeface (Inter Tight), the brand mint, coral and graphite, light and dark themes.
+Tokens are in `styles/Theme.css`; shared classes (`.container`, `.card`, `.badge`, `.btn`,
+`.chip`, `.field`) in `styles/global.css`. Motion is GSAP (`lib/motion.js`) with Lenis
+smooth scrolling, plus a few building blocks in `components/`: `TextReveal`, `Reveal`,
+`Marquee`, `Counter`, `Button` (magnetic, fill from the pointer) and the custom `Cursor`.
+Everything respects the visitor's reduced-motion setting.
 
 ## Contact form and spam
 
-The form posts to the `sendMessage` Cloud Function (deployed from the petsitting
-repo). It drops bots (hidden field filled, or sent within a few seconds of opening the
+The form posts to the `sendMessage` Cloud Function (in `functions/`, deployed with
+this site). It drops bots (hidden field filled, or sent within a few seconds of opening the
 form), limits how often one sender and one email address can write, caps the site's
 daily total, then saves the message to `portfolio_messages` with a 12-month expiry.
 The rules refuse direct writes to that collection.
@@ -60,7 +71,9 @@ frontend/src
                seo.js (each page's title, description and link preview)
   context/     content and toast providers
   firebase/    data access, one module per concern, re-exported from firebase/index.js
-  hooks/       theme, auth, reveal on scroll, momentum scroll, page meta
+  hooks/       theme, auth, reveal on scroll, smooth scroll, magnetic and tilt hover, page meta
+  lib/         motion.js: GSAP setup shared by every animation
+  cv/          the downloadable CV (built in the browser)
   pages/       one folder per page, lazy loaded through pages/index.js
     Admin/     the admin: sections/ has one folder per tab
   styles/      tokens, global styles, motion and admin styles

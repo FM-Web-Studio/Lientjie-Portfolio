@@ -1,16 +1,18 @@
-/* Public-site component barrel.
- *
- * The admin-only Modal is deliberately NOT exported here. The admin sections
- * import it directly, which keeps it out of any public page's dependency
- * graph - and therefore out of the chunks a visitor downloads. */
-
-export { default as NavigationBar } from './NavigationBar'
-export { default as Footer }        from './Footer'
-export { default as Reveal }        from './Reveal'
-export { default as Figure }        from './Figure'
-export { default as ProjectBleed }  from './ProjectBleed'
-export { ProjectBleedSkeleton }     from './ProjectBleed'
-export { default as ProjectLightbox } from './ProjectLightbox'
-export { default as ToastContainer } from './Toast'
-export { default as ScrollToTop }    from './ScrollToTop'
-export { default as CvButton }       from './CvButton'
+// Public-site components. The admin-only Modal is imported directly by the admin, to keep it out of public chunks.
+export { default as NavigationBar, ThemeToggle } from './NavigationBar'
+export { default as Footer }           from './Footer'
+export { default as Reveal }           from './Reveal'
+export { default as Figure }           from './Figure'
+export { default as ProjectLightbox }  from './ProjectLightbox'
+export { default as ToastContainer }   from './Toast'
+export { default as CvButton }         from './CvButton'
+export { default as Button, Roll }     from './Button'
+export { default as Cursor }           from './Cursor'
+export { default as Ambient }          from './Ambient'
+export { default as TiltLayer }        from './TiltLayer'
+export { default as Loader }           from './Loader'
+export { default as TransitionRoutes } from './PageTransition'
+export { default as TextReveal }       from './TextReveal'
+export { default as Marquee }          from './Marquee'
+export { default as Counter }          from './Counter'
+export * from './Icons'

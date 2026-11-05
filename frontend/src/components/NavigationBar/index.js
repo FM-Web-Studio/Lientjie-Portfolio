@@ -1,1 +1,1 @@
-export { default } from './NavigationBar'
+export { default, ThemeToggle } from './NavigationBar'

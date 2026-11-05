@@ -2,69 +2,64 @@
   position: relative;
   overflow: hidden;
   margin: 0;
-  background: var(--bg-2);
-  /* The box is sized by aspect-ratio from the component, so it holds its
-     space before the image loads and the reveal below it never jumps. */
   width: 100%;
+  background: var(--bg-2);
 }
 
 .img {
+  position: relative;
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* `object-position: center` is the default but stated explicitly: these
-     are architectural photographs cropped hard by the aspect ratio, and the
-     centre is the safest assumption when the subject is unknown. */
   object-position: center;
 }
 
-/* ── Fallback plate ─────────────────────────────────────────────────────────
-   Stands in for a missing image. Reads as a drafting sheet rather than as an
-   error: a ruled grid, the project index, and the title. */
-.plate {
+/* Opacity only, so a 4MB upload is never re-rasterised while it arrives. */
+@media (prefers-reduced-motion: no-preference) {
+  .img { transition: opacity 700ms var(--ease-out); }
+  .figure[data-loaded='false'] .img { opacity: 0; }
+}
+
+/* A calm shimmer while the image decodes. */
+.loading {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--bg-2) 0%, var(--bg-3) 40%, var(--bg-2) 80%);
+  background-size: 300% 100%;
+  animation: shimmer 1.6s linear infinite;
+  transition: opacity 600ms var(--ease-out);
+}
+.figure[data-loaded='true'] .loading { opacity: 0; animation: none; }
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: -50% 0; } }
+@media (prefers-reduced-motion: reduce) { .loading { animation: none; } }
+
+/* No image: a soft tile with the name centred. */
+.tile {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  gap: var(--sp-3);
-  padding: clamp(20px, 4vw, 48px);
-  background: var(--bg-2);
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-6);
+  text-align: center;
+  background:
+    radial-gradient(120% 90% at 30% 20%, var(--accent-dim), transparent 60%),
+    var(--bg-2);
 }
-
-/* Two repeating-linear-gradients rather than an SVG or a background image:
-   no extra request, and it scales with the box for free. 48px is small
-   enough to read as drafting paper and large enough not to alias into a
-   flat grey when the plate is scaled down on mobile. */
-.plateGrid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    repeating-linear-gradient(to right,  var(--rule) 0 1px, transparent 1px 48px),
-    repeating-linear-gradient(to bottom, var(--rule) 0 1px, transparent 1px 48px);
-  /* Promoted so a grid that fills the viewport is rasterised once instead of
-     being re-drawn on scroll frames. `will-change` is deliberately not set:
-     this never animates, and a permanent compositor hint on a full-bleed
-     element wastes GPU memory. */
-  transform: translateZ(0);
-  opacity: 0.9;
-}
-
-.plateIndex {
-  position: relative;
-  font-family: var(--font-serif);
-  font-size: clamp(3rem, 9vw, 7rem);
-  line-height: 0.85;
-  color: var(--fg-4);
-  letter-spacing: var(--tracking-display);
-}
-
-.plateLabel {
-  position: relative;
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
+.tileIndex {
+  font-size: var(--text-xs);
+  font-weight: 500;
   color: var(--fg-3);
-  max-width: var(--measure-tight);
+  font-variant-numeric: tabular-nums;
+}
+.tileLabel {
+  max-width: 22ch;
+  font-size: var(--text-lg);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--fg-2);
 }

@@ -1,325 +1,278 @@
+import { Children } from 'react'
 import { Buffer } from 'buffer/'
 import { Document, Page, View, Text, Image, Link, Font, StyleSheet, pdf } from '@react-pdf/renderer'
-import serif300i from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-300-italic.woff?url'
-import serif400 from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-400-normal.woff?url'
-import serif400i from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-400-italic.woff?url'
-import serif500 from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-500-normal.woff?url'
-import sans400 from '@fontsource/dm-sans/files/dm-sans-latin-400-normal.woff?url'
-import sans500 from '@fontsource/dm-sans/files/dm-sans-latin-500-normal.woff?url'
-import sans600 from '@fontsource/dm-sans/files/dm-sans-latin-600-normal.woff?url'
-import mono400 from '@ibm/plex-mono/fonts/complete/woff/IBMPlexMono-Regular.woff?url'
-import mono500 from '@ibm/plex-mono/fonts/complete/woff/IBMPlexMono-Medium.woff?url'
+import w400 from '@fontsource/inter-tight/files/inter-tight-latin-400-normal.woff?url'
+import w500 from '@fontsource/inter-tight/files/inter-tight-latin-500-normal.woff?url'
+import w600 from '@fontsource/inter-tight/files/inter-tight-latin-600-normal.woff?url'
+import w700 from '@fontsource/inter-tight/files/inter-tight-latin-700-normal.woff?url'
 
 // The CV as an A4 PDF, built in the browser and loaded only when someone asks for it.
+// Single column on purpose: it reads in the right order on paper, on screen and in applicant tracking systems.
 // react-pdf checks Buffer.isBuffer when it loads an image, which browsers do not have.
 globalThis.Buffer ??= Buffer
 
 Font.register({
-  family: 'Serif',
+  family: 'Inter',
   fonts: [
-    { src: serif300i, fontWeight: 300, fontStyle: 'italic' },
-    { src: serif400, fontWeight: 400 },
-    { src: serif400i, fontWeight: 400, fontStyle: 'italic' },
-    { src: serif500, fontWeight: 500 },
-  ],
-})
-Font.register({
-  family: 'Sans',
-  fonts: [
-    { src: sans400, fontWeight: 400 },
-    { src: sans500, fontWeight: 500 },
-    { src: sans600, fontWeight: 600 },
-  ],
-})
-Font.register({
-  family: 'Mono',
-  fonts: [
-    { src: mono400, fontWeight: 400 },
-    { src: mono500, fontWeight: 500 },
+    { src: w400, fontWeight: 400 },
+    { src: w500, fontWeight: 500 },
+    { src: w600, fontWeight: 600 },
+    { src: w700, fontWeight: 700 },
   ],
 })
 // Whole words only. A hyphenated name, place or link reads badly on a CV.
 Font.registerHyphenationCallback(word => [word])
 
-// The light theme's values, restated because a PDF cannot read CSS variables.
-const INK = '#1A1A1A'
-const INK_2 = '#3D3D3D'
-const INK_3 = '#555555'
+const INK = '#141414'
+const INK_2 = '#3A3A3A'
+const INK_3 = '#6E6E6E'
+const LINE = '#DADADA'
 const ACCENT = '#115F29'
 const MINT = '#B0EFC3'
-const RULE = '#D2D2D2'
-const HAIR = 0.6
 
-const SIDE = 44
-const LEAD = 104
-const PAGE_H = 841.89
+// One colour per section, deep enough to read in print, each with a pale tint for fills.
+const TONE = {
+  mint:     { ink: '#115F29', tint: '#E3F7EA', bright: '#B0EFC3' },
+  sky:      { ink: '#1D5F99', tint: '#E3F1FC', bright: '#A8DAFF' },
+  lavender: { ink: '#5B3FC4', tint: '#EEEAFE', bright: '#CDBEFF' },
+  coral:    { ink: '#A3302F', tint: '#FCE9E9', bright: '#F2A7A7' },
+  peach:    { ink: '#7A4A1E', tint: '#F7EEE7', bright: '#E3CBB9' },
+}
+const STRIP = ['mint', 'sky', 'lavender', 'coral', 'peach']
 
 const s = StyleSheet.create({
-  page: { paddingTop: 40, paddingBottom: 78, paddingHorizontal: SIDE, fontFamily: 'Sans', fontSize: 8.8, lineHeight: 1.45, color: INK, backgroundColor: '#FFFFFF' },
+  page: { paddingTop: 30, paddingBottom: 46, paddingHorizontal: 48, fontFamily: 'Inter', fontSize: 9.2, lineHeight: 1.45, color: INK },
 
-  head: { flexDirection: 'row', alignItems: 'flex-end' },
-  headType: { flex: 1, paddingRight: 20 },
-  eyebrow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
-  eyebrowLine: { width: 24, height: HAIR, backgroundColor: ACCENT, marginRight: 8 },
-  mono: { fontFamily: 'Mono', fontSize: 6.8, letterSpacing: 1.1, textTransform: 'uppercase', color: INK_3 },
-  nameFirst: { fontFamily: 'Serif', fontStyle: 'italic', fontWeight: 300, fontSize: 44, lineHeight: 0.92, letterSpacing: -0.8 },
-  nameLast: { fontFamily: 'Serif', fontWeight: 400, fontSize: 44, lineHeight: 0.92, letterSpacing: -0.8, marginLeft: 6 },
-  dot: { color: ACCENT },
-  role: { marginTop: 14, paddingTop: 6, borderTopWidth: HAIR, borderTopColor: RULE, alignSelf: 'flex-start' },
-  photo: { width: 90, height: 120, objectFit: 'cover' },
+  strip: { position: 'absolute', top: 0, left: 0, right: 0, height: 5, flexDirection: 'row' },
+  stripCell: { flex: 1 },
+  headPanel: { marginTop: -30, marginHorizontal: -48, paddingHorizontal: 48, paddingTop: 36, paddingBottom: 18, backgroundColor: '#EEF9F2', borderBottomWidth: 0.8, borderBottomColor: '#CFEBD9' },
+  head: { flexDirection: 'row', alignItems: 'flex-start' },
+  headText: { flex: 1, paddingRight: 16 },
+  name: { fontSize: 25, fontWeight: 700, letterSpacing: -0.6, lineHeight: 1.05 },
+  title: { marginTop: 4, fontSize: 11, fontWeight: 600, color: ACCENT },
+  contact: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 10 },
+  contactItem: { flexDirection: 'row', alignItems: 'center', marginRight: 12, marginBottom: 3 },
+  contactDot: { width: 3.5, height: 3.5, borderRadius: 2, backgroundColor: MINT, marginRight: 5 },
+  contactText: { fontSize: 8.6, color: INK_2, textDecoration: 'none' },
+  photo: { width: 70, height: 86, objectFit: 'cover', borderRadius: 10, borderWidth: 2.5, borderColor: '#FFFFFF' },
 
-  band: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: MINT, marginTop: 18, paddingTop: 8, paddingBottom: 3, paddingHorizontal: 12 },
-  reach: { paddingRight: 10, marginBottom: 5 },
-  reachKey: { fontFamily: 'Mono', fontSize: 5.8, letterSpacing: 1, textTransform: 'uppercase', color: '#2B2B2B' },
-  reachVal: { fontSize: 8.2, color: '#121212', textDecoration: 'none', marginTop: 1 },
+  profile: { marginTop: 14, fontSize: 9.5, lineHeight: 1.5, color: INK_2 },
 
-  section: { marginTop: 16 },
-  sectionHead: { flexDirection: 'row', alignItems: 'center', paddingBottom: 5, borderBottomWidth: HAIR, borderBottomColor: RULE },
-  sectionNum: { fontFamily: 'Mono', fontSize: 7, color: ACCENT, width: LEAD },
-  sectionTitle: { fontFamily: 'Serif', fontWeight: 500, fontSize: 15, lineHeight: 1, color: INK },
+  section: { marginTop: 14 },
+  sectionHead: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  sectionMark: { width: 7, height: 7, borderRadius: 2, marginRight: 7 },
+  sectionTitle: { fontSize: 8.6, fontWeight: 700, letterSpacing: 1.3, textTransform: 'uppercase', marginRight: 10 },
+  sectionRule: { flex: 1, height: 0.8 },
 
-  lead: { marginLeft: LEAD, paddingTop: 6 },
-  bio: { fontFamily: 'Serif', fontSize: 12, lineHeight: 1.32, color: INK },
-  bioGap: { marginTop: 5 },
-
-  entry: { flexDirection: 'row', paddingVertical: 5.5, borderBottomWidth: HAIR, borderBottomColor: RULE },
-  period: { width: LEAD, paddingRight: 10, paddingTop: 1.6, fontFamily: 'Mono', fontSize: 6.4, letterSpacing: 0.5, lineHeight: 1.4, textTransform: 'uppercase', color: ACCENT },
-  entryBody: { flex: 1 },
-  entryTitle: { fontSize: 9.4, fontWeight: 600, lineHeight: 1.3, color: INK },
+  entry: { marginTop: 6, paddingLeft: 9, borderLeftWidth: 2 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  role: { flex: 1, fontSize: 10, fontWeight: 600, paddingRight: 12 },
+  date: { fontSize: 7.8, fontWeight: 600, textAlign: 'right', borderRadius: 8, paddingVertical: 2, paddingHorizontal: 6 },
+  org: { fontSize: 9, fontWeight: 500, color: INK_3, marginTop: 1 },
+  orgInline: { fontSize: 9, fontWeight: 500, color: INK_3 },
   text: { marginTop: 2, color: INK_2 },
   link: { color: ACCENT, textDecoration: 'none' },
 
-  skills: { flexDirection: 'row', flexWrap: 'wrap', marginLeft: LEAD, paddingTop: 7 },
-  skillGroup: { width: '33.33%', paddingRight: 12, marginBottom: 4 },
-  skillHead: { fontFamily: 'Mono', fontSize: 6.6, letterSpacing: 0.9, textTransform: 'uppercase', color: ACCENT, marginBottom: 3 },
-  skill: { fontSize: 8.8, lineHeight: 1.5, color: INK_2 },
+  pair: { flexDirection: 'row', marginTop: 5 },
+  pairKey: { width: 96, fontSize: 9, fontWeight: 600, color: INK, paddingTop: 2 },
+  pairVal: { flex: 1, color: INK_2 },
+  pills: { flex: 1, flexDirection: 'row', flexWrap: 'wrap' },
+  pill: { fontSize: 8.2, lineHeight: 1, borderRadius: 9, paddingVertical: 3.2, paddingHorizontal: 7, marginRight: 4, marginBottom: 4 },
 
-  projects: { flexDirection: 'row', flexWrap: 'wrap', marginLeft: LEAD },
-  project: { width: '50%', paddingVertical: 5, paddingRight: 12, borderBottomWidth: HAIR, borderBottomColor: RULE },
-  projectTitle: { fontFamily: 'Serif', fontWeight: 500, fontSize: 11.6, lineHeight: 1.2, color: INK },
-  projectMeta: { fontSize: 7.8, lineHeight: 1.4, color: INK_3, marginTop: 1 },
-  projectYear: { fontFamily: 'Mono', fontSize: 6.4, letterSpacing: 0.5, color: ACCENT },
-  inlinePlace: { fontFamily: 'Serif', fontStyle: 'italic', fontWeight: 400, fontSize: 10.6, color: INK_2 },
-  note: { marginLeft: LEAD, marginTop: 6, fontSize: 8, color: INK_3 },
+  note: { marginTop: 6, fontSize: 8.6, color: INK_3 },
 
-  block: { position: 'absolute', left: SIDE, right: SIDE, top: PAGE_H - 50, flexDirection: 'row', alignItems: 'flex-start', borderTopWidth: HAIR, borderTopColor: INK, paddingTop: 5 },
-  cell: { paddingRight: 10, marginRight: 10, borderRightWidth: HAIR, borderRightColor: RULE },
-  cellLast: { flex: 1, borderRightWidth: 0, marginRight: 0, paddingRight: 0, alignItems: 'flex-end' },
-  cellKey: { fontFamily: 'Mono', fontSize: 5.4, letterSpacing: 0.9, textTransform: 'uppercase', color: INK_3 },
-  cellVal: { fontSize: 7.2, color: INK, marginTop: 1.5, textDecoration: 'none' },
+  foot: { position: 'absolute', top: 841.89 - 28, left: 48, right: 48, flexDirection: 'row', justifyContent: 'space-between', fontSize: 7.6, color: INK_3 },
 })
-
-// Three columns, the first wide enough for an email address.
-const REACH_W = ['42%', '27%', '31%']
 
 const clean = (v) => String(v ?? '').replace(/\s+/g, ' ').trim()
 const bare = (url) => url.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/+$/, '')
+const cap = (t) => (t ? t[0].toUpperCase() + t.slice(1) : t)
 const URL_IN_TEXT = /(https?:\/\/[^\s)]+)/g
 
-// Plain text in which any web address becomes a working link.
+// "2023 - current", "2024 – Present (Expected 2026)" and "Jan 2022 - Dec 2023" all read the same way.
+const tidyDate = (v) => cap(clean(v)
+  .replace(/\s*[-–]\s*/g, ' – ')
+  .replace(/\b(current|present|now|today)\b/gi, 'Present')
+  .replace(/\b(January|February|March|April|May|June|July|August|September|October|November|December)\b/g, m => m.slice(0, 3)))
+
+// Most recent first: ongoing entries on top, then by the last year mentioned.
+const endYear = (v) => {
+  const t = clean(v)
+  if (/present|current|now/i.test(t)) return 9999
+  const years = t.match(/\b(19|20)\d{2}\b/g)
+  return years ? Number(years[years.length - 1]) : 0
+}
+const newestFirst = (list) => list.map((x, i) => [x, i]).sort((a, b) => endYear(b[0].period) - endYear(a[0].period) || a[1] - b[1]).map(([x]) => x)
+
+// Every description ends as a full sentence.
+const sentence = (v) => {
+  const t = cap(clean(v))
+  return !t || /[.!?)]$/.test(t) ? t : `${t}.`
+}
+
+// The first sentence of a description. A long one is cut at a comma, never mid-thought with "...".
+const brief = (v, max = 230) => {
+  const first = clean(v).split(/(?<=[.!?])\s/)[0]
+  if (first.length <= max) return sentence(first)
+  const comma = first.lastIndexOf(',', max)
+  return sentence(comma > 60 ? first.slice(0, comma) : first)
+}
+
+// Organisation names in title case ("Royal academy of dance" -> "Royal Academy of Dance").
+// Words already capitalised, like "NG" or "De", are left as typed.
+const SMALL = new Set(['a', 'an', 'and', 'at', 'for', 'in', 'of', 'on', 'the', 'to'])
+const titleCase = (v) => clean(v).split(' ').map((w, i) => (i > 0 && SMALL.has(w) ? w : cap(w))).join(' ')
+
+// Plain text in which any web address becomes a link. A full stop after a link stays outside it.
 function Rich({ style, children }) {
   const parts = clean(children).split(URL_IN_TEXT)
   return (
     <Text style={style}>
-      {parts.map((p, i) => (i % 2
-        ? <Link key={i} src={p} style={s.link}>{bare(p)}</Link>
-        : p))}
+      {parts.map((p, i) => {
+        if (i % 2 === 0) return p
+        const [, url, tail] = p.match(/^(.*?)([.,;:!?]*)$/)
+        return [<Link key={i} src={url} style={s.link}>{bare(url)}</Link>, tail]
+      })}
     </Text>
   )
 }
 
-// `keep` holds a short section together, so its heading never ends a page alone.
-function Section({ num, title, keep, children }) {
+// The heading travels with its first entry, so it can never end a page on its own.
+function Section({ title, tone = 'mint', children }) {
+  const [first, ...rest] = Children.toArray(children)
+  const c = TONE[tone]
   return (
-    <View style={s.section} wrap={!keep}>
-      <View style={s.sectionHead} minPresenceAhead={60}>
-        <Text style={s.sectionNum}>{num}</Text>
-        <Text style={s.sectionTitle}>{title}</Text>
+    <View style={s.section}>
+      <View wrap={false}>
+        <View style={s.sectionHead}>
+          <View style={[s.sectionMark, { backgroundColor: c.bright }]} />
+          <Text style={[s.sectionTitle, { color: c.ink }]}>{title}</Text>
+          <View style={[s.sectionRule, { backgroundColor: c.tint }]} />
+        </View>
+        {first}
       </View>
-      {children}
+      {rest}
     </View>
   )
 }
 
-function Entry({ period, title, place, text }) {
-  const where = clean(place)
+// inline puts the organisation on the title line, for short entries such as awards.
+function Entry({ title, org, date, text, plainOrg = false, inline = false, tone = 'mint' }) {
+  const c = TONE[tone]
   return (
-    <View style={s.entry} wrap={false}>
-      <Text style={s.period}>{clean(period)}</Text>
-      <View style={s.entryBody}>
-        {clean(title) && (
-          <Text style={s.entryTitle}>
-            {clean(title)}
-            {where ? <Text style={s.inlinePlace}>{`  ${where}`}</Text> : null}
-          </Text>
-        )}
-        {clean(text) && <Rich style={s.text}>{text}</Rich>}
+    <View style={[s.entry, { borderLeftColor: c.bright }]} wrap={false}>
+      <View style={s.row}>
+        <Text style={s.role}>
+          {cap(clean(title))}
+          {inline && clean(org) ? <Text style={s.orgInline}>{`  ·  ${titleCase(org)}`}</Text> : null}
+        </Text>
+        {clean(date) && <Text style={[s.date, { color: c.ink, backgroundColor: c.tint }]}>{tidyDate(date)}</Text>}
       </View>
+      {!inline && clean(org) && <Text style={s.org}>{plainOrg ? cap(clean(org)) : titleCase(org)}</Text>}
+      {clean(text) && <Rich style={s.text}>{sentence(text)}</Rich>}
     </View>
   )
 }
 
 function CvDocument({ name, title, photo, bio, reach, education, experience, achievements, skills, projects, languages, references, site, t }) {
-  const [first, ...rest] = clean(name).split(' ')
-  const last = rest.join(' ')
   const paragraphs = String(bio ?? '').split(/\n\s*\n/).map(clean).filter(Boolean)
-  const updated = new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric' }).format(new Date())
-  const further = [
-    languages && { key: t.languagesHeading, value: languages },
-    references && { key: t.referencesHeading, value: references },
-  ].filter(Boolean)
-
-  const sections = [
-    paragraphs.length > 0 && 'profile',
-    education.length > 0 && 'education',
-    experience.length > 0 && 'experience',
-    projects.length > 0 && 'projects',
-    achievements.length > 0 && 'achievements',
-    skills.length > 0 && 'skills',
-    further.length > 0 && 'further',
-  ].filter(Boolean)
-  const num = (id) => String(sections.indexOf(id) + 1).padStart(2, '0')
-  const has = (id) => sections.includes(id)
 
   return (
     <Document title={`${clean(name)} - ${t.documentLabel}`} author={clean(name)} subject={t.documentLabel} creator={bare(site)} producer={bare(site)}>
       <Page size="A4" style={s.page}>
+        <View style={s.headPanel}>
         <View style={s.head}>
-          <View style={s.headType}>
-            <View style={s.eyebrow}>
-              <View style={s.eyebrowLine} />
-              <Text style={s.mono}>{t.documentLabel}</Text>
-            </View>
-            <Text style={s.nameFirst}>{first}</Text>
-            {last
-              ? <Text style={s.nameLast}>{last}<Text style={s.dot}>.</Text></Text>
-              : null}
-            {clean(title) && <Text style={[s.mono, s.role]}>{clean(title)}</Text>}
-          </View>
-          {photo && <Image style={s.photo} src={photo} />}
-        </View>
-
-        {reach.length > 0 && (
-          <View style={s.band}>
-            {reach.map((r, i) => (
-              <View key={r.key} style={[s.reach, { width: REACH_W[i % 3] }]}>
-                <Text style={s.reachKey}>{r.key}</Text>
-                {r.href
-                  ? <Link src={r.href} style={s.reachVal}>{r.value}</Link>
-                  : <Text style={s.reachVal}>{r.value}</Text>}
-              </View>
-            ))}
-          </View>
-        )}
-
-        {has('profile') && (
-          <Section num={num('profile')} title={t.profileHeading}>
-            <View style={s.lead}>
-              {paragraphs.map((p, i) => <Text key={i} style={[s.bio, i > 0 && s.bioGap]}>{p}</Text>)}
-            </View>
-          </Section>
-        )}
-
-        {has('education') && (
-          <Section num={num('education')} title={t.educationHeading}>
-            {education.map((e, i) => (
-              <Entry key={i} period={e.period} title={e.degree} place={e.institution} text={e.description} />
-            ))}
-          </Section>
-        )}
-
-        {has('experience') && (
-          <Section num={num('experience')} title={t.experienceHeading}>
-            {experience.map((e, i) => (
-              <Entry key={i} period={e.period} title={e.role} place={e.company} text={e.description} />
-            ))}
-          </Section>
-        )}
-
-        {has('projects') && (
-          <Section num={num('projects')} title={t.projectsHeading}>
-            <View style={s.projects}>
-              {projects.map((p, i) => (
-                <View key={i} style={s.project} wrap={false}>
-                  <Text style={s.projectTitle}>{clean(p.title)}</Text>
-                  <Text style={s.projectMeta}>
-                    {clean(p.year) && <Text style={s.projectYear}>{`${clean(p.year)}   `}</Text>}
-                    {clean(p.category)}
-                  </Text>
+          <View style={s.headText}>
+            <Text style={s.name}>{clean(name)}</Text>
+            {clean(title) && <Text style={s.title}>{clean(title)}</Text>}
+            <View style={s.contact}>
+              {reach.map(r => (
+                <View key={r.key} style={s.contactItem}>
+                  <View style={s.contactDot} />
+                  {r.href ? <Link src={r.href} style={s.contactText}>{r.value}</Link> : <Text style={s.contactText}>{r.value}</Text>}
                 </View>
               ))}
             </View>
+          </View>
+          {photo && <Image style={s.photo} src={photo} />}
+        </View>
+        </View>
+
+        {paragraphs.map((p, i) => <Text key={i} style={s.profile}>{p}</Text>)}
+
+        {education.length > 0 && (
+          <Section title={t.educationHeading} tone="mint">
+            {newestFirst(education).map((e, i) => <Entry key={i} tone="mint" title={e.degree} org={e.institution} date={e.period} text={e.description} />)}
+          </Section>
+        )}
+
+        {experience.length > 0 && (
+          <Section title={t.experienceHeading} tone="sky">
+            {newestFirst(experience).map((e, i) => <Entry key={i} tone="sky" title={e.role} org={e.company} date={e.period} text={e.description} />)}
+          </Section>
+        )}
+
+        {projects.length > 0 && (
+          <Section title={t.projectsHeading} tone="lavender">
+            {projects.map((p, i) => (
+              <Entry key={i} tone="lavender" title={p.title} org={clean(p.category)} plainOrg date={clean(p.year)} text={brief(p.description)} />
+            ))}
             <Text style={s.note}>
               {t.projectsNote} <Link src={`${site}/work`} style={s.link}>{bare(site)}/work</Link>
             </Text>
           </Section>
         )}
 
-        {has('achievements') && (
-          <Section num={num('achievements')} title={t.achievementsHeading}>
-            {achievements.map((a, i) => (
-              <Entry key={i} period={a.period} title={a.title} place={a.issuer} text={a.description} />
-            ))}
-          </Section>
-        )}
-
-        {has('skills') && (
-          <Section keep num={num('skills')} title={t.skillsHeading}>
-            <View style={s.skills}>
-              {skills.map((g, i) => (
-                <View key={i} style={s.skillGroup} wrap={false}>
-                  {g.name && <Text style={s.skillHead}>{g.name}</Text>}
-                  <Text style={s.skill}>{g.items.join('\n')}</Text>
+        {skills.length > 0 && (
+          <Section title={t.skillsHeading} tone="coral">
+            {skills.map((g, i) => (
+              <View key={i} style={s.pair} wrap={false}>
+                <Text style={s.pairKey}>{g.name}</Text>
+                <View style={s.pills}>
+                  {g.items.map(item => {
+                    const c = TONE[STRIP[(i + 3) % STRIP.length]]
+                    return <Text key={item} style={[s.pill, { color: c.ink, backgroundColor: c.tint }]}>{item}</Text>
+                  })}
                 </View>
-              ))}
-            </View>
-          </Section>
-        )}
-
-        {has('further') && (
-          <Section keep num={num('further')} title={t.furtherHeading}>
-            {further.map((f, i) => (
-              <Entry key={f.key} period={f.key} text={f.value} />
+              </View>
             ))}
           </Section>
         )}
 
-        <View style={s.block} fixed>
-          <View style={s.cell}>
-            <Text style={s.cellKey}>{t.blockName}</Text>
-            <Text style={s.cellVal}>{clean(name)}</Text>
-          </View>
-          <View style={s.cell}>
-            <Text style={s.cellKey}>{t.blockDocument}</Text>
-            <Text style={s.cellVal}>{t.documentLabel}</Text>
-          </View>
-          <View style={s.cell}>
-            <Text style={s.cellKey}>{t.blockPortfolio}</Text>
-            <Link src={site} style={s.cellVal}>{bare(site)}</Link>
-          </View>
-          <View style={s.cell}>
-            <Text style={s.cellKey}>{t.blockUpdated}</Text>
-            <Text style={s.cellVal}>{updated}</Text>
-          </View>
-          <View style={[s.cell, s.cellLast]}>
-            <Text style={s.cellKey}>{t.blockSheet}</Text>
-            <Text style={s.cellVal} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-          </View>
+        {achievements.length > 0 && (
+          <Section title={t.achievementsHeading} tone="peach">
+            {newestFirst(achievements).map((a, i) => <Entry key={i} tone="peach" inline title={a.title} org={a.issuer} date={a.period} text={a.description} />)}
+          </Section>
+        )}
+
+        {(languages || references) && (
+          <Section title={t.furtherHeading} tone="mint">
+            {languages && <View style={s.pair}><Text style={s.pairKey}>{t.languagesHeading}</Text><Text style={s.pairVal}>{languages}</Text></View>}
+            {references && <View style={s.pair}><Text style={s.pairKey}>{t.referencesHeading}</Text><Text style={s.pairVal}>{references}</Text></View>}
+          </Section>
+        )}
+
+        <View style={s.strip} fixed>
+          {STRIP.map(t => <View key={t} style={[s.stripCell, { backgroundColor: TONE[t].bright }]} />)}
+        </View>
+        <View style={s.foot} fixed>
+          <Text>{clean(name)}  ·  {t.documentLabel}</Text>
+          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
         </View>
       </Page>
     </Document>
   )
 }
 
-// The portrait is shrunk to print size first: the uploaded original can be several MB.
-// A failed fetch drops the photo rather than failing the CV.
+// The portrait is shrunk to print size first: uploads can be several MB.
+// A blocked or failed fetch leaves it out rather than failing the CV.
 async function printPhoto(url) {
   if (!url) return null
   try {
     const res = await fetch(url)
     if (!res.ok) return null
     const bitmap = await createImageBitmap(await res.blob())
-    const scale = Math.min(1, 720 / Math.max(bitmap.width, bitmap.height))
+    const scale = Math.min(1, 600 / Math.max(bitmap.width, bitmap.height))
     const canvas = document.createElement('canvas')
     canvas.width = Math.round(bitmap.width * scale)
     canvas.height = Math.round(bitmap.height * scale)

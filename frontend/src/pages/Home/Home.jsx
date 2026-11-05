@@ -1,313 +1,217 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { subscribeFeaturedProjects } from '../../firebase'
 import {
-  Figure, Reveal, ProjectBleed, ProjectBleedSkeleton, ProjectLightbox,
+  Button, Counter, Marquee, Reveal, TextReveal, Figure, ProjectLightbox, ArrowRight, ArrowUpRight,
 } from '../../components'
+import useTilt from '../../hooks/useTilt'
 import { useContent } from '../../context/ContentContext'
 import styles from './Home.module.css'
+import { toneFor } from '../../lib/tone'
 
-/* How many featured projects the home page carries as full-bleed rows.
-   Four is the point where the page still reads as a selection rather than as
-   the Work page duplicated; the rest live behind "All work". */
 const FEATURED_COUNT = 4
+// The 3D model is its own download, fetched only when the home page shows.
+const Hero3D = lazy(() => import('./Hero3D'))
 
-function Arrow() {
+// A project as a rounded card that tilts toward the pointer.
+function ProjectCard({ project, index, onOpen }) {
+  const ref = useRef(null)
+  useTilt(ref, 4)
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-         strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <line x1="5" y1="12" x2="19" y2="12" />
-      <polyline points="12 5 19 12 12 19" />
-    </svg>
+    <Reveal variant="flip-up" index={index % 2} className={styles.cardWrap}>
+      <button
+        ref={ref}
+        type="button"
+        className={styles.card}
+        onClick={(e) => onOpen(project, e.currentTarget.querySelector('img')?.getBoundingClientRect())}
+        data-cursor="view"
+        aria-label={`Open ${project.title}`}
+      >
+        <span className={styles.cardMedia}>
+          <span className={styles.cardZoom}>
+            <Figure src={project.coverImage} alt="" ratio="4 / 3" label={project.title} priority={index < 2} className={styles.cardFig} />
+          </span>
+          <span className={styles.glare} aria-hidden="true" />
+        </span>
+        <span className={styles.cardBody}>
+          <span className={styles.cardText}>
+            <span className={styles.cardTitle}>{project.title}</span>
+            <span className={styles.cardMeta}>
+              {project.category && <span className={`badge badge-${toneFor(project.category)}`}>{project.category}</span>}
+              {project.year && <span className={styles.cardYear}>{project.year}</span>}
+            </span>
+          </span>
+          <span className={styles.cardArrow} aria-hidden="true"><ArrowUpRight size={16} /></span>
+        </span>
+      </button>
+    </Reveal>
   )
 }
 
-/** Numbered section opener. This is what makes the page read as a sequence of
-    named places rather than as one continuous scroll. */
-function Marker({ num, children }) {
+function CardSkeleton() {
   return (
-    <p className="marker">
-      <span className="marker-num">{num}</span>
-      <span>{children}</span>
-    </p>
+    <div className={styles.cardWrap} aria-hidden="true">
+      <span className={`skeleton ${styles.skelMedia}`} />
+      <span className="skeleton" style={{ width: '45%', height: 18, marginTop: 16 }} />
+    </div>
+  )
+}
+
+// The hero's little stack of project photos, fanned like prints on a desk.
+function PhotoStack({ projects, onOpen }) {
+  const shots = projects.filter(p => p.coverImage).slice(0, 3)
+  if (shots.length === 0) return <div className={`${styles.stack} ${styles.stackEmpty}`} aria-hidden="true" />
+  return (
+    <div className={styles.stack}>
+      {shots.map((p, i) => (
+        <button
+          key={p.id}
+          type="button"
+          className={styles.print}
+          style={{ '--i': i }}
+          onClick={(e) => onOpen(p, e.currentTarget.getBoundingClientRect())}
+          data-cursor="view"
+          aria-label={`Open ${p.title}`}
+        >
+          <Figure src={p.coverImage} alt="" ratio="4 / 5" label={p.title} priority className={styles.printFig} />
+          <span className={styles.printLabel}>{p.title}</span>
+        </button>
+      ))}
+    </div>
   )
 }
 
 export default function Home() {
   const { copy } = useContent()
   const t = copy('home')
-  const info = copy('contact')
-
   const [projects, setProjects] = useState([])
-  const [loading,  setLoading]  = useState(true)
-  const [active,   setActive]   = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [active, setActive] = useState(null)
 
-  /*
-   * The quote is picked once per mount from whichever quote fields are
-   * actually filled in. Indexing a fixed 1-5 range would leave a one-in-five
-   * chance of rendering an empty blockquote with a stray attribution rule
-   * whenever one of them is blanked in the admin panel.
-   *
-   * The empty dependency array is deliberate: re-rolling the quote whenever
-   * the content document changes would swap it under the reader mid-scroll.
-   */
+  // Picked once per mount from the filled quotes, so it never swaps mid-read.
   const quote = useMemo(() => {
     const filled = [1, 2, 3, 4, 5]
       .map(i => ({ text: t[`quote${i}Text`], author: t[`quote${i}Author`] }))
       .filter(q => q.text?.trim())
-    if (filled.length === 0) return null
-    return filled[Math.floor(Math.random() * filled.length)]
+    return filled.length ? filled[Math.floor(Math.random() * filled.length)] : null
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Live subscription rather than a one-shot read, so an admin reordering,
-  // hiding or re-flagging a project sees the page update without a reload.
-  useEffect(() => {
-    const unsubscribe = subscribeFeaturedProjects(
-      items => { setProjects(items.slice(0, FEATURED_COUNT)); setLoading(false) },
-      err   => { console.error('[Home] featured projects failed:', err); setLoading(false) },
-      FEATURED_COUNT,
-    )
-    return unsubscribe
-  }, [])
+  useEffect(() => subscribeFeaturedProjects(
+    items => { setProjects(items.slice(0, FEATURED_COUNT)); setLoading(false) },
+    err => { console.error('[Home] featured projects failed:', err); setLoading(false) },
+    FEATURED_COUNT,
+  ), [])
 
-  /* The hero background is an explicit, optional choice (Admin → Site Copy →
-     Home → "Hero background image"), NOT the first project's cover.
-     Auto-using a cover was tried and abandoned: the covers are presentation
-     sheets on white, and the hero's bone-white display type vanished against
-     one while the sheet's own captions collided with it. With no image the
-     hero is composed type on a ruled ground, which always reads. */
-  const heroImage = t.heroImage?.trim() || ''
-
-  const STATS = [
-    { value: t.stat1Value, label: t.stat1Label },
-    { value: t.stat2Value, label: t.stat2Label },
-    { value: t.stat3Value, label: t.stat3Label },
-  ]
-
-  const PROCESS = [
-    { num: '01', title: t.process1Title, body: t.process1Body },
-    { num: '02', title: t.process2Title, body: t.process2Body },
-    { num: '03', title: t.process3Title, body: t.process3Body },
-    { num: '04', title: t.process4Title, body: t.process4Body },
-  ]
+  const open = (project, origin) => setActive({ project, origin })
+  // Without WebGL the hero falls back to the stack of project prints.
+  const [no3d, setNo3d] = useState(false)
+  const fallBack = useCallback(() => setNo3d(true), [])
+  const stats = [1, 2, 3].map(i => ({ value: t[`stat${i}Value`], label: t[`stat${i}Label`] })).filter(s => s.value)
+  const steps = [1, 2, 3, 4].map(i => ({ title: t[`process${i}Title`], body: t[`process${i}Body`] })).filter(s => s.title)
+  const words = [...new Set([...steps.map(s => s.title), 'Open to placements', t.heroEyebrow].filter(Boolean))]
 
   return (
     <>
-      {/* ════ HERO ══════════════════════════════════════════════════════════
-          Full-viewport, full-bleed photograph with the name set over its
-          lower-left. Nothing is centred: the type sits on the page gutter and
-          the metadata rail sits against the opposite edge. */}
-      <section
-        className={`${styles.hero} ${heroImage ? '' : styles.heroBare}`}
-        /* Lets the nav float over this section transparently, and tells it
-           what is underneath: with an image the hero lays a dark scrim in BOTH
-           themes, so the bar needs fixed light type; without one the ground is
-           the theme's own surface and theme colours are already correct. */
-        data-nav-overlay={heroImage ? 'scrim' : 'ground'}
-      >
-        <div className={styles.heroMedia} aria-hidden="true">
-          {heroImage ? (
-            <>
-              <Figure
-                src={heroImage}
-                alt=""
-                ratio="auto"
-                priority
-                className={styles.heroFigure}
-              />
-              <span className={styles.heroScrim} />
-            </>
-          ) : (
-            /* Ruled drafting ground. Two repeating gradients rather than an
-               asset: no request, and it scales with the viewport for free. */
-            <span className={styles.heroGrid} />
-          )}
+      {/* ── Hero ── */}
+      <section className={`container ${styles.hero}`}>
+        <div className={styles.heroText}>
+          <Reveal variant="rise-sm"><span className="badge badge-dot">Open to placements</span></Reveal>
+          <TextReveal as="h1" by="words" trigger="mount" className={styles.heroTitle}>
+            {t.heroNameFirst} <span className="text-gradient">{t.heroNameLast}</span><span className={styles.heroDot}>.</span>
+          </TextReveal>
+          <Reveal variant="rise" index={2}><p className={styles.heroBio}>{t.heroBio}</p></Reveal>
+          <Reveal variant="rise" index={3} className={styles.heroActions}>
+            <Button to="/work" variant="accent" icon={<ArrowRight size={15} />}>{t.heroCtaPrimary}</Button>
+            <Button to="/about">{t.heroCtaSecondary}</Button>
+          </Reveal>
         </div>
+        <div className={styles.heroArt}>
+          {t.heroImage?.trim()
+            ? <div className={styles.heroImage}><Figure src={t.heroImage.trim()} alt="" ratio="4 / 5" priority /></div>
+            : no3d
+              ? <PhotoStack projects={projects} onOpen={open} />
+              : <Suspense fallback={<div className={styles.stage} />}><Hero3D onUnavailable={fallBack} /></Suspense>}
+        </div>
+      </section>
 
-        <div className={styles.heroContent}>
-          <div className={styles.heroType}>
-            <p className={styles.heroEyebrow}>{t.heroEyebrow}</p>
-            <h1 className={styles.heroName}>
-              <em>{t.heroNameFirst}</em>
-              <span className={styles.heroLast}>
-                {t.heroNameLast}<span className="dot">.</span>
-              </span>
-            </h1>
-            <p className={styles.heroBio}>{t.heroBio}</p>
+      {/* ── A quiet moving line of what she works on ── */}
+      <div className={styles.band} aria-hidden="true">
+        <Marquee duration={40}>
+          {words.map(w => <span key={w} className={styles.bandItem}><span className={styles.bandWord}>{w}</span><span className={styles.bandDot} /></span>)}
+        </Marquee>
+      </div>
 
-            <div className={styles.heroActions}>
-              <Link to="/work" className={`btn btn-accent ${styles.heroBtn}`}>
-                {t.heroCtaPrimary}<Arrow />
-              </Link>
-              <Link to="/about" className={`btn ${styles.heroBtnGhost}`}>
-                {t.heroCtaSecondary}
-              </Link>
-            </div>
+      {/* ── Selected work ── */}
+      <section className={`container section ${styles.work}`}>
+        <div className={styles.head}>
+          <div>
+            <p className="eyebrow eyebrow-sky">{t.workEyebrow}</p>
+            <TextReveal as="h2" className={styles.h2}>{t.workTitle}</TextReveal>
           </div>
+          <Button to="/work" size="sm" icon={<ArrowRight size={14} />}>{t.workLink}</Button>
+        </div>
+        <div className={styles.grid}>
+          {loading
+            ? [0, 1].map(i => <CardSkeleton key={i} />)
+            : projects.length === 0
+              ? <p className={styles.empty}>No featured projects yet. Flag a project as featured in the admin and it will appear here.</p>
+              : projects.map((p, i) => <ProjectCard key={p.id} project={p} index={i} onOpen={open} />)}
+        </div>
+      </section>
 
-          {/* Metadata rail, pinned against the opposite edge. Hidden below the
-              grid breakpoint, where there is no room for a second column. */}
-          <dl className={styles.heroRail}>
-            {info.location && (
-              <div className={styles.railItem}>
-                <dt className={styles.railKey}>Based in</dt>
-                <dd className={styles.railVal}>{info.location}</dd>
-              </div>
-            )}
-            <div className={styles.railItem}>
-              <dt className={styles.railKey}>Status</dt>
-              <dd className={styles.railVal}>Open to placements</dd>
-            </div>
+      {/* ── About ── */}
+      <section className={`container section ${styles.about}`}>
+        <div className={styles.aboutGrid}>
+          <div>
+            <p className="eyebrow eyebrow-coral">{t.aboutEyebrow}</p>
+            <TextReveal as="h2" className={styles.h2}>{t.aboutHeading}</TextReveal>
+          </div>
+          <div className={styles.aboutBody}>
+            <TextReveal as="p" className={styles.lead} delay={0.1}>{t.aboutBody}</TextReveal>
+            <Reveal variant="rise-sm" index={2}><Button to="/about" icon={<ArrowRight size={14} />}>{t.aboutCta}</Button></Reveal>
+          </div>
+        </div>
+        {stats.length > 0 && (
+          <dl className={styles.stats}>
+            {stats.map((s, i) => (
+              <Reveal key={s.label || i} variant="flip-up" index={i} className={`card is-hoverable ${styles.stat}`}>
+                <dd className={styles.statValue}><Counter value={s.value} /></dd>
+                <dt className={styles.statLabel}>{s.label}</dt>
+              </Reveal>
+            ))}
           </dl>
-        </div>
-
-        <span className={`cue ${styles.heroCue}`} aria-hidden="true">Scroll</span>
-      </section>
-
-
-      {/* ════ 01 - STATEMENT ════════════════════════════════════════════════
-          One large statement, set on the grid from column 4 so it is
-          emphatically not centred, with the facts row as a ruled band under
-          it. */}
-      <section className={`section tone-accent-soft ${styles.statement}`}>
-        <div className="grid12">
-          <Reveal className={styles.statementMarker} variant="rise-sm">
-            <Marker num="01">{t.aboutEyebrow}</Marker>
-          </Reveal>
-
-          <Reveal className={styles.statementBody} variant="rise">
-            <h2 className={styles.statementHead}>{t.aboutHeading}</h2>
-            <p className={styles.statementText}>{t.aboutBody}</p>
-            <Link to="/about" className={`link ${styles.statementLink}`}>
-              {t.aboutCta}
-            </Link>
-          </Reveal>
-        </div>
-
-        <div className={`grid12 ${styles.facts}`}>
-          {STATS.map((s, i) => (
-            <Reveal key={s.label} className={styles.fact} variant="rise-sm" index={i}>
-              <span className={styles.factValue}>{s.value}</span>
-              <span className={styles.factLabel}>{s.label}</span>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* ════ 02 - SELECTED WORK ════════════════════════════════════════════
-          The core of the layout: alternating full-bleed rows. */}
-      <section className={`tone-base ${styles.work}`}>
-        <div className={`grid12 ${styles.workHead}`}>
-          <Reveal className={styles.workHeadMarker} variant="rise-sm">
-            <Marker num="02">{t.workEyebrow}</Marker>
-          </Reveal>
-          <Reveal className={styles.workHeadTitle} variant="rise">
-            <h2 className={styles.sectionTitle}>{t.workTitle}</h2>
-          </Reveal>
-          <Reveal className={styles.workHeadLink} variant="rise-sm">
-            <Link to="/work" className={`link ${styles.workLink}`}>
-              {t.workLink}<Arrow />
-            </Link>
-          </Reveal>
-        </div>
-
-        {loading ? (
-          Array.from({ length: 2 }).map((_, i) => (
-            <ProjectBleedSkeleton key={i} index={i} />
-          ))
-        ) : projects.length === 0 ? (
-          <div className="grid12">
-            <p className={styles.empty}>
-              No featured projects yet. Flag a project as featured in the admin
-              panel and it will appear here.
-            </p>
-          </div>
-        ) : (
-          projects.map((p, i) => (
-            <ProjectBleed
-              key={p.id}
-              project={p}
-              index={i}
-              onOpen={setActive}
-            />
-          ))
         )}
       </section>
 
-      {/* ════ 03 - APPROACH ═════════════════════════════════════════════════
-          Four numbered columns on a ruled grid. Each cell is top-ruled, so the
-          section reads as a table of contents rather than as four cards. */}
-      <section className={`section tone-accent ${styles.approach}`}>
-        <div className="grid12">
-          <Reveal className={styles.approachMarker} variant="rise-sm">
-            <Marker num="03">{t.processEyebrow}</Marker>
-          </Reveal>
-          <Reveal className={styles.approachTitle} variant="rise">
-            <h2 className={styles.sectionTitle}>{t.processTitle}</h2>
-          </Reveal>
-        </div>
-
-        <div className={`grid12 ${styles.approachGrid}`}>
-          {PROCESS.map((p, i) => (
-            <Reveal key={p.num} className={styles.step} variant="rise" index={i}>
-              <span className={styles.stepNum}>{p.num}</span>
-              <h3 className={styles.stepTitle}>{p.title}</h3>
-              <p className={styles.stepBody}>{p.body}</p>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* ════ QUOTE ═════════════════════════════════════════════════════════
-          An unnumbered full-bleed interlude between sections. Inverted, so it
-          breaks the vertical rhythm without introducing another colour. */}
-      {quote && (
-        <section className={`tone-invert ${styles.band}`}>
-          <div className="grid12">
-            <Reveal className={styles.bandInner} variant="rise">
-              <blockquote className={styles.quote}>{quote.text}</blockquote>
-              {quote.author && (
-                <p className={styles.quoteBy}>
-                  <span className={styles.quoteRule} aria-hidden="true" />
-                  {quote.author}
-                </p>
-              )}
-            </Reveal>
-          </div>
+      {/* ── How I work ── */}
+      {steps.length > 0 && (
+        <section className={`container section ${styles.process}`}>
+          <p className="eyebrow eyebrow-lavender">{t.processEyebrow}</p>
+          <TextReveal as="h2" className={styles.h2}>{t.processTitle}</TextReveal>
+          <ol className={styles.steps}>
+            {steps.map((s, i) => (
+              <Reveal as="li" key={s.title} variant="flip-up" index={i} className={`card ${styles.step}`} tabIndex={0} data-no-tilt>
+                <span className={styles.stepNum}>{String(i + 1).padStart(2, '0')}</span>
+                <h3 className={styles.stepTitle}>{s.title}</h3>
+                <p className={styles.stepBody}>{s.body}</p>
+              </Reveal>
+            ))}
+          </ol>
         </section>
       )}
 
-      {/* ════ 04 - CONTACT ══════════════════════════════════════════════════ */}
-      <section className={`section tone-accent-deep ${styles.cta}`}>
-        <div className="grid12">
-          <Reveal className={styles.ctaMarker} variant="rise-sm">
-            <Marker num="04">{t.contactEyebrow}</Marker>
-          </Reveal>
+      {/* ── A line to end on ── */}
+      {quote && (
+        <section className={`container section ${styles.quoteWrap}`}>
+          <figure className={styles.quote}>
+            <span className={styles.quoteMark} aria-hidden="true">&ldquo;</span>
+            <TextReveal as="blockquote" by="words" className={styles.quoteText}>{quote.text}</TextReveal>
+            {quote.author && <figcaption className={styles.quoteBy}>{quote.author}</figcaption>}
+          </figure>
+        </section>
+      )}
 
-          <Reveal className={styles.ctaBody} variant="rise">
-            <h2 className={styles.ctaHead}>{t.contactHeading}</h2>
-            <Link to="/contact" className={`btn btn-accent ${styles.ctaBtn}`}>
-              {t.contactCta}<Arrow />
-            </Link>
-          </Reveal>
-
-          <Reveal className={styles.ctaRail} variant="rise-sm" index={1}>
-            {info.email && (
-              <a href={`mailto:${info.email}`} className={styles.ctaMeta}>
-                {info.email}
-              </a>
-            )}
-            {info.responseTime && (
-              <p className={styles.ctaMetaDim}>
-                Replies {info.responseTime.toLowerCase()}
-              </p>
-            )}
-          </Reveal>
-        </div>
-      </section>
-
-      {active && <ProjectLightbox project={active} onClose={() => setActive(null)} />}
+      {active && <ProjectLightbox project={active.project} origin={active.origin} onClose={() => setActive(null)} />}
     </>
   )
 }

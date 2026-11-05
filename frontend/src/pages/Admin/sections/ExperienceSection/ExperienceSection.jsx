@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react'
 import { getBioSection, updateBioSection } from '../../../../firebase'
 import { useToast } from '../../../../context/ToastContext'
 import Modal from '../../../../components/Modal'
+import Button from '../../../../components/Button'
+import { Plus } from '../../../../components/Icons'
+import { SectionHeader, EmptyState, SkeletonRows, IconAction, cx } from '../../ui'
+import { IconPencil, IconTrash } from '../../icons'
 import styles from '../../Admin.module.css'
 
 const BLANK = { company: '', role: '', period: '', description: '', link: '' }
@@ -20,9 +24,7 @@ export default function ExperienceSection() {
 
   const set = (f) => (e) => setForm(prev => ({ ...prev, [f]: e.target.value }))
   const openAdd = () => { setForm(BLANK); setModal({ mode: 'add' }) }
-  /* Spread over BLANK, not used raw: entries saved before a field existed
-     have no key for it, and feeding undefined into a controlled input makes
-     React switch it to uncontrolled and warn. */
+  // Spread over BLANK: older entries lack newer keys, and undefined would make the inputs uncontrolled.
   const openEdit = (i) => { setForm({ ...BLANK, ...items[i] }); setModal({ mode: 'edit', index: i }) }
   const close = () => setModal(null)
 
@@ -49,38 +51,41 @@ export default function ExperienceSection() {
     addToast({ type: 'success', title: 'Entry deleted' })
   }
 
+  const addButton = <Button variant="accent" size="sm" magnetic={false} icon={<Plus size={14} />} onClick={openAdd}>Add entry</Button>
+
   return (
     <div>
-      <div className={styles.sectionHeader}>
-        <p className={styles.intro} style={{ margin: 0 }}>Experience timeline shown on the About page.</p>
-        <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`} onClick={openAdd}>+ Add Entry</button>
-      </div>
+      <SectionHeader description={<p>Experience timeline shown on the About page.</p>} action={addButton} />
 
-      {loading ? <p className={styles.empty}>Loading…</p>
-        : items.length === 0 ? <p className={styles.empty}>No experience entries yet.</p>
-        : items.map((it, i) => (
-          <div key={i} className={styles.listRow}>
-            <div className={styles.listRowContent}>
-              <strong>{it.role}</strong>
-              <span className={styles.meta}>{it.company}{it.period ? ` · ${it.period}` : ''}</span>
-            </div>
-            <div className={styles.listRowActions}>
-              <button className={`${styles.btn} ${styles.btnOutline} ${styles.btnSm}`} onClick={() => openEdit(i)}>Edit</button>
-              <button className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`} onClick={() => remove(i)}>Delete</button>
-            </div>
+      {loading ? <SkeletonRows rows={3} />
+        : items.length === 0 ? <EmptyState title="No experience yet">Job shadowing, internships and studio work all belong here.</EmptyState>
+        : (
+          <div className={styles.list}>
+            {items.map((it, i) => (
+              <div key={i} className={styles.row} style={{ '--i': i }}>
+                <div className={styles.rowMain}>
+                  <strong className={styles.rowTitle}>{it.role}</strong>
+                  <span className={styles.rowMeta}>{it.company}{it.period ? ` · ${it.period}` : ''}</span>
+                </div>
+                <div className={styles.rowActions}>
+                  <IconAction label={`Edit "${it.role}"`} onClick={() => openEdit(i)}><IconPencil size={15} /></IconAction>
+                  <IconAction label={`Delete "${it.role}"`} danger onClick={() => remove(i)}><IconTrash size={15} /></IconAction>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
 
-      <Modal open={!!modal} onClose={close} title={modal?.mode === 'add' ? 'Add Experience' : 'Edit Experience'}>
+      <Modal open={!!modal} onClose={close} title={modal?.mode === 'add' ? 'Add experience' : 'Edit experience'}>
         <form onSubmit={save}>
           <div className={styles.grid2}>
-            <div className={styles.field}><label>Company / Organisation *</label><input value={form.company} onChange={set('company')} placeholder="Klad Studios Architecture" /></div>
-            <div className={styles.field}><label>Role / Position *</label><input value={form.role} onChange={set('role')} placeholder="Job Shadow" /></div>
-            <div className={`${styles.field} ${styles.span2}`}><label>Period</label><input value={form.period} onChange={set('period')} placeholder="2023" /></div>
-            <div className={`${styles.field} ${styles.span2}`}><label>Description</label><textarea rows={3} value={form.description} onChange={set('description')} placeholder="Brief description…" /></div>
-            <div className={`${styles.field} ${styles.span2}`}>
-              <label>Website link (optional)</label>
-              <input value={form.link} onChange={set('link')} placeholder="lientjiepetsitting.co.za" />
+            <div className={styles.field}><label htmlFor="ex-co">Company / organisation *</label><input id="ex-co" value={form.company} onChange={set('company')} placeholder="Klad Studios Architecture" /></div>
+            <div className={styles.field}><label htmlFor="ex-role">Role / position *</label><input id="ex-role" value={form.role} onChange={set('role')} placeholder="Job Shadow" /></div>
+            <div className={cx(styles.field, styles.span2)}><label htmlFor="ex-per">Period</label><input id="ex-per" value={form.period} onChange={set('period')} placeholder="2023" /></div>
+            <div className={cx(styles.field, styles.span2)}><label htmlFor="ex-desc">Description</label><textarea id="ex-desc" rows={3} value={form.description} onChange={set('description')} placeholder="Brief description…" /></div>
+            <div className={cx(styles.field, styles.span2)}>
+              <label htmlFor="ex-link">Website link (optional)</label>
+              <input id="ex-link" value={form.link} onChange={set('link')} placeholder="lientjiepetsitting.co.za" />
               <p className={styles.hint}>
                 Shown as a clickable link under the entry on the About page.
                 You can leave off the “https://” - it is added for you.
@@ -88,8 +93,8 @@ export default function ExperienceSection() {
             </div>
           </div>
           <div className={styles.formActions}>
-            <button type="button" className={`${styles.btn} ${styles.btnOutline}`} onClick={close}>Cancel</button>
-            <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
+            <Button size="sm" magnetic={false} onClick={close}>Cancel</Button>
+            <Button variant="accent" size="sm" magnetic={false} type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
           </div>
         </form>
       </Modal>

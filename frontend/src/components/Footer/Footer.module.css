@@ -1,141 +1,80 @@
-/* The ground comes from the tone class on the element. The top edge is a
-   2px accent rule rather than a neutral hairline: the footer follows a
-   full-strength brand band on most routes, and a faint grey line between two
-   coloured grounds reads as a seam rather than as a division. */
-.footer {
-  border-top: 2px solid var(--accent);
-  padding-inline: var(--gutter);
-  padding-top: clamp(56px, 8vh, 104px);
-  padding-bottom: var(--sp-8);
-}
+.footer { padding-top: var(--section-y); }
 
-/* Asymmetric on purpose: the identity block takes roughly half the width and
-   the three metadata columns share the rest, so the footer is weighted left
-   like every other section rather than being four equal columns. */
-.top {
+/* The closing invitation: one rounded mint card that tilts a little toward the pointer. */
+.cta {
   display: grid;
-  grid-template-columns: 1.6fr repeat(3, minmax(0, 0.8fr));
-  gap: clamp(32px, 5vw, 72px);
-  padding-bottom: clamp(48px, 7vh, 88px);
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--sp-10);
+  padding: clamp(32px, 5vw, 64px);
+  border-radius: var(--r-xl);
+  background: var(--accent);
+  color: var(--accent-ink);
+  will-change: transform;
 }
-
-.identity { min-width: 0; }
-
-.wordmark {
-  font-family: var(--font-serif);
-  font-size: clamp(2rem, 4.5vw, 3.5rem);
-  line-height: 1;
-  letter-spacing: var(--tracking-tight);
-  color: var(--fg-1);
-  margin: 0 0 var(--sp-4);
-  /* Optical alignment with the gutter, matching .display. */
-  margin-left: -0.035em;
+.ctaEyebrow { font-size: var(--text-sm); font-weight: 500; opacity: 0.75; }
+.ctaHead {
+  margin-top: var(--sp-3);
+  max-width: 20ch;
+  font-size: var(--text-4xl);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: var(--tracking-display);
 }
-
-.tagline {
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  color: var(--fg-3);
-  margin: 0;
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--accent-line);
-  display: inline-block;
-  /* Sized to the text so the rule underlines the tagline rather than spanning
-     the column like a section divider. */
-  width: fit-content;
+.ctaActions { display: flex; flex-direction: column; align-items: flex-end; gap: var(--sp-4); }
+/* Inverted on the mint ground: ink pill that turns light on hover. */
+.cta .ctaBtn {
+  --btn-fg: var(--accent);
+  --btn-bg: var(--accent-ink);
+  --btn-line: var(--accent-ink);
+  --btn-fill: var(--bg-0);
+  --btn-fill-fg: var(--fg-1);
 }
+.cta .ctaMail { font-size: var(--text-sm); color: var(--accent-ink); }
 
-.col {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-3);
-  min-width: 0;
+.cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  gap: var(--sp-10);
+  padding-block: clamp(48px, 7vw, 88px) var(--sp-10);
 }
-
-/* Accent, not the muted grey these were. They are the only repeated element
-   in the footer, so colouring them is what makes the block read as branded
-   rather than as fine print. */
-.colHead {
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  color: var(--accent);
-  margin: 0 0 var(--sp-2);
-}
-
-.colLink {
-  font-size: var(--text-sm);
-  color: var(--fg-2);
-  text-decoration: none;
-  /* Wraps rather than overflowing: the email address is long enough to break
-     the column on a narrow viewport. */
-  overflow-wrap: anywhere;
-  transition: color var(--t-fast);
-}
-
-.colLink:hover { color: var(--accent); }
-
-.colButton {
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-size: var(--text-sm);
-  text-align: left;
-  cursor: pointer;
-}
-
-.colText {
-  font-size: var(--text-sm);
-  color: var(--fg-3);
-  margin: 0;
-}
+.brand { display: flex; flex-direction: column; gap: var(--sp-2); }
+.brandName { font-size: var(--text-2xl); font-weight: 600; letter-spacing: -0.03em; }
+.col { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-3); min-width: 0; font-size: var(--text-sm); }
+.colHead { font-size: var(--text-sm); font-weight: 600; color: var(--accent); margin-bottom: var(--sp-1); }
+.col:nth-child(3) .colHead { color: var(--coral); }
+.col:nth-child(4) .colHead { color: var(--peach); }
+.wrap { overflow-wrap: anywhere; }
+.muted { font-size: var(--text-sm); color: var(--fg-3); }
+.clock { display: inline-flex; align-items: center; gap: var(--sp-2); margin-top: var(--sp-4); font-size: var(--text-sm); color: var(--fg-2); font-variant-numeric: tabular-nums; }
+.live { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
 
 .bottom {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-4) var(--sp-8);
+  align-items: center;
   justify-content: space-between;
-  padding-top: var(--sp-6);
+  gap: var(--sp-6);
+  padding-block: var(--sp-6) var(--sp-8);
   border-top: 1px solid var(--rule);
 }
-
-.fine {
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  letter-spacing: 0.06em;
-  color: var(--fg-4);
-  margin: 0;
+.legal { display: flex; gap: var(--sp-6); }
+.top {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  transition: background-color 300ms, color 300ms, border-color 300ms, transform 500ms var(--ease-spring);
 }
-
-.legal {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2) var(--sp-6);
-}
-
-.legal a {
-  color: var(--fg-3);
-  text-decoration: none;
-  transition: color var(--t-fast);
-}
-
-.legal a:hover { color: var(--accent); }
+.top:hover { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); transform: translateY(-4px); }
 
 @media (max-width: 900px) {
-  .top {
-    /* Two columns, not one: the three metadata columns are short enough to
-       pair up, and a single stacked column makes the footer taller than the
-       viewport on a phone. */
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .identity { grid-column: 1 / -1; }
+  .cta { grid-template-columns: 1fr; }
+  .ctaActions { align-items: flex-start; }
+  .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .brand { grid-column: 1 / -1; }
 }
-
 @media (max-width: 480px) {
-  .top { grid-template-columns: minmax(0, 1fr); }
+  .cols { grid-template-columns: 1fr; }
 }

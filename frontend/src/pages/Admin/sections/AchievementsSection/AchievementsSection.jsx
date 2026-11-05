@@ -2,17 +2,15 @@ import { useState, useEffect } from 'react'
 import { getBioSection, updateBioSection } from '../../../../firebase'
 import { useToast } from '../../../../context/ToastContext'
 import Modal from '../../../../components/Modal'
+import Button from '../../../../components/Button'
+import { Plus } from '../../../../components/Icons'
+import { SectionHeader, EmptyState, SkeletonRows, IconAction, cx } from '../../ui'
+import { IconPencil, IconTrash, IconChevUp, IconChevDown } from '../../icons'
 import styles from '../../Admin.module.css'
 
 const BLANK = { title: '', issuer: '', period: '', description: '', link: '' }
 
-/**
- * Achievements - awards, competitions, publications, certifications.
- *
- * Stored as `portfolio_bio/achievements` with the same `{ items: [...] }`
- * shape as Education and Experience, so it needs no new Firestore rule: the
- * existing `portfolio_bio/{id}` match already covers it.
- */
+// Stored as portfolio_bio/achievements with the same { items } shape as Education, so no new rule is needed.
 export default function AchievementsSection() {
   const { addToast } = useToast()
   const [items, setItems] = useState([])
@@ -53,9 +51,7 @@ export default function AchievementsSection() {
     addToast({ type: 'success', title: 'Achievement deleted' })
   }
 
-  /* Reordering by hand, because these are not naturally chronological the way
-     Education and Experience are - a prize won in first year may still be the
-     one that belongs at the top. */
+  // Ordered by hand: a first-year prize may still belong at the top.
   async function move(i, delta) {
     const j = i + delta
     if (j < 0 || j >= items.length) return
@@ -64,76 +60,77 @@ export default function AchievementsSection() {
     await persist(next)
   }
 
+  const addButton = <Button variant="accent" size="sm" magnetic={false} icon={<Plus size={14} />} onClick={openAdd}>Add achievement</Button>
+
   return (
     <div>
-      <div className={styles.sectionHeader}>
-        <p className={styles.intro} style={{ margin: 0 }}>
-          Awards, competitions, publications and certifications. Shown on the About
-          page between Experience and Skills; the section is hidden while this list
-          is empty.
-        </p>
-        <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`} onClick={openAdd}>+ Add Achievement</button>
-      </div>
+      <SectionHeader
+        description={
+          <p>
+            Awards, competitions, publications and certifications. Shown on the About
+            page between Experience and Skills; the section is hidden while this list
+            is empty.
+          </p>
+        }
+        action={addButton}
+      />
 
-      {loading ? <p className={styles.empty}>Loading…</p>
-        : items.length === 0 ? <p className={styles.empty}>No achievements yet. Add your first one above.</p>
-        : items.map((it, i) => (
-          <div key={i} className={styles.listRow}>
-            <div className={styles.listRowContent}>
-              <strong>{it.title}</strong>
-              <span className={styles.meta}>
-                {[it.issuer, it.period].filter(Boolean).join(' · ')}
-              </span>
-            </div>
-            <div className={styles.listRowActions}>
-              <button
-                className={`${styles.btn} ${styles.btnOutline} ${styles.btnSm}`}
-                onClick={() => move(i, -1)}
-                disabled={i === 0}
-                aria-label={`Move "${it.title}" up`}
-              >↑</button>
-              <button
-                className={`${styles.btn} ${styles.btnOutline} ${styles.btnSm}`}
-                onClick={() => move(i, 1)}
-                disabled={i === items.length - 1}
-                aria-label={`Move "${it.title}" down`}
-              >↓</button>
-              <button className={`${styles.btn} ${styles.btnOutline} ${styles.btnSm}`} onClick={() => openEdit(i)}>Edit</button>
-              <button className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`} onClick={() => remove(i)}>Delete</button>
-            </div>
+      {loading ? <SkeletonRows rows={3} />
+        : items.length === 0 ? <EmptyState title="No achievements yet">Add your first one with the button above.</EmptyState>
+        : (
+          <div className={styles.list}>
+            {items.map((it, i) => (
+              <div key={i} className={cx(styles.row, styles.rowWithHandle)} style={{ '--i': i }}>
+                <div className={styles.reorder} role="group" aria-label={`Reorder "${it.title}"`}>
+                  <button type="button" onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Move "${it.title}" up`}>
+                    <IconChevUp size={14} />
+                  </button>
+                  <span className={styles.grip} aria-hidden="true" />
+                  <button type="button" onClick={() => move(i, 1)} disabled={i === items.length - 1} aria-label={`Move "${it.title}" down`}>
+                    <IconChevDown size={14} />
+                  </button>
+                </div>
+                <div className={styles.rowMain}>
+                  <strong className={styles.rowTitle}>{it.title}</strong>
+                  <span className={styles.rowMeta}>{[it.issuer, it.period].filter(Boolean).join(' · ')}</span>
+                </div>
+                <div className={styles.rowActions}>
+                  <IconAction label={`Edit "${it.title}"`} onClick={() => openEdit(i)}><IconPencil size={15} /></IconAction>
+                  <IconAction label={`Delete "${it.title}"`} danger onClick={() => remove(i)}><IconTrash size={15} /></IconAction>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
 
-      <Modal open={!!modal} onClose={close} title={modal?.mode === 'add' ? 'Add Achievement' : 'Edit Achievement'}>
+      <Modal open={!!modal} onClose={close} title={modal?.mode === 'add' ? 'Add achievement' : 'Edit achievement'}>
         <form onSubmit={save}>
           <div className={styles.grid2}>
-            <div className={`${styles.field} ${styles.span2}`}>
-              <label>Title *</label>
-              <input value={form.title} onChange={set('title')} placeholder="Dean's Merit List" />
+            <div className={cx(styles.field, styles.span2)}>
+              <label htmlFor="ac-title">Title *</label>
+              <input id="ac-title" value={form.title} onChange={set('title')} placeholder="Dean's Merit List" />
             </div>
             <div className={styles.field}>
-              <label>Awarded by</label>
-              <input value={form.issuer} onChange={set('issuer')} placeholder="University of Pretoria" />
+              <label htmlFor="ac-issuer">Awarded by</label>
+              <input id="ac-issuer" value={form.issuer} onChange={set('issuer')} placeholder="University of Pretoria" />
             </div>
             <div className={styles.field}>
-              <label>Year / Period</label>
-              <input value={form.period} onChange={set('period')} placeholder="2025" />
+              <label htmlFor="ac-period">Year / period</label>
+              <input id="ac-period" value={form.period} onChange={set('period')} placeholder="2025" />
             </div>
-            <div className={`${styles.field} ${styles.span2}`}>
-              <label>Description</label>
-              <textarea rows={3} value={form.description} onChange={set('description')} placeholder="Brief description…" />
+            <div className={cx(styles.field, styles.span2)}>
+              <label htmlFor="ac-desc">Description</label>
+              <textarea id="ac-desc" rows={3} value={form.description} onChange={set('description')} placeholder="Brief description…" />
             </div>
-            <div className={`${styles.field} ${styles.span2}`}>
-              <label>Link (optional)</label>
-              <input value={form.link} onChange={set('link')} placeholder="example.co.za/award" />
-              <p className={styles.hint}>
-                You can leave off the “https://” - it is added for you.
-              </p>
+            <div className={cx(styles.field, styles.span2)}>
+              <label htmlFor="ac-link">Link (optional)</label>
+              <input id="ac-link" value={form.link} onChange={set('link')} placeholder="example.co.za/award" />
+              <p className={styles.hint}>You can leave off the “https://” - it is added for you.</p>
             </div>
           </div>
           <div className={styles.formActions}>
-            <button type="button" className={`${styles.btn} ${styles.btnOutline}`} onClick={close}>Cancel</button>
-            <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
+            <Button size="sm" magnetic={false} onClick={close}>Cancel</Button>
+            <Button variant="accent" size="sm" magnetic={false} type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
           </div>
         </form>
       </Modal>

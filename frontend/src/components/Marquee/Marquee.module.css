@@ -1,0 +1,4 @@
+.marquee { overflow: hidden; width: 100%; user-select: none; }
+.track { display: flex; width: max-content; will-change: transform; }
+.run { display: flex; flex-shrink: 0; }
+.item { display: inline-flex; align-items: center; flex-shrink: 0; white-space: nowrap; }

@@ -1,80 +1,35 @@
-/* Fonts are NOT imported here. An @import nested inside a stylesheet is
-   fetched serially - it cannot begin until this file has been downloaded and
-   parsed - which put the webfonts a full round-trip later than necessary and
-   made them swap in mid-scroll. They are declared as a <link> in index.html
-   so the preload scanner picks them up alongside the HTML. */
+/* Fonts load from a <link> in index.html. */
 @import './Theme.css';
 @import './motion.css';
 
-/* ── Metric-matched font fallbacks ───────────────────────────────────────────
-   The webfonts load with `display: swap`, so the page first paints in a
-   fallback and then swaps. If the fallback's metrics differ from the real
-   face, that swap RE-LAYS-OUT every line of text on the page - measured at
-   CLS 0.094 on the old home page, against 0.0007 with the webfonts blocked
-   entirely.
-
-   These three faces re-scale the local fallback to the webfont's own metrics,
-   so the fallback occupies the same space and the swap becomes invisible. The
-   ratios are MEASURED, not estimated. They matter MORE in this layout than in
-   the last one, not less: display type is now clamped as high as 12rem, so a
-   percentage error in advance width is a proportionally larger pixel shift.
-
-   Do not change these without re-measuring. */
+/* Approximate, not measured: brings Arial close to Inter Tight's width and height to soften the font swap. */
 @font-face {
-  font-family: 'Cormorant Fallback';
-  src: local('Georgia'), local('Times New Roman'), local('Times');
-  size-adjust: 88.87%;
-  ascent-override: 103.52%;
-  descent-override: 32.63%;
-  line-gap-override: 0%;
-}
-
-@font-face {
-  font-family: 'DM Sans Fallback';
+  font-family: 'Inter Tight Fallback';
   src: local('Arial'), local('Helvetica Neue'), local('Helvetica');
-  size-adjust: 93.47%;
-  ascent-override: 95.21%;
-  descent-override: 23.54%;
+  size-adjust: 94%;
+  ascent-override: 96%;
+  descent-override: 24%;
   line-gap-override: 0%;
 }
 
-/* Courier New rather than Consolas: measured against IBM Plex Mono its
-   advance width is 99.98% (Consolas is 109.13%), so the substitution is
-   almost exact before any adjustment. */
-@font-face {
-  font-family: 'Plex Mono Fallback';
-  src: local('Courier New'), local('Courier'), local('Consolas');
-  size-adjust: 99.98%;
-  ascent-override: 103.02%;
-  descent-override: 28%;
-  line-gap-override: 0%;
+:root {
+  --section-y: clamp(72px, 11vh, 136px);
+  --container: 1240px;
+  --r-md: 14px;
+  --r-lg: 24px;
+  --r-xl: 32px;
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --t-btn: 620ms cubic-bezier(0.19, 1, 0.22, 1);
+  --nav-h: 72px;
 }
 
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html {
-  /* MUST stay `auto`. Lenis interpolates scrolling itself, and native smooth
-     scrolling fights that interpolation - the two run at different rates on
-     the same scrollTop and the result reads as stutter, not smoothness. */
   scroll-behavior: auto;
   -webkit-text-size-adjust: 100%;
   background: var(--bg-0);
-
-  /* `clip`, not `hidden`. overflow-x:hidden silently turns <html> into a
-     scroll container, and a scroll container clips position:sticky
-     descendants - which would break every sticky element in this layout,
-     including the Work page's filter bar and the About page's metadata rails.
-     `clip` suppresses horizontal overflow without creating a scroll
-     container. The `hidden` line first is the fallback for Safari < 16,
-     which ignores `clip`.
-
-     This matters more here than it used to: a full-bleed layout deliberately
-     pushes images past the viewport edge, so there is real horizontal
-     overflow to suppress on nearly every section. */
+  /* clip, not hidden: hidden would make <html> a scroll container and break position: sticky. */
   overflow-x: hidden;
   overflow-x: clip;
 }
@@ -84,76 +39,44 @@ body {
   font-size: var(--text-md);
   line-height: var(--leading-normal);
   color: var(--fg-1);
-  background: var(--bg-0);
+  background: transparent;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
-  /* Monochrome foundation: there is deliberately no gradient wash behind the
-     page. The previous design had two tinted radial gradients on a fixed
-     layer; with photography running full-bleed they tinted the images at the
-     edges, and the brief calls for the colour in the page to come from the
-     projects rather than the interface. */
+  text-rendering: optimizeLegibility;
 }
 
-img, video {
-  max-width: 100%;
-  display: block;
-}
+img, video, svg { display: block; max-width: 100%; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+a { color: inherit; }
+input, textarea, select { font: inherit; color: inherit; }
 
-/* Lenis owns the wheel on the root. A scrollable panel marked
-   [data-lenis-prevent] scrolls on its own without the page gliding
-   underneath it. */
-.lenis.lenis-smooth [data-lenis-prevent] {
-  overscroll-behavior: contain;
-}
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.nav-locked { overflow: hidden; }
 
-/* Applied to <html> while the mobile nav overlay is open. Lenis drives
-   scrolling from the root element, so locking <body> alone would not stop the
-   page gliding behind the overlay. */
-.nav-locked {
-  overflow: hidden;
-}
-
-/* ── Scrollbar ──────────────────────────────────────────────────────────────
-   No track, thin brass thumb. */
 ::-webkit-scrollbar { width: 10px; height: 10px; background: transparent; }
-::-webkit-scrollbar-track,
-::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: rgba(var(--accent-rgb), 0.45);
   border-radius: var(--r-full);
   border: 3px solid transparent;
   background-clip: padding-box;
 }
-::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-rgb), 0.75); }
-@supports not selector(::-webkit-scrollbar) {
-  * { scrollbar-width: thin; scrollbar-color: rgba(var(--accent-rgb), 0.5) transparent; }
-}
+::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-rgb), 0.8); }
 
-/* ── Selection ──────────────────────────────────────────────────────────── */
-::selection {
-  background: var(--accent);
-  color: var(--accent-ink);
-}
+::selection { background: var(--accent); color: var(--accent-ink); }
 
-/* ── Focus ──────────────────────────────────────────────────────────────────
-   `:focus-visible`, so a mouse click does not leave a ring behind but a Tab
-   key does. The accent clears 3:1 against every surface it can appear on, so
-   the ring is perceivable without a second offset outline. */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
   border-radius: var(--r-xs);
 }
 
-/* ── Skip link ──────────────────────────────────────────────────────────────
-   A full-bleed layout puts a lot of decorative imagery before the first
-   heading, so a keyboard user needs a way past the chrome. */
 .skip-link {
   position: fixed;
   top: var(--sp-3);
   left: var(--sp-3);
-  z-index: calc(var(--z-toast) + 1);
+  z-index: calc(var(--z-toast) + 10);
   padding: var(--sp-3) var(--sp-5);
   background: var(--accent);
   color: var(--accent-ink);
@@ -162,255 +85,337 @@ img, video {
   text-transform: uppercase;
   letter-spacing: var(--tracking-mono);
   text-decoration: none;
+  border-radius: var(--r-full);
   transform: translateY(calc(-100% - var(--sp-4)));
   transition: transform var(--t-base);
 }
 .skip-link:focus-visible { transform: translateY(0); }
 
-/* =============================================================================
-   LAYOUT PRIMITIVES
-   -----------------------------------------------------------------------------
-   There is no centred `.container` in this stylesheet. Sections run the full
-   width of the viewport and content is positioned inside a 12-column grid
-   that spans it, so a block can start at column 3, or run from column 7 off
-   the right-hand edge, instead of every section being the same centred column.
-   ========================================================================== */
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+/* The centred column every page sits in. */
+.container { width: 100%; max-width: calc(var(--container) + var(--gutter) * 2); margin-inline: auto; padding-inline: var(--gutter); }
 
-/* The grid every section lays its content on. `--gutter` is the page margin;
-   columns are equal fractions of what is left. Named lines are deliberately
-   NOT used - the fractional grid keeps `grid-column: 3 / 9` readable, which
-   is how the page modules address it. */
-.grid12 {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  column-gap: clamp(12px, 2vw, 28px);
-  padding-inline: var(--gutter);
-  width: 100%;
-}
-
-/* Content that should reach the page margin but no further. Used for text
-   blocks and metadata rails - never for imagery. */
-.pad {
-  padding-inline: var(--gutter);
-  width: 100%;
-}
-
-/* True full-bleed: escapes the gutter entirely and touches the viewport edge.
-   Applied to imagery and to the inverted bands. */
-.bleed {
-  width: 100%;
-  margin-inline: 0;
-}
-
-/* Bleeds off ONE edge only, staying gutter-aligned on the other. This is the
-   core move of the layout: an image that runs off the left of the screen while
-   its caption stays on the type grid to the right, alternating down the page.
-   The 50vw overshoot is arbitrary but larger than any gutter, and the parent
-   clips it via html{overflow-x:clip}. */
-.bleed-left  { margin-left:  calc(var(--gutter) * -1); }
-.bleed-right { margin-right: calc(var(--gutter) * -1); }
-
-/* ── Section rhythm ─────────────────────────────────────────────────────────
-   One token, used by every section, so the vertical rhythm of the whole site
-   is adjustable from a single place. Sections are tall: the layout depends on
-   each one occupying enough of the viewport to read as a distinct place. */
-:root {
-  --section-y: clamp(80px, 12vh, 168px);
-}
-
-.section {
+/* A soft surface: rounded, hairline edge, lifts on hover where it is interactive. */
+.card {
   position: relative;
-  padding-block: var(--section-y);
+  background: var(--glass);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
+  box-shadow: var(--depth-1);
+  transition: transform 500ms var(--ease-out-expo), border-color 300ms, background-color 300ms, box-shadow 500ms var(--ease-out-expo);
 }
+a.card:hover, button.card:hover, .card.is-hoverable:hover { translate: 0 -6px; border-color: var(--edge); box-shadow: var(--depth-2); }
+.card { transition: transform 600ms var(--ease-out-expo), translate 500ms var(--ease-out-expo), border-color 300ms, background-color 300ms, box-shadow 500ms var(--ease-out-expo); }
+/* Every card leans toward the pointer (TiltLayer); the lift on hover uses translate so the two combine. */
+.card.is-tilting { transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform 120ms linear, translate 500ms var(--ease-out-expo), border-color 300ms, box-shadow 500ms var(--ease-out-expo); box-shadow: var(--depth-2); }
 
-/* A section that shares an edge with a full-bleed image needs no top padding -
-   the image provides the break. */
-.section-tight { padding-block: clamp(48px, 6vh, 88px); }
+/* Anything marked data-tilt leans toward the pointer in 3D (TiltLayer drives --rx and --ry). */
+[data-tilt] { transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(0); transition: transform 600ms var(--ease-out-expo); will-change: transform; }
+[data-tilt].is-tilting { transition: transform 120ms linear; }
 
-/* ── Section tones ──────────────────────────────────────────────────────────
-   The token values live in Theme.css (measured, per theme). These four classes
-   only apply them. Every tone paints its own background and text colour so a
-   section is self-contained: a page module needs no knowledge of which ground
-   it is sitting on.
-
-   `isolation: isolate` gives each toned section its own stacking context, so a
-   full-bleed image inside one cannot paint over the section above it. */
-.tone-base,
-.tone-raised,
-.tone-deep,
-.tone-invert,
-.tone-accent,
-.tone-accent-soft,
-.tone-accent-deep {
-  background: var(--bg-0);
-  color: var(--fg-1);
-  isolation: isolate;
-}
-
-/* Hairline seams between adjacent grounds. Without these two neighbouring
-   surfaces a single step apart (bg-0 against bg-2) read as a rendering seam
-   rather than as a deliberate change of ground. The accent and inverted bands
-   need no line - the change of value is already unmistakable. */
-.tone-raised,
-.tone-deep,
-.tone-accent-soft {
-  border-block: 1px solid var(--rule);
-}
-
-/* ── Section marker ─────────────────────────────────────────────────────────
-   The numbered label that opens each section ("03 - Selected Work"). This is
-   what makes the page read as a sequence of named sections rather than as a
-   continuous scroll, which was the central complaint about the old layout. */
-.marker {
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-4);
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  color: var(--fg-3);
-}
-.marker::after {
+/* A sheen that follows the pointer across tilted surfaces. */
+[data-tilt]::after {
   content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--rule);
-  /* Nudged to sit on the text baseline rather than the box centre. */
-  transform: translateY(-0.3em);
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(380px circle at var(--gx, 50%) var(--gy, 50%), rgba(255, 255, 255, 0.12), transparent 60%);
+  opacity: 0;
+  transition: opacity 400ms;
+  pointer-events: none;
 }
-.marker > .marker-num { color: var(--accent); }
+[data-tilt].is-tilting::after { opacity: 1; }
 
-/* ── Mono label ─────────────────────────────────────────────────────────────
-   Metadata: years, categories, counts, field labels. Uppercase mono with wide
-   tracking is the only "decoration" the design allows itself. */
-.mono {
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  color: var(--fg-3);
+/* Small rounded label: categories, status, counts. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--fg-2);
+  background: var(--bg-2);
+  border-radius: var(--r-full);
+  white-space: nowrap;
 }
+.badge-accent { color: var(--accent-ink); background: var(--accent); }
+.badge-mint  { color: var(--accent); background: var(--mint-tint); }
+.badge-coral { color: var(--coral); background: var(--coral-tint); }
+.badge-peach { color: var(--peach); background: var(--peach-tint); }
+.badge-lavender { color: var(--lavender); background: var(--lavender-tint); }
+.badge-sky { color: var(--sky); background: var(--sky-tint); }
+.badge-dot::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
 
-/* ── Display type ───────────────────────────────────────────────────────── */
-.display {
-  font-family: var(--font-serif);
-  font-size: var(--text-display);
-  line-height: var(--leading-display);
-  letter-spacing: var(--tracking-display);
-  font-weight: 400;
-  color: var(--fg-1);
-  /* Optical alignment: a large serif's left sidebearing makes the text look
-     indented against a hard grid line. Pulling back by a fraction of an em
-     lines the glyph up with the rule above it instead of the glyph box. */
-  margin-left: -0.045em;
-}
+.section { position: relative; padding-block: var(--section-y); }
 
-.display em {
-  font-style: italic;
-  font-weight: 300;
-}
-
-/* The full stop that closes a display heading. Brass, and the only place in
-   the page where the accent appears at display size. */
-.dot { color: var(--accent); }
-
-/* ── Rules ──────────────────────────────────────────────────────────────── */
-.hr {
-  border: 0;
-  height: 1px;
-  background: var(--rule);
-  width: 100%;
-}
-
-/* ── Prose ──────────────────────────────────────────────────────────────── */
-.prose {
-  max-width: var(--measure);
-  font-size: var(--text-md);
+/* ── Type ───────────────────────────────────────────────────────────────── */
+.lead {
+  font-size: clamp(1.125rem, 1.4vw, 1.35rem);
   line-height: var(--leading-relaxed);
   color: var(--fg-2);
-}
-.prose-lg {
-  max-width: var(--measure-wide);
-  font-family: var(--font-serif);
-  font-size: var(--text-2xl);
-  line-height: var(--leading-snug);
-  letter-spacing: var(--tracking-tight);
-  color: var(--fg-1);
+  max-width: var(--measure);
 }
 
-/* ── Link, underlined on hover from the left ────────────────────────────── */
+.mono, .eyebrow {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--text-2xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono);
+  color: var(--fg-3);
+}
+
+.eyebrow { display: inline-flex; align-items: center; gap: var(--sp-3); font-size: var(--text-sm); font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--accent); }
+.eyebrow-coral { color: var(--coral); }
+.eyebrow-coral::before { background: var(--coral) !important; box-shadow: 0 0 0 4px var(--coral-tint) !important; }
+.eyebrow-peach { color: var(--peach); }
+.eyebrow-lavender { color: var(--lavender); }
+.eyebrow-lavender::before { background: var(--lavender) !important; box-shadow: 0 0 0 4px var(--lavender-tint) !important; }
+.eyebrow-sky { color: var(--sky); }
+.eyebrow-sky::before { background: var(--sky) !important; box-shadow: 0 0 0 4px var(--sky-tint) !important; }
+.eyebrow-peach::before { background: var(--peach) !important; box-shadow: 0 0 0 4px var(--peach-tint) !important; }
+.eyebrow::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-dim);
+  flex-shrink: 0;
+}
+
+.dot { color: var(--accent); }
+
+/* ── Links: underline draws in from the left, leaves to the right ────── */
 .link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
   color: var(--fg-1);
   text-decoration: none;
-  position: relative;
-  display: inline-block;
 }
 .link::after {
   content: '';
   position: absolute;
   left: 0;
-  bottom: -2px;
-  width: 100%;
+  right: 0;
+  bottom: -3px;
   height: 1px;
-  background: var(--accent);
+  background: currentColor;
   transform: scaleX(0);
-  transform-origin: left;
-  transition: transform var(--t-base);
+  transform-origin: right center;
+  transition: transform var(--t-btn);
 }
-.link:hover::after,
-.link:focus-visible::after { transform: scaleX(1); }
+.link:hover::after, .link:focus-visible::after { transform: scaleX(1); transform-origin: left center; }
+.link svg { transition: transform var(--t-btn); }
+.link:hover svg { transform: translateX(4px); }
+.link:hover { color: var(--accent); }
 
-/* ── Button ─────────────────────────────────────────────────────────────────
-   One button, two weights. Square, mono, letterspaced - it reads as a label
-   with a border rather than as a UI control, which keeps the chrome quiet. */
+/* ── Buttons ────────────────────────────────────────────────────────────
+   A pill with a fill that grows from wherever the pointer enters (--x, --y,
+   set by the Button component) and a label that rolls up on hover. Plain
+   `.btn` elements without the component still get a centred fill. */
 .btn {
+  --x: 50%;
+  --y: 50%;
+  --btn-fg: var(--fg-1);
+  --btn-bg: transparent;
+  --btn-line: var(--edge);
+  --btn-fill: var(--accent);
+  --btn-fill-fg: var(--accent-ink);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--sp-3);
-  padding: var(--sp-4) var(--sp-8);
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  border: 1px solid var(--edge);
-  border-radius: var(--r-xs);
-  background: transparent;
-  color: var(--fg-1);
-  cursor: pointer;
+  min-height: 48px;
+  padding: 0 var(--sp-6);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--btn-fg);
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-line);
+  border-radius: var(--r-full);
   text-decoration: none;
-  transition: background-color var(--t-base), color var(--t-base),
-              border-color var(--t-base);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--t-btn), border-color var(--t-btn), transform 300ms var(--ease-out);
 }
-.btn:hover:not(:disabled) {
-  background: var(--fg-1);
-  color: var(--bg-0);
-  border-color: var(--fg-1);
+.btn::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: var(--x);
+  top: var(--y);
+  width: 260%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--btn-fill);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform var(--t-btn);
 }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:hover:not(:disabled), .btn:focus-visible { color: var(--btn-fill-fg); border-color: var(--btn-fill); }
+.btn:hover:not(:disabled)::before, .btn:focus-visible::before { transform: translate(-50%, -50%) scale(1); }
+.btn:active:not(:disabled) { transform: scale(0.96); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn svg { flex-shrink: 0; transition: transform var(--t-btn); }
+.btn:hover:not(:disabled) svg { transform: translateX(3px); }
 
 .btn-accent {
+  --btn-fg: var(--accent-ink);
+  --btn-bg: var(--accent);
+  --btn-line: var(--accent);
+  --btn-fill: #EC7373;
+  --btn-fill-fg: var(--ink);
+}
+.btn-sm { min-height: 38px; padding: 0 var(--sp-4); font-size: var(--text-xs); }
+.btn-lg { min-height: 56px; padding: 0 var(--sp-8); font-size: var(--text-base); }
+.btn-block { width: 100%; }
+.btn-icon { width: 48px; padding: 0; }
+.btn-icon.btn-sm { width: 40px; }
+
+/* The rolling label: the visible copy slides up, a duplicate follows from below. */
+.btn-roll { position: relative; display: inline-block; overflow: hidden; line-height: 1.25; }
+.btn-roll > span { display: block; transition: transform var(--t-btn); }
+.btn-roll > span + span { position: absolute; inset: 0; transform: translateY(105%); }
+.btn:hover .btn-roll > span:first-child, .roll-host:hover .btn-roll > span:first-child { transform: translateY(-105%); }
+.btn:hover .btn-roll > span + span, .roll-host:hover .btn-roll > span + span { transform: translateY(0); }
+
+.ripple {
+  position: absolute;
+  z-index: -1;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.35;
+  pointer-events: none;
+  animation: ripple 700ms var(--ease-out) forwards;
+}
+@keyframes ripple { to { transform: scale(40); opacity: 0; } }
+
+/* ── Chips: filters and tags ─────────────────────────────────────────── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 36px;
+  padding: 0 var(--sp-4);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--fg-2);
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-full);
+  cursor: pointer;
+  transition: color var(--t-base), background-color var(--t-base), border-color var(--t-base), transform 200ms var(--ease-out);
+}
+.chip:hover { border-color: var(--edge); color: var(--fg-1); }
+.chip:active { transform: scale(0.95); }
+.chip[aria-pressed='true'], .chip.is-active {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-ink);
 }
-.btn-accent:hover:not(:disabled) {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
-  color: var(--accent-ink);
+.chip-count { opacity: 0.6; }
+
+/* ── Form fields: a label above an underlined input, the line draws in on focus ─ */
+.field { position: relative; display: flex; flex-direction: column; gap: var(--sp-2); }
+.field-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono);
+  color: var(--fg-3);
+  transition: color var(--t-base);
+}
+.field:focus-within .field-label { color: var(--accent); }
+.input {
+  width: 100%;
+  padding: var(--sp-3) 0;
+  font-size: var(--text-lg);
+  color: var(--fg-1);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--edge);
+  border-radius: 0;
+  outline: none;
+  background-image: linear-gradient(var(--accent), var(--accent));
+  background-repeat: no-repeat;
+  background-position: left bottom;
+  background-size: 0% 2px;
+  transition: background-size var(--t-slow), border-color var(--t-base);
+}
+.input:focus { background-size: 100% 2px; }
+.input:focus-visible { outline: none; }
+.input::placeholder { color: var(--fg-4); }
+textarea.input { resize: vertical; min-height: 140px; line-height: var(--leading-normal); }
+.input[aria-invalid='true'] { border-bottom-color: var(--state-err); }
+
+/* ── Skeleton shimmer ────────────────────────────────────────────────── */
+.skeleton {
+  display: block;
+  border-radius: var(--r-xs);
+  background: linear-gradient(90deg, var(--bg-2) 0%, var(--bg-3) 40%, var(--bg-2) 80%);
+  background-size: 300% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: -50% 0; } }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+
+/* ── Noise grain over everything, very faint, for a printed feel ─────── */
+.grain {
+  position: fixed;
+  inset: -50%;
+  z-index: var(--z-toast);
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+[data-theme='light'] .grain { opacity: 0.07; mix-blend-mode: multiply; }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-/* Type set over a photograph. Always the fixed light value, never --fg-1:
-   the scrim under it is dark in BOTH themes, so a token that flips with the
-   theme would put charcoal type on a dark scrim in light mode. */
-.on-image { color: var(--on-image); }
-.on-image-dim { color: var(--on-image-dim); }
-
-@media (max-width: 900px) {
-  /* Below this width a 12-column grid stops being useful - there is not
-     enough room for a block to start at column 3 and still hold a sensible
-     measure. Sections collapse to a single column and the asymmetry is
-     carried by scale and rules instead of by position. */
-  .grid12 { grid-template-columns: minmax(0, 1fr); }
-  .grid12 > * { grid-column: 1 !important; }
+/* A custom cursor replaces the system one on fine pointers only. */
+@media (hover: hover) and (pointer: fine) {
+  html.has-cursor, html.has-cursor a, html.has-cursor button, html.has-cursor [data-cursor] { cursor: none; }
+  html.has-cursor input, html.has-cursor textarea, html.has-cursor select { cursor: text; }
 }
+
+/* Gradient text for a highlighted word. */
+.text-gradient {
+  background: linear-gradient(100deg, var(--c-mint) 0%, var(--c-sky) 35%, var(--c-lavender) 65%, var(--c-coral) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-drift 8s ease-in-out infinite alternate;
+}
+/* The text animation wraps words in their own elements; each one carries the gradient too. */
+.text-gradient * { background: inherit; -webkit-background-clip: text; background-clip: text; color: transparent; }
+[data-theme='light'] .text-gradient { background-image: linear-gradient(100deg, #115F29 0%, #1D5F99 35%, #5B3FC4 65%, #A3302F 100%); }
+@keyframes gradient-drift { to { background-position: 100% 0; } }
+@media (prefers-reduced-motion: reduce) { .text-gradient { animation: none; } }

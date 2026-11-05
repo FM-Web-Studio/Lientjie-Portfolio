@@ -1,77 +1,46 @@
-/* =============================================================================
-   DESIGN TOKENS - JBM Architex
-   -----------------------------------------------------------------------------
-   Palette taken from the JBM Architex identity sheet: mint green and coral on a
-   neutral grey ground, with a peach ribbon as the third note.
-
-   THE GOVERNING FACT ABOUT THIS PALETTE: both brand colours are LIGHT.
-   Measured as text on the identity sheet's own grey (#E6E6E6):
-
-       mint  #B0EFC3   1.05:1   invisible
-       coral #EC7373   2.32:1   fails
-       grey  #808080   3.16:1   fails  (the wordmark's own grey)
-
-   On a dark ground they are excellent (14.26:1 and 6.48:1), and as BAND
-   BACKGROUNDS with dark type they are excellent in either theme (14.26:1 and
-   6.48:1). So this palette wants the brand colours on surfaces, not on type.
-   Where an accent must be text - a link, an 11px label - the light theme uses a
-   deep derivative of the same hue instead. Each is noted where it appears.
-
-   Every ratio in the comments below is computed, not estimated.
-   ========================================================================== */
-
+/* Design tokens. Brand: mint #B0EFC3, coral #EC7373, peach #D6BEAD on graphite or sheet grey.
+   Text colours were contrast-checked against every surface they sit on; recheck before changing them. */
 :root {
-  /* ── Brand pigments ───────────────────────────────────────────────────────
-     The raw values sampled from the identity sheet. Kept as their own tokens
-     so the source of every derived colour is traceable, and referenced only by
-     the theme blocks below - never used directly by a component, because none
-     of them is safe as text on every surface. */
   --brand-mint:  #B0EFC3;
   --brand-coral: #EC7373;
   --brand-peach: #D6BEAD;
-  --brand-grey:  #808080;   /* the wordmark grey - decorative only */
-  --brand-sheet: #E6E6E6;   /* the sheet background                */
+  --brand-grey:  #808080;
+  --brand-sheet: #E6E6E6;
+  /* Fixed grounds for colour blocks, the same in both themes, always with dark ink on top. */
+  --ink:         #121212;
+  --c-mint: #B0EFC3;
+  --c-coral: #F2A7A7;
+  --c-peach: #E3CBB9;
+  --c-lavender: #CDBEFF;
+  --c-sky: #A8DAFF;
 
-  /* ── Type families ────────────────────────────────────────────────────────
-     The fallbacks are metric-matched faces declared in global.css, not raw
-     system fonts, so the swap from fallback to webfont does not reflow. Do
-     not add a family here that is not actually loaded in index.html: it will
-     apply only on machines that happen to have it installed, which makes the
-     site render differently for those visitors for no reason. */
-  --font-serif: 'Cormorant Garamond', 'Cormorant Fallback', Georgia, serif;
-  --font-sans:  'DM Sans', 'DM Sans Fallback', system-ui, -apple-system, sans-serif;
-  --font-mono:  'IBM Plex Mono', 'Plex Mono Fallback', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-serif: 'Inter Tight', 'Inter Tight Fallback', system-ui, -apple-system, sans-serif;
+  --font-sans:  'Inter Tight', 'Inter Tight Fallback', system-ui, -apple-system, sans-serif;
+  --font-mono:  'Inter Tight', 'Inter Tight Fallback', system-ui, -apple-system, sans-serif;
 
-  /* ── Type scale ───────────────────────────────────────────────────────────
-     Editorial rather than uniform: the display sizes are deliberately far
-     apart from the body sizes, because the layout leans on that jump for
-     hierarchy instead of on boxes and borders. */
-  --text-2xs:  0.6875rem;   /* 11px - mono metadata, letterspaced          */
-  --text-xs:   0.75rem;
+  --text-2xs:  0.75rem;
+  --text-xs:   0.8125rem;
   --text-sm:   0.875rem;
   --text-base: 1rem;
-  --text-md:   1.0625rem;   /* body copy - 17px reads better at long measure */
-  --text-lg:   1.25rem;
-  --text-xl:   1.5rem;
-  --text-2xl:  clamp(1.75rem, 2.6vw, 2.25rem);
-  --text-3xl:  clamp(2.25rem, 4.4vw, 3.5rem);
-  --text-4xl:  clamp(3rem, 7vw, 5.5rem);
-  /* The one true display size - hero and page titles only. */
-  --text-display: clamp(3.25rem, 12vw, 12rem);
+  --text-md:   1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.375rem;
+  --text-2xl:  clamp(1.375rem, 2vw, 1.75rem);
+  --text-3xl:  clamp(1.75rem, 3vw, 2.5rem);
+  --text-4xl:  clamp(2.25rem, 4.2vw, 3.5rem);
 
-  --leading-display: 0.88;  /* tight enough that two lines lock together */
+  --text-display: clamp(2.75rem, 6vw, 5rem);
+
+  --leading-display: 1;
   --leading-tight:   1.06;
   --leading-snug:    1.28;
   --leading-normal:  1.55;
   --leading-relaxed: 1.72;
 
-  --tracking-display: -0.03em;
-  --tracking-tight:   -0.015em;
-  --tracking-mono:     0.14em;  /* mono labels only, always uppercase */
+  --tracking-display: -0.04em;
+  --tracking-tight:   -0.03em;
+  --tracking-mono:     0.04em;
 
-  /* ── Space ────────────────────────────────────────────────────────────────
-     A 4px base. The section rhythm is separate (--section-y) because it needs
-     to scale with the viewport, not with the text. */
   --sp-1:   4px;
   --sp-2:   8px;
   --sp-3:  12px;
@@ -86,42 +55,24 @@
   --sp-24: 96px;
   --sp-32: 128px;
 
-  /* ── Layout ───────────────────────────────────────────────────────────────
-     There is no page-wide max-width token here on purpose. The old layout
-     centred every section inside a 1200px column, which on a wide display is
-     a narrow ribbon of content with several hundred pixels of dead margin
-     either side - that reads as "everything is centred" no matter how the
-     inside of the section is gridded. Sections are full-bleed now; only
-     individual text blocks are measured, and they are measured in `ch` so the
-     constraint follows the font rather than the viewport. */
-  --gutter: clamp(20px, 5vw, 64px);
-  --measure-tight: 46ch;   /* captions, single-column metadata */
-  --measure:       62ch;   /* body copy                        */
-  --measure-wide:  78ch;   /* large statement type             */
+  --gutter: clamp(20px, 4vw, 48px);
+  --measure-tight: 46ch;
+  --measure:       62ch;
+  --measure-wide:  78ch;
 
   --nav-h: 68px;
 
-  /* ── Radii ────────────────────────────────────────────────────────────────
-     Near-square throughout. A rounded card is a UI convention; this design
-     wants the photograph to read as a plate on a page, so corners stay sharp
-     and only interactive controls get a hint of a radius. */
   --r-0:    0px;
   --r-xs:   2px;
   --r-sm:   4px;
   --r-full: 9999px;
 
-  /* ── Motion ───────────────────────────────────────────────────────────────
-     Slow and eased. Nothing bounces: an overshoot easing reads as playful,
-     which fights the register of the rest of the page. */
   --t-fast: 160ms cubic-bezier(0.4, 0, 0.2, 1);
   --t-base: 280ms cubic-bezier(0.22, 1, 0.36, 1);
   --t-slow: 520ms cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out:      cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* How long the light/dark cross-fade runs. Referenced by both the CSS
-     transition and the JS timeout that removes the transition class, so the
-     two can never drift apart. */
   --t-theme: 420ms;
 
   --z-base:     1;
@@ -132,64 +83,47 @@
   --z-toast:   500;
 }
 
-/* =============================================================================
-   DARK - neutral graphite, sheet white, mint
-   -----------------------------------------------------------------------------
-   The greys are true neutrals, matching the identity sheet's own neutral grey
-   character; the mint and coral supply all the colour. Dark is the primary
-   mode, and it is the mode this palette was born for - both brand colours are
-   light, so they sit on a dark ground without alteration.
-   ========================================================================== */
+/* Dark: graphite grounds, the literal mint as accent. */
 [data-theme='dark'] {
-  --bg-0: #121212;   /* page                                    */
-  --bg-1: #191919;   /* raised - cards, form fields             */
-  --bg-2: #202020;   /* raised further - hover, inset panels    */
-  --bg-3: #272727;   /* highest - active states                 */
+  --lavender:   #C9B8FF;
+  --sky:        #9FD3FF;
+  --lavender-tint: rgba(201, 184, 255, 0.16);
+  --sky-tint:   rgba(159, 211, 255, 0.16);
+  /* Coloured shadows give cards weight: a tight contact shadow plus a wide, faintly tinted glow. */
+  --depth-1: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 2px 6px rgba(0, 0, 0, 0.35), 0 14px 40px -12px rgba(0, 0, 0, 0.6);
+  --depth-2: 0 1px 0 rgba(255, 255, 255, 0.07) inset, 0 4px 12px rgba(0, 0, 0, 0.35), 0 30px 70px -20px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --glass: rgba(30, 30, 32, 0.62);
+  --glow-opacity: 0.55;
+  --coral:      #F08A8A;
+  --peach:      #E3CBB9;
+  --mint-tint:  rgba(176, 239, 195, 0.14);
+  --coral-tint: rgba(236, 115, 115, 0.16);
+  --peach-tint: rgba(214, 190, 173, 0.16);
+  --bg-0: #121212;
+  --bg-1: #191919;
+  --bg-2: #202020;
+  --bg-3: #272727;
 
-  /* Primary text is the identity sheet's own #E6E6E6, so the site's type and
-     the brand sheet are literally the same value. 15.01:1 on bg-0. */
   --fg-1: #E6E6E6;
-  --fg-2: #CCCCCC;   /* 11.02:1 on bg-0 */
-  --fg-3: #949494;   /*  5.83:1 on bg-0, and still 4.99:1 on bg-3 */
-  --fg-4: #6E6E6E;   /* decorative numerals, disabled - never body text */
+  --fg-2: #CCCCCC;
+  --fg-3: #949494;
+  --fg-4: #6E6E6E;
 
-  /* Mint, used exactly as supplied. 14.26:1 on the page and ~12.8:1 on the
-     highest surface, so it is safe for body-size text and 11px labels alike -
-     which is only true in dark mode. See the light block for the alternative. */
   --accent:       #B0EFC3;
   --accent-hover: #C6F5D5;
   --accent-dim:   rgba(176, 239, 195, 0.13);
   --accent-line:  rgba(176, 239, 195, 0.32);
-  --accent-ink:   #121212;   /* text ON mint - 14.26:1 */
+  --accent-ink:   #121212;
   --accent-rgb:   176, 239, 195;
 
-  /* Two divider tokens, because one value cannot do both jobs.
-
-     --rule is decorative: it separates sections at roughly 1.3:1, which is
-     intentionally almost invisible. WCAG's non-text contrast rule does not
-     apply to purely decorative lines, so this is compliant as well as being
-     the effect the design wants.
-
-     --edge is the boundary of something you can actually operate - a text
-     input, a select, a checkbox. That IS covered (WCAG 1.4.11) and must clear
-     3:1. At 3.20:1 against the bg-2 that form fields sit on, --edge does; the
-     decorative value would have failed it by a wide margin, and you would not
-     have been able to see where to type. */
   --rule: #262626;
   --edge: #6E6E6E;
 
-  /* Scrim over full-bleed photography, so type stays legible on an unknown
-     image. A gradient rather than a flat wash: a flat scrim greys out the
-     whole photograph, while a gradient keeps the top of the frame clean and
-     darkens only where the type actually sits. */
   --scrim-from: rgba(0, 0, 0, 0.04);
   --scrim-to:   rgba(0, 0, 0, 0.68);
   --on-image:   #F4F4F4;
   --on-image-dim: rgba(244, 244, 244, 0.74);
 
-  /* Status colours drawn from the brand where the brand can carry them: the
-     coral is the error tone, since it is exactly what a warning red should be
-     and it clears 6.48:1 here. */
   --state-ok:   #8FD9A6;
   --state-warn: #E0C3A8;
   --state-err:  #EC7373;
@@ -198,58 +132,51 @@
 
   --overlay: rgba(6, 6, 6, 0.88);
 
-  /* Elevation is communicated with a change of surface value, not a drop
-     shadow. The two that remain are for genuinely floating things. */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.72);
 }
 
-/* =============================================================================
-   LIGHT - the identity sheet's grey, with a deep mint
-   -----------------------------------------------------------------------------
-   The page ground is #E6E6E6, the sheet's own background, rather than white.
-
-   The accent CANNOT be the brand mint here: #B0EFC3 on #E6E6E6 is 1.05:1, so
-   a mint link would be invisible. The accent is instead a deep derivative of
-   the same hue (138°), which keeps the brand's colour identity while being
-   usable for text. The literal mint still appears throughout this theme - as
-   band backgrounds, where it belongs (see .tone-accent).
-   ========================================================================== */
+/* Light: the sheet grey ground. Mint is too pale for text here, so the accent is a deep green. */
 [data-theme='light'] {
-  --bg-0: #E6E6E6;   /* the identity sheet's grey */
-  --bg-1: #F2F2F2;   /* raised - cards, form fields */
+  --lavender:   #5B3FC4;
+  --sky:        #1D5F99;
+  --lavender-tint: rgba(91, 63, 196, 0.10);
+  --sky-tint:   rgba(29, 95, 153, 0.10);
+  --depth-1: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 2px 6px rgba(20, 20, 40, 0.06), 0 14px 40px -12px rgba(30, 30, 60, 0.18);
+  --depth-2: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 4px 12px rgba(20, 20, 40, 0.08), 0 30px 70px -20px rgba(30, 30, 60, 0.28);
+  --glass: rgba(250, 250, 250, 0.68);
+  --glow-opacity: 0.7;
+  --coral:      #A3302F;
+  --peach:      #7A4A1E;
+  --mint-tint:  rgba(17, 95, 41, 0.10);
+  --coral-tint: rgba(163, 48, 47, 0.10);
+  --peach-tint: rgba(122, 74, 30, 0.10);
+  --bg-0: #E6E6E6;
+  --bg-1: #F2F2F2;
   --bg-2: #DCDCDC;
   --bg-3: #D2D2D2;
 
-  --fg-1: #1A1A1A;   /* 11.51:1 on the worst surface it can land on */
-  --fg-2: #3D3D3D;   /*  7.18:1 */
-  /* #555555, not the #666666 a neutral scale would suggest: on a #E6E6E6 page
-     #666666 is only 3.80:1 against bg-3. A darker page ground costs the muted
-     tier some headroom, and this is where it is paid back. */
-  --fg-3: #555555;   /*  4.93:1 */
-  --fg-4: #767676;   /* decorative only */
+  --fg-1: #1A1A1A;
+  --fg-2: #3D3D3D;
 
-  /* Deep mint - the brand hue at L=0.22. 5.16:1 on the worst surface. */
+  --fg-3: #555555;
+  --fg-4: #767676;
+
   --accent:       #115F29;
   --accent-hover: #0E4E21;
   --accent-dim:   rgba(17, 95, 41, 0.10);
   --accent-line:  rgba(17, 95, 41, 0.26);
-  --accent-ink:   #F2F2F2;   /* text ON deep mint - 8.9:1 */
+  --accent-ink:   #F2F2F2;
   --accent-rgb:   17, 95, 41;
 
-  --rule: #D2D2D2;   /* decorative - deliberately faint */
-  --edge: #767676;   /* interactive boundary - 4.06:1 on bg-1 */
+  --rule: #D2D2D2;
+  --edge: #767676;
 
-  /* The scrim stays dark in light mode. Photography is photography: a light
-     scrim over an unknown image cannot guarantee legibility for dark type,
-     whereas a dark scrim with light type always can. */
   --scrim-from: rgba(0, 0, 0, 0.04);
   --scrim-to:   rgba(0, 0, 0, 0.70);
   --on-image:   #F4F4F4;
   --on-image-dim: rgba(244, 244, 244, 0.74);
 
-  /* Deep derivatives again - the brand coral is 2.32:1 here and cannot be an
-     error colour that anyone can read. #9C1111 is the same hue at 5.55:1. */
   --state-ok:   #1A6B33;
   --state-warn: #7A4A1E;
   --state-err:  #9C1111;
@@ -260,201 +187,4 @@
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.16);
-}
-
-/* =============================================================================
-   SECTION TONES
-   -----------------------------------------------------------------------------
-   Each section can sit on a different ground. A tone class does NOT just set a
-   background - it REDEFINES the surface and text tokens on that section, so
-   every component inside it (rules, markers, buttons, tags, inputs) recolours
-   itself with no per-component overrides. A page module that already says
-   `background: var(--bg-0)` keeps working untouched, because --bg-0 is what the
-   tone rewrote.
-
-   Values are literal hex per theme rather than derived with var(), because a
-   tone that said `--bg-0: var(--accent)` while also redefining --accent would
-   be a self-referencing cycle and resolve to nothing.
-
-   This is where the brand colours do their real work. Mint and coral are both
-   light, so each is a band GROUND with dark type - and identical in both
-   themes, since a light ground needs dark type either way. That is why the
-   mint and coral blocks below are not split by theme.
-   ========================================================================== */
-
-/* ── Mint ground ────────────────────────────────────────────────────────────
-   The brand mint, unaltered, as a full-bleed band. Generous headroom: dark
-   type runs 14.26:1 and even the fourth tier clears 4.86:1. */
-.tone-accent {
-  --bg-0: #B0EFC3;
-  --bg-1: #A5EABA;
-  --bg-2: #99E4B0;
-  --bg-3: #8DDDA5;
-
-  --fg-1: #121212;   /* 14.26:1 */
-  --fg-2: #2B2B2B;   /* 10.77:1 */
-  --fg-3: #4A4A4A;   /*  6.74:1 */
-  --fg-4: #5F5F5F;   /*  4.86:1 */
-
-  --rule: rgba(18, 18, 18, 0.16);
-  --edge: rgba(18, 18, 18, 0.55);
-
-  /* Accent details invert inside the band: a mint marker numeral on a mint
-     ground would vanish, so here the "accent" is the ink. */
-  --accent:       #121212;
-  --accent-hover: #2B2B2B;
-  --accent-ink:   #B0EFC3;
-  --accent-dim:   rgba(18, 18, 18, 0.09);
-  --accent-line:  rgba(18, 18, 18, 0.28);
-  --accent-rgb:   18, 18, 18;
-}
-
-/* ── Coral ground ───────────────────────────────────────────────────────────
-   The brand coral, unaltered.
-
-   NOTE ON HIERARCHY: coral is the weakest ground in the palette. Dark type is
-   6.48:1 and the second tier is 4.90:1 - the third would be 3.76:1, a fail. So
-   fg-3 is set equal to fg-2 rather than lighter, and this band deliberately
-   carries one less level of text hierarchy than the others. Deepening the
-   coral does not help: it moves the ground toward the type and costs headroom
-   rather than gaining it (#D64B4B drops primary text to 4.43:1). */
-.tone-accent-deep {
-  --bg-0: #EC7373;
-  --bg-1: #EF8080;
-  --bg-2: #F18C8C;
-  --bg-3: #F49999;
-
-  --fg-1: #121212;   /* 6.48:1 */
-  --fg-2: #2B2B2B;   /* 4.90:1 */
-  --fg-3: #2B2B2B;   /* same as fg-2 on purpose - see note above */
-  --fg-4: #3D3D3D;   /* 3.76:1 - decorative numerals only, never text */
-
-  --rule: rgba(18, 18, 18, 0.20);
-  --edge: rgba(18, 18, 18, 0.58);
-
-  --accent:       #121212;
-  --accent-hover: #2B2B2B;
-  --accent-ink:   #EC7373;
-  --accent-dim:   rgba(18, 18, 18, 0.10);
-  --accent-line:  rgba(18, 18, 18, 0.30);
-  --accent-rgb:   18, 18, 18;
-}
-
-/* ── Brand tint ─────────────────────────────────────────────────────────────
-   The brand as a ground WASH rather than at full strength, and the one accent
-   treatment that keeps the page's normal text colours - the tint is far enough
-   from the brand values that fg-1/2/3 all still clear 4.5:1 on it.
-
-   Dark mode tints toward the mint; light mode uses the sheet's peach ribbon,
-   so all three brand colours end up doing structural work. */
-[data-theme='dark'] .tone-accent-soft {
-  --bg-0: #131A16;
-  --bg-1: #18211C;
-  --bg-2: #1D2721;
-  --bg-3: #222E27;
-  /* fg unchanged: 14.17 / 11.02 / 5.83, and mint holds 13.46:1 here. */
-  --rule: rgba(176, 239, 195, 0.15);
-}
-
-[data-theme='light'] .tone-accent-soft {
-  --bg-0: #E8DCD2;   /* the peach ribbon, softened to a ground */
-  --bg-1: #F0E7DF;
-  --bg-2: #E0D2C6;
-  --bg-3: #D8C8BB;
-  /* fg-1 12.93:1 and fg-2 8.07:1 need no change. fg-3 is nudged one step
-     darker than the theme's #555555 so it still clears 4.5:1 against the
-     lowest peach step rather than only against the top one. */
-  --fg-3: #4F4F4F;
-  --rule: rgba(90, 66, 48, 0.20);
-}
-
-/* ── Inverted ground ────────────────────────────────────────────────────────
-   Flips the page: a light band in dark mode, a dark band in light mode. The
-   accent has to swap with it - the literal mint is 13.24:1 on a near-black
-   band but 1.05:1 on a near-white one, so each direction borrows the other
-   theme's accent value. */
-[data-theme='dark'] .tone-invert {
-  --bg-0: #E6E6E6;
-  --bg-1: #DCDCDC;
-  --bg-2: #D2D2D2;
-  --bg-3: #C8C8C8;
-
-  --fg-1: #121212;   /* 15.01:1 */
-  --fg-2: #2E2E2E;
-  --fg-3: #4A4A4A;
-  --fg-4: #6E6E6E;
-
-  --rule: rgba(18, 18, 18, 0.14);
-  --edge: rgba(18, 18, 18, 0.45);
-
-  --accent:       #115F29;   /* deep mint - 6.25:1 here */
-  --accent-hover: #0E4E21;
-  --accent-ink:   #F2F2F2;
-  --accent-dim:   rgba(17, 95, 41, 0.10);
-  --accent-line:  rgba(17, 95, 41, 0.26);
-  --accent-rgb:   17, 95, 41;
-}
-
-[data-theme='light'] .tone-invert {
-  --bg-0: #1A1A1A;
-  --bg-1: #242424;
-  --bg-2: #2E2E2E;
-  --bg-3: #383838;
-
-  --fg-1: #E6E6E6;   /* 13.94:1 */
-  --fg-2: #CCCCCC;
-  --fg-3: #949494;
-  --fg-4: #6E6E6E;
-
-  --rule: rgba(230, 230, 230, 0.14);
-  --edge: rgba(230, 230, 230, 0.45);
-
-  --accent:       #B0EFC3;   /* the literal mint - 13.24:1 here */
-  --accent-hover: #C6F5D5;
-  --accent-ink:   #121212;
-  --accent-dim:   rgba(176, 239, 195, 0.13);
-  --accent-line:  rgba(176, 239, 195, 0.32);
-  --accent-rgb:   176, 239, 195;
-}
-
-/* ── Raised / deep grounds ──────────────────────────────────────────────────
-   A shift of surface value rather than of hue. No token remapping needed: the
-   body and muted text colours were checked against both and still clear
-   4.5:1, so only --bg-0 moves. */
-.tone-raised { --bg-0: var(--bg-2); }
-.tone-deep   { --bg-0: var(--bg-3); }
-
-/* ── Theme cross-fade ───────────────────────────────────────────────────────
-   The mode change should feel deliberate rather than instant.
-
-   The transition is scoped to a class that useTheme adds for the duration of
-   the toggle and then removes, rather than living permanently on `*`. Two
-   reasons that matters: a permanent transition on colour properties makes
-   every hover state on the page lag by the same duration, and it also fires
-   on first paint, so the whole site would fade in from the wrong palette on
-   load. Bound to the toggle, it costs nothing the rest of the time.
-
-   Only paint properties are listed. Transitioning `all` here would animate
-   layout properties too and turn the toggle into a visible reflow. */
-.theme-transition,
-.theme-transition *,
-.theme-transition *::before,
-.theme-transition *::after {
-  transition:
-    background-color var(--t-theme) var(--ease-out),
-    border-color     var(--t-theme) var(--ease-out),
-    color            var(--t-theme) var(--ease-out),
-    fill             var(--t-theme) var(--ease-out),
-    stroke           var(--t-theme) var(--ease-out),
-    box-shadow       var(--t-theme) var(--ease-out) !important;
-  transition-delay: 0s !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .theme-transition,
-  .theme-transition *,
-  .theme-transition *::before,
-  .theme-transition *::after {
-    transition: none !important;
-  }
 }

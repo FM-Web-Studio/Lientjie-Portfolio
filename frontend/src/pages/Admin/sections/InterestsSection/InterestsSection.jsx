@@ -5,6 +5,10 @@ import {
 } from '../../../../firebase'
 import { useToast } from '../../../../context/ToastContext'
 import Modal from '../../../../components/Modal'
+import Button from '../../../../components/Button'
+import { Plus, Close } from '../../../../components/Icons'
+import { SectionHeader, EmptyState, SkeletonRows, DropZone, Pill, IconAction, cx } from '../../ui'
+import { IconPencil, IconTrash, IconStar, IconEye, IconEyeOff, IconImage, IconChevLeft, IconChevRight } from '../../icons'
 import styles from '../../Admin.module.css'
 
 const BLANK = {
@@ -13,12 +17,7 @@ const BLANK = {
 
 const slug = (s) => (s || 'untitled').toLowerCase().replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled'
 
-/**
- * Interests shown on the public Interests page. Deliberately lighter than
- * Projects - no category, year or tags, since these are personal hobbies
- * rather than portfolio pieces. An interest can be saved with zero images;
- * the public page shows it as a "coming soon" tile rather than hiding it.
- */
+// Lighter than Projects: hobbies, not portfolio pieces. Zero images is fine, the site shows a "coming soon" tile.
 export default function InterestsSection() {
   const { addToast } = useToast()
   const [interests, setInterests] = useState([])
@@ -52,9 +51,7 @@ export default function InterestsSection() {
       setForm(f => ({
         ...f,
         images: [...f.images, ...urls],
-        // First upload on an empty interest becomes the cover automatically -
-        // otherwise a freshly added interest has photos but no thumbnail
-        // until someone remembers to star one.
+        // The first upload on an empty interest becomes the cover, so it never lacks a thumbnail.
         coverImage: f.coverImage || urls[0],
       }))
     } catch { addToast({ type: 'error', title: 'Image upload failed' }) }
@@ -135,121 +132,124 @@ export default function InterestsSection() {
     }
   }
 
+  const addButton = <Button variant="accent" size="sm" magnetic={false} icon={<Plus size={14} />} onClick={openNew}>Add interest</Button>
+
   return (
     <div>
-      <div className={styles.sectionHeader}>
-        <p className={styles.intro} style={{ margin: 0 }}>
-          Interests shown on the Interests page - each can have zero or more photos.
-          Hidden interests are kept here but never shown on the site.
-        </p>
-        <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`} onClick={openNew}>+ Add Interest</button>
-      </div>
+      <SectionHeader
+        description={<p>Interests shown on the Interests page, each with zero or more photos. Hidden interests are kept here but never shown on the site.</p>}
+        action={addButton}
+      />
 
-      {loading ? <p className={styles.empty}>Loading…</p>
-        : interests.length === 0 ? <p className={styles.empty}>No interests yet. Add the first one above.</p>
+      {loading ? <SkeletonRows rows={3} thumb />
+        : interests.length === 0 ? <EmptyState title="No interests yet">Add the first one with the button above.</EmptyState>
         : (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead><tr><th>Order</th><th>Image</th><th>Name</th><th>Photos</th><th>Visible</th><th>Actions</th></tr></thead>
-              <tbody>
-                {interests.map(i => {
-                  const isHidden = i.hidden === true
-                  return (
-                  <tr key={i.id} className={isHidden ? styles.rowHidden : undefined}>
-                    <td><input type="number" defaultValue={i.order} className={styles.orderInput} onBlur={e => saveOrder(i, e.target.value)} /></td>
-                    <td>{i.coverImage && <img src={i.coverImage} alt="" className={styles.thumb} />}</td>
-                    <td>
-                      <strong>{i.name}</strong>
-                      {isHidden && <span className={styles.hiddenTag}>Hidden</span>}
-                    </td>
-                    <td>{i.images?.length ?? 0}</td>
-                    <td>
-                      <button
-                        className={`${styles.btn} ${styles.btnSm} ${isHidden ? styles.btnOutline : styles.btnPrimary}`}
-                        onClick={() => toggleHidden(i)}
-                        aria-pressed={!isHidden}
-                        title={isHidden ? 'Show this interest on the site' : 'Hide this interest from the site'}
-                      >
-                        {isHidden ? 'Hidden' : 'Shown'}
-                      </button>
-                    </td>
-                    <td className={styles.actions}>
-                      <button className={`${styles.btn} ${styles.btnOutline} ${styles.btnSm}`} onClick={() => openEdit(i)}>Edit</button>
-                      <button className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`} onClick={() => remove(i)}>Delete</button>
-                    </td>
-                  </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+          <div className={styles.workList}>
+            {interests.map((i, idx) => {
+              const isHidden = i.hidden === true
+              const count = i.images?.length ?? 0
+              return (
+                <div key={i.id} className={cx(styles.workRow, isHidden && styles.rowHidden)} style={{ '--i': idx }}>
+                  <div className={styles.workOrder}>
+                    <input
+                      type="number"
+                      defaultValue={i.order}
+                      className={styles.orderInput}
+                      onBlur={e => saveOrder(i, e.target.value)}
+                      aria-label={`Order of "${i.name}"`}
+                    />
+                    <span aria-hidden="true">Order</span>
+                  </div>
+                  <div className={styles.thumb}>
+                    {i.coverImage
+                      ? <span className={styles.thumbZoom}><img src={i.coverImage} alt="" loading="lazy" decoding="async" /></span>
+                      : <span className={styles.thumbEmpty}><IconImage size={18} /></span>}
+                  </div>
+                  <div className={styles.workMain}>
+                    <strong className={styles.rowTitle}>{i.name}</strong>
+                    <div className={styles.rowMetaLine}>
+                      <span className={styles.workYear}>{count} photo{count === 1 ? '' : 's'}</span>
+                      {isHidden && <Pill tone="hidden">Hidden</Pill>}
+                    </div>
+                  </div>
+                  <div className={styles.toggles}>
+                    <button
+                      type="button"
+                      className={cx(styles.toggle, styles.toggleWarn)}
+                      onClick={() => toggleHidden(i)}
+                      aria-pressed={!isHidden}
+                      title={isHidden ? 'Show this interest on the site' : 'Hide this interest from the site'}
+                    >
+                      {isHidden ? <IconEyeOff size={13} /> : <IconEye size={13} />} {isHidden ? 'Hidden' : 'Shown'}
+                    </button>
+                  </div>
+                  <div className={styles.rowActions}>
+                    <IconAction label={`Edit "${i.name}"`} onClick={() => openEdit(i)}><IconPencil size={15} /></IconAction>
+                    <IconAction label={`Delete "${i.name}"`} danger onClick={() => remove(i)}><IconTrash size={15} /></IconAction>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
 
-      <Modal open={!!modal} onClose={close} title={modal?.mode === 'add' ? 'New Interest' : 'Edit Interest'} size="lg">
+      <Modal open={!!modal} onClose={close} title={modal?.mode === 'add' ? 'New interest' : 'Edit interest'} size="lg">
         <form onSubmit={save}>
           <div className={styles.grid2}>
-            <div className={`${styles.field} ${styles.span2}`}><label>Name *</label><input value={form.name} onChange={set('name')} placeholder="e.g. Photography, Baking, Hiking" /></div>
-            <div className={`${styles.field} ${styles.span2}`}><label>Description</label><textarea rows={3} value={form.description} onChange={set('description')} placeholder="A short note shown in the viewer (optional)" /></div>
-            <div className={styles.field}><label>Order</label><input type="number" value={form.order} onChange={set('order')} min="0" /></div>
-            {/* Phrased positively and stored inverted, matching Projects: the
-                checkbox reads as "on = live" while the field stays `hidden` so
-                untouched legacy documents keep defaulting to visible. */}
-            <div className={`${styles.field} ${styles.checkField}`}><input type="checkbox" checked={!form.hidden} onChange={e => setForm(f => ({ ...f, hidden: !e.target.checked }))} id="if-visible" /><label htmlFor="if-visible">Show on the site</label></div>
-
-            <div className={`${styles.field} ${styles.span2}`}>
-              <label>Photos</label>
-              <p className={styles.hint}>
-                It's fine to leave this empty - the interest still appears on the site. Use ‹ › to
-                reorder, ★ to make one the cover image, and ✕ to remove.
-              </p>
-              {form.images.length > 0 && (
-                <div className={styles.gallery}>
-                  {form.images.map((url, i) => (
-                    <div key={`${url}-${i}`} className={styles.galleryItem}>
-                      <img src={url} alt={`Image ${i + 1}`} />
-                      {url === form.coverImage && <span className={styles.galleryFlag}>Cover</span>}
-                      <div className={styles.galleryBar}>
-                        <button
-                          type="button" className={styles.galleryBtn}
-                          onClick={() => moveImage(i, -1)} disabled={i === 0}
-                          aria-label={`Move image ${i + 1} earlier`}
-                        >‹</button>
-                        <button
-                          type="button" className={styles.galleryBtn}
-                          onClick={() => makeCover(url)} disabled={url === form.coverImage}
-                          aria-label={`Use image ${i + 1} as the cover`} title="Use as cover"
-                        >★</button>
-                        <button
-                          type="button" className={styles.galleryBtn}
-                          onClick={() => moveImage(i, 1)} disabled={i === form.images.length - 1}
-                          aria-label={`Move image ${i + 1} later`}
-                        >›</button>
-                        <button
-                          type="button" className={`${styles.galleryBtn} ${styles.galleryBtnDanger}`}
-                          onClick={() => removeImage(i)}
-                          aria-label={`Remove image ${i + 1}`}
-                        >✕</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className={styles.imgRow}>
-                <label className={`${styles.btn} ${styles.btnOutline} ${styles.btnSm} ${styles.uploadBtn}`}>
-                  {uploading ? 'Uploading…' : 'Add photos'}
-                  <input type="file" accept="image/*" multiple onChange={handleImagesUpload} hidden disabled={uploading} />
-                </label>
-                {form.images.length > 0 && (
-                  <span className={styles.uploadMsg}>
-                    {form.images.length} photo{form.images.length === 1 ? '' : 's'}
-                  </span>
-                )}
-              </div>
-            </div>
+            <div className={cx(styles.field, styles.span2)}><label htmlFor="if-name">Name *</label><input id="if-name" value={form.name} onChange={set('name')} placeholder="e.g. Photography, Baking, Hiking" /></div>
+            <div className={cx(styles.field, styles.span2)}><label htmlFor="if-desc">Description</label><textarea id="if-desc" rows={3} value={form.description} onChange={set('description')} placeholder="A short note shown in the viewer (optional)" /></div>
+            <div className={styles.field}><label htmlFor="if-order">Order</label><input id="if-order" type="number" value={form.order} onChange={set('order')} min="0" /></div>
+            {/* Phrased as "on = live" but stored inverted, matching Projects. */}
+            <div className={cx(styles.field, styles.checkField)}><input type="checkbox" checked={!form.hidden} onChange={e => setForm(f => ({ ...f, hidden: !e.target.checked }))} id="if-visible" /><label htmlFor="if-visible">Show on the site</label></div>
           </div>
+
+          <div className={cx(styles.field, styles.fieldGap)}>
+            <span className={styles.fieldLabel}>
+              Photos
+              {form.images.length > 0 && <span className={styles.uploadMsg}>{form.images.length} photo{form.images.length === 1 ? '' : 's'}</span>}
+            </span>
+            <p className={styles.hint}>
+              It's fine to leave this empty - the interest still appears on the site. Use the arrows
+              to reorder, the star to make one the cover image, and the cross to remove.
+            </p>
+            {form.images.length > 0 && (
+              <div className={styles.gallery}>
+                {form.images.map((url, i) => (
+                  <div key={`${url}-${i}`} className={cx(styles.galleryItem, url === form.coverImage && styles.isCover)}>
+                    <span className={styles.galleryZoom}><img src={url} alt={`Image ${i + 1}`} loading="lazy" decoding="async" /></span>
+                    {url === form.coverImage ? <span className={styles.galleryFlag}>Cover</span> : <span className={styles.galleryIdx}>{i + 1}</span>}
+                    <div className={styles.galleryBar}>
+                      <button
+                        type="button" className={styles.galleryBtn}
+                        onClick={() => moveImage(i, -1)} disabled={i === 0}
+                        aria-label={`Move image ${i + 1} earlier`}
+                      ><IconChevLeft size={14} /></button>
+                      <button
+                        type="button" className={styles.galleryBtn}
+                        onClick={() => makeCover(url)} disabled={url === form.coverImage}
+                        aria-label={`Use image ${i + 1} as the cover`} title="Use as cover"
+                      ><IconStar size={13} /></button>
+                      <button
+                        type="button" className={styles.galleryBtn}
+                        onClick={() => moveImage(i, 1)} disabled={i === form.images.length - 1}
+                        aria-label={`Move image ${i + 1} later`}
+                      ><IconChevRight size={14} /></button>
+                      <button
+                        type="button" className={cx(styles.galleryBtn, styles.galleryBtnDanger)}
+                        onClick={() => removeImage(i)}
+                        aria-label={`Remove image ${i + 1}`}
+                      ><Close size={13} /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <DropZone multiple busy={uploading} onFiles={handleImagesUpload} title="Add photos" hint="The first one becomes the cover" />
+          </div>
+
           <div className={styles.formActions}>
-            <button type="button" className={`${styles.btn} ${styles.btnOutline}`} onClick={close}>Cancel</button>
-            <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={saving || uploading}>{saving ? 'Saving…' : 'Save Interest'}</button>
+            <Button size="sm" magnetic={false} onClick={close}>Cancel</Button>
+            <Button variant="accent" size="sm" magnetic={false} type="submit" disabled={saving || uploading}>{saving ? 'Saving…' : 'Save interest'}</Button>
           </div>
         </form>
       </Modal>

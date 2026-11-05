@@ -1,312 +1,174 @@
-/* =============================================================================
-   CONTACT
-   -----------------------------------------------------------------------------
-   Header, then an asymmetric split: the form on the left seven columns and the
-   contact details as a ruled rail on the right three. No centred card.
-   ========================================================================== */
-
-.head {
-  padding-top: calc(var(--nav-h) + clamp(48px, 9vh, 112px));
-  padding-bottom: clamp(40px, 6vh, 72px);
-}
-
-.headType {
-  grid-column: 1 / 9;
-  min-width: 0;
-}
-
-.eyebrow {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  color: var(--fg-3);
-  margin: 0 0 var(--sp-6);
-}
-
-.eyebrow::before {
-  content: '';
-  width: 40px;
-  height: 1px;
-  background: var(--accent);
-  flex-shrink: 0;
-}
-
-.title {
-  font-family: var(--font-serif);
-  font-size: var(--text-display);
-  line-height: var(--leading-display);
-  letter-spacing: var(--tracking-display);
-  font-weight: 400;
-  color: var(--fg-1);
-  margin: 0;
-  /* Optical alignment against the gutter - see .display in global.css. */
-  margin-left: -0.045em;
-  max-width: 14ch;
-}
-
-.headSub {
-  grid-column: 9 / 13;
-  align-self: end;
-  padding-bottom: var(--sp-3);
-  min-width: 0;
-}
-
-.sub {
-  font-size: var(--text-base);
-  line-height: var(--leading-relaxed);
-  color: var(--fg-2);
-  margin: 0;
-  max-width: 34ch;
-}
-
-/* ── Body ───────────────────────────────────────────────────────────────── */
-.body {
-  padding-bottom: var(--section-y);
-  padding-top: clamp(48px, 7vh, 88px);
-}
-
-.formCol {
-  grid-column: 1 / 8;
-  min-width: 0;
-}
-
-/* The submit row sits on the page ground, so its rule is the page's. */
-
-/* Two columns for the short fields, one for the message. A single stacked
-   column made the form a tall ribbon, which is the shape being avoided. */
-.fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(20px, 3vw, 32px);
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-  min-width: 0;
-}
-
-.fieldWide { grid-column: 1 / -1; }
-
-.label {
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  color: var(--fg-3);
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-2);
-}
-
-.req { color: var(--accent); }
-
-/* An underline rather than a box. The border uses --edge, not --rule: --rule
-   is the decorative divider value at ~1.3:1, and a form field is an
-   interactive component whose boundary must clear 3:1 (WCAG 1.4.11) or the
-   reader genuinely cannot see where to type. --edge is 3.23:1 on this
-   surface in dark and 3.45:1 in light. */
-.input {
-  appearance: none;
-  width: 100%;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--edge);
-  border-radius: 0;
-  padding: var(--sp-3) 0;
-  font-family: var(--font-sans);
-  font-size: var(--text-md);
-  color: var(--fg-1);
-  transition: border-color var(--t-base);
-}
-
-.input::placeholder { color: var(--fg-4); }
-
-.input:hover { border-bottom-color: var(--fg-3); }
-
-.input:focus {
-  outline: none;
-  border-bottom-color: var(--accent);
-}
-
-/* The focus ring would sit around a borderless box and read as a stray
-   rectangle, so focus is expressed with the underline instead - but only for
-   pointer focus. Keyboard focus keeps a real ring, because the underline
-   alone is too quiet to track when tabbing. */
-.input:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 4px;
-}
-
-.textarea {
-  resize: vertical;
-  min-height: 8lh;
-  line-height: var(--leading-relaxed);
-}
-
-.inputErr { border-bottom-color: var(--state-err); }
-
-.err {
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  color: var(--state-err);
-}
-
-.actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--sp-6);
-  margin-top: clamp(32px, 5vh, 56px);
-  padding-top: var(--sp-8);
-  border-top: 1px solid var(--rule);
-}
-
-.note {
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  color: var(--fg-4);
-  margin: 0;
-}
-
-.privacy {
-  flex-basis: 100%;
-  max-width: var(--measure);
-  font-size: var(--text-sm);
-  line-height: var(--leading-normal);
-  color: var(--fg-3);
-  margin: 0;
-}
-
-.privacy a {
-  color: var(--accent);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-/* ── Sent state ─────────────────────────────────────────────────────────────
-   Replaces the form in place rather than navigating, so the reader's context
-   is preserved and they can send another without a round trip. */
-.sent {
+/* ── Heading ── */
+.hero {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--sp-5);
-  padding: clamp(32px, 5vw, 56px);
-  border: 1px solid var(--rule);
-  background: var(--bg-1);
+  gap: var(--sp-6);
+  padding-top: calc(var(--nav-h) + clamp(48px, 8vh, 96px));
+  padding-bottom: clamp(40px, 6vh, 64px);
+}
+.status { gap: 8px; }
+.statusDot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.title {
+  font-size: var(--text-display);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: var(--tracking-display);
+  max-width: 14ch;
+}
+.sub { max-width: 46ch; font-size: var(--text-lg); line-height: 1.6; color: var(--fg-2); }
+
+/* ── Form and details side by side ── */
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(20px, 3vw, 40px);
+  padding-bottom: var(--section-y);
 }
 
-.sentMark {
-  color: var(--accent);
-  margin: 0;
+.formCard { padding: clamp(24px, 4vw, 48px); }
+.form { display: flex; flex-direction: column; gap: var(--sp-8); }
+.formHead { display: flex; justify-content: space-between; align-items: baseline; gap: var(--sp-4); }
+.formTitle { font-size: var(--text-xl); font-weight: 600; letter-spacing: -0.02em; }
+.formReq { font-size: var(--text-xs); color: var(--fg-3); }
+.req { color: var(--accent); }
+
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-8) var(--sp-6); }
+.field { grid-column: 1 / -1; }
+.half { grid-column: span 1; }
+.fieldErr :global(.field-label) { color: var(--state-err); }
+.err {
+  font-size: var(--text-xs);
+  color: var(--state-err);
+  animation: errIn 400ms var(--ease-spring) both;
+}
+@keyframes errIn { from { opacity: 0; transform: translateY(-4px); } }
+.fieldFoot { display: flex; justify-content: space-between; gap: var(--sp-4); }
+.count { font-size: var(--text-xs); color: var(--fg-4); font-variant-numeric: tabular-nums; }
+
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-4) var(--sp-6); }
+.privacy { flex: 1 1 240px; font-size: var(--text-xs); line-height: 1.6; color: var(--fg-3); }
+.inlineLink { color: var(--fg-1); text-underline-offset: 3px; }
+.spin { animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Sent: a tick that springs in with a little burst ── */
+.sent {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--sp-5);
+  padding-block: clamp(24px, 6vw, 64px);
 }
-
-.sentTitle {
-  font-family: var(--font-serif);
-  font-size: var(--text-2xl);
-  line-height: var(--leading-snug);
-  font-weight: 400;
-  color: var(--fg-1);
-  margin: 0;
+.sent :global(.btn) { margin-top: var(--sp-3); }
+.badgeOk {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  animation: pop 800ms var(--ease-spring) both;
 }
-
-.sentBody {
-  font-size: var(--text-base);
-  line-height: var(--leading-relaxed);
-  color: var(--fg-2);
-  margin: 0;
-  max-width: 44ch;
+@keyframes pop { from { transform: scale(0) rotate(-30deg); } }
+.spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: rotate(var(--r)) translateY(0);
+  opacity: 0;
+  animation: burst 900ms var(--ease-out) 200ms both;
 }
+.spark:nth-child(odd) { background: var(--fg-1); width: 6px; height: 6px; margin: -3px; }
+@keyframes burst {
+  0%   { opacity: 1; transform: rotate(var(--r)) translateY(0) scale(1); }
+  100% { opacity: 0; transform: rotate(var(--r)) translateY(-70px) scale(0.4); }
+}
+.sentTitle { font-size: var(--text-3xl); font-weight: 600; letter-spacing: var(--tracking-display); outline: none; }
+.sentBody { max-width: 40ch; color: var(--fg-2); line-height: 1.6; }
 
-/* ── Details rail ───────────────────────────────────────────────────────── */
-/* A coral panel rather than a bare rail. `align-self: start` keeps it the
-   height of its content - stretched to the form's full height it became a
-   several-hundred-pixel slab of coral, which overwhelmed the form beside it. */
-.detailsCol {
-  grid-column: 9 / 13;
-  align-self: start;
+/* ── Details: a column of small cards ── */
+.side { position: sticky; top: calc(var(--nav-h) + var(--sp-6)); display: flex; flex-direction: column; gap: var(--sp-3); }
+.sideTitle { margin-bottom: var(--sp-2); font-size: var(--text-xl); font-weight: 600; letter-spacing: -0.02em; }
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--sp-5);
   min-width: 0;
-  padding: clamp(24px, 3vw, 40px);
 }
-
-.detailsHead {
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  color: var(--fg-1);
-  margin: 0 0 var(--sp-6);
-  padding-bottom: var(--sp-3);
-  /* --rule inside .tone-accent-deep is a dark alpha over coral, so this line
-     reads as an ink hairline rather than the near-invisible neutral divider
-     it would have been on the page ground. */
-  border-bottom: 1px solid var(--rule);
-}
-
-.details {
+.item:has(.hit) { padding: 0; }
+.item:has(.hit):hover { transform: translateY(-3px); border-color: var(--edge); box-shadow: var(--shadow-lg); }
+.hit {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
-  margin: 0;
-}
-
-.detail {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.detailKey {
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  color: var(--fg-3);
-}
-
-.detailVal {
-  font-size: var(--text-sm);
-  color: var(--fg-1);
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.detailLink {
-  color: inherit;
+  gap: 6px;
+  width: 100%;
+  padding: var(--sp-5);
+  text-align: left;
   text-decoration: none;
-  transition: color var(--t-fast);
+  color: inherit;
+  border-radius: inherit;
 }
+.key { font-size: var(--text-xs); color: var(--fg-3); }
+.val { font-size: var(--text-base); font-weight: 500; overflow-wrap: anywhere; }
+.note { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-xs); color: var(--fg-3); }
+.noteOk { color: var(--accent); }
+.arrow {
+  position: absolute;
+  top: var(--sp-4);
+  right: var(--sp-4);
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  transition: transform 600ms var(--ease-spring), background-color 300ms, color 300ms, border-color 300ms;
+}
+.hit:hover .arrow, .hit:focus-visible .arrow { transform: rotate(45deg); background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 
-.detailLink:hover { color: var(--accent); }
+.emailItem { flex-direction: row; align-items: stretch; }
+.emailItem .hit { flex: 1; min-width: 0; padding-right: 0; }
+.mailBtn {
+  align-self: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin: var(--sp-4);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--fg-1);
+  background: var(--bg-2);
+  transition: transform 500ms var(--ease-spring), background-color 300ms, color 300ms;
+}
+.mailBtn:hover { transform: rotate(-12deg) scale(1.08); background: var(--accent); color: var(--accent-ink); }
 
-/* ── Stacked ────────────────────────────────────────────────────────────── */
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); }
+.small .val { font-size: var(--text-sm); }
+
 @media (max-width: 900px) {
-  .headSub {
-    align-self: start;
-    padding-bottom: 0;
-    margin-top: var(--sp-8);
-  }
-
-  .sub, .title { max-width: none; }
-
-  .detailsCol { margin-top: clamp(48px, 8vh, 80px); }
+  .body { grid-template-columns: minmax(0, 1fr); padding-bottom: clamp(48px, 8vh, 80px); }
+  .side { position: static; }
 }
-
 @media (max-width: 560px) {
-  /* One column: two side-by-side fields at this width give each about eight
-     visible characters. */
   .fields { grid-template-columns: minmax(0, 1fr); }
+  .half { grid-column: 1 / -1; }
+  .formHead { flex-direction: column; gap: var(--sp-2); }
 }
-
-.cvRow { margin-top: var(--sp-8); }
+@media (prefers-reduced-motion: reduce) {
+  .badgeOk, .spark, .err, .spin { animation: none; }
+  .spark { display: none; }
+  .arrow, .mailBtn { transition: none; }
+}
