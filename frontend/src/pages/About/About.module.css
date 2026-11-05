@@ -385,3 +385,5 @@
 
   .entryPeriod { padding-top: 0; }
 }
+
+.cvRow { margin-top: var(--sp-8); }

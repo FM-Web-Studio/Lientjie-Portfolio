@@ -2,7 +2,7 @@
 // A block is a paragraph (string) or a bullet list (array). [text](url) becomes a link.
 // Change LEGAL_UPDATED whenever the meaning of either document changes.
 
-export const LEGAL_UPDATED = '4 November 2026'
+export const LEGAL_UPDATED = '5 November 2026'
 
 // reCAPTCHA only loads once App Check has a site key, so the policy only mentions it then.
 const SPAM_CHECK = Boolean(import.meta.env.FIREBASE_APPCHECK_SITE_KEY)
@@ -24,6 +24,7 @@ export const privacyPolicy = ({ name, email, location }) => ({
         'When you send a message through the Contact page: your name, your email address, the subject if you give one, your message, and the time it was sent. Nothing else is attached to it.',
         'To stop the form being used for spam, the site also keeps short one-way codes made from your network (IP) address and your email address, so it can count how many messages arrive from one place. The codes cannot be turned back into the originals, and they are deleted after 24 hours.',
         'When you visit any page: the site is served by Google Firebase Hosting, which, like every web host, receives your IP address, browser details and the page requested in order to deliver it. I do not run analytics, advertising or tracking scripts, and I do not build a profile of you.',
+        'When you download my CV: the PDF is put together inside your own browser from what is already on this site. The site does not record that you downloaded it, who you are, or what you do with it.',
         'Please do not send special personal information (health, religion, political views and the like) or anything about children through the form. I do not need it.',
       ],
     },
@@ -43,12 +44,19 @@ export const privacyPolicy = ({ name, email, location }) => ({
         [
           'Google (Firebase and Google Cloud) stores contact messages in a database in Belgium (europe-west1) and hosts the site. See [Google\'s privacy policy](https://policies.google.com/privacy).',
           'A small program in the same Google Cloud region checks each message for spam, saves it, and emails a copy to my Gmail inbox so I can reply.',
-          'Google Fonts supplies the site\'s typefaces, so your browser contacts Google\'s servers when a page loads.',
+          'Google Fonts supplies the site\'s typefaces, so your browser contacts Google\'s servers when a page loads. The CV uses copies of the same typefaces served from this site itself, so downloading it contacts no one new.',
           ...(SPAM_CHECK ? ['Google reCAPTCHA checks that the form is being used by a person and not a bot. It looks at how the page is used and may set its own cookies. The [Google privacy policy](https://policies.google.com/privacy) and [terms](https://policies.google.com/terms) apply to it.'] : []),
         ],
         'Some of these providers store or process information outside South Africa. I rely on them because they are bound by data-protection terms that give protection comparable to POPIA (POPIA section 72), including the EU Standard Contractual Clauses where they apply.',
         'Links to Instagram, LinkedIn and other sites only contact those services when you follow them, and their own policies then apply.',
         'I would only share your information with anyone else if the law required me to.',
+      ],
+    },
+    {
+      heading: 'My own information in the CV',
+      blocks: [
+        'The CV and the About page share my own contact details, education and work history so that practices, studios and universities can consider me for placements, work and study. Please use them for that purpose only. Do not add me to marketing or recruitment databases, sell or publish my details, or contact me about unrelated offers.',
+        'If you receive my CV as part of an application, please keep it only as long as you need it to consider me, and delete it afterwards.',
       ],
     },
     {
@@ -110,6 +118,13 @@ export const termsOfUse = ({ name, email, location }) => ({
         'Some projects were made as part of my studies at the University of Johannesburg. The university\'s own rules on student work may also apply to them, and nothing on this site grants any right that belongs to the university.',
         'Where a project credits other people or uses material from others, their part remains theirs.',
         'You may view the site, share links to it, and refer to my work with credit. You may not copy, download for reuse, publish or adapt the work, use it in your own portfolio or projects, or present it as yours, without my written permission.',
+      ],
+    },
+    {
+      heading: 'The CV',
+      blocks: [
+        'You may download, save, print and pass on my CV within your practice, studio or institution so that it can consider me for a placement, a job, study or a collaboration. Please do not change it, publish it, or use the personal details in it for any other purpose, as set out in the [privacy policy](/privacy).',
+        'The CV is built from this site at the moment you download it, so it reflects the site on that date. If a saved copy differs from the site, the site is the current version.',
       ],
     },
     {

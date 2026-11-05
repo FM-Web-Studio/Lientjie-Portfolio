@@ -79,6 +79,16 @@
 
 .colLink:hover { color: var(--accent); }
 
+.colButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
 .colText {
   font-size: var(--text-sm);
   color: var(--fg-3);

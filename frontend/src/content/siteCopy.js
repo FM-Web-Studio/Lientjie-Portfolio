@@ -116,6 +116,32 @@ const CONTACT_PAGE_FIELDS = [
   { key: 'successBody',  label: 'Success - body',   type: 'textarea', default: "Thank you for reaching out - I'll be in touch within 24 hours." },
 ]
 
+// The downloadable CV. Its content comes from the About page data, these are only its words.
+const CV_FIELDS = [
+  { key: 'buttonLabel',  label: 'Download button',  type: 'text', default: 'Download CV' },
+  { key: 'busyLabel',    label: 'Button while the PDF is being made', type: 'text', default: 'Preparing CV' },
+  { key: 'photo',        label: 'Photo on the CV - type "no" to leave it off', type: 'text', default: 'yes' },
+  { key: 'languages',    label: 'Languages (leave blank to hide)', type: 'text', default: '' },
+  { key: 'references',   label: 'References (leave blank to hide)', type: 'text', default: 'Available on request.' },
+  { key: 'projectCount', label: 'How many projects to list', type: 'text', default: '6' },
+  { key: 'projectsNote', label: 'Line under the project list', type: 'text', default: 'Drawings, models and process for each project at' },
+  { key: 'documentLabel',       label: 'Document name', type: 'text', default: 'Curriculum Vitae' },
+  { key: 'profileHeading',      label: 'Heading - Profile',      type: 'text', default: 'Profile' },
+  { key: 'educationHeading',    label: 'Heading - Education',    type: 'text', default: 'Education' },
+  { key: 'experienceHeading',   label: 'Heading - Experience',   type: 'text', default: 'Experience' },
+  { key: 'projectsHeading',     label: 'Heading - Projects',     type: 'text', default: 'Selected Projects' },
+  { key: 'achievementsHeading', label: 'Heading - Achievements', type: 'text', default: 'Achievements' },
+  { key: 'skillsHeading',       label: 'Heading - Skills',       type: 'text', default: 'Skills' },
+  { key: 'furtherHeading',      label: 'Heading - Further details', type: 'text', default: 'Further Details' },
+  { key: 'languagesHeading',    label: 'Label - Languages',      type: 'text', default: 'Languages' },
+  { key: 'referencesHeading',   label: 'Label - References',     type: 'text', default: 'References' },
+  { key: 'blockName',      label: 'Sheet footer - name label',      type: 'text', default: 'Name' },
+  { key: 'blockDocument',  label: 'Sheet footer - document label',  type: 'text', default: 'Document' },
+  { key: 'blockPortfolio', label: 'Sheet footer - portfolio label', type: 'text', default: 'Portfolio' },
+  { key: 'blockUpdated',   label: 'Sheet footer - date label',      type: 'text', default: 'Updated' },
+  { key: 'blockSheet',     label: 'Sheet footer - page label',      type: 'text', default: 'Sheet' },
+]
+
 // Contact details - the single source of truth (Contact page, About page, footer).
 export const CONTACT_INFO_FIELDS = [
   { key: 'email',          label: 'Email',            type: 'text', default: 'meiringlientjie0214@gmail.com' },
@@ -135,6 +161,7 @@ export const COPY_SCHEMA = [
   { key: 'interests',   label: 'Interests',      fields: INTERESTS_FIELDS },
   { key: 'about',       label: 'About',          fields: ABOUT_FIELDS },
   { key: 'contactPage', label: 'Contact page',   fields: CONTACT_PAGE_FIELDS },
+  { key: 'cv',          label: 'CV',             fields: CV_FIELDS },
 ]
 
 export const GROUP_FIELDS = {
@@ -144,6 +171,7 @@ export const GROUP_FIELDS = {
   interests:   INTERESTS_FIELDS,
   about:       ABOUT_FIELDS,
   contactPage: CONTACT_PAGE_FIELDS,
+  cv:          CV_FIELDS,
   contact:     CONTACT_INFO_FIELDS,
 }
 

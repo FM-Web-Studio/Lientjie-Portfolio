@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useContent } from '../../context/ContentContext'
+import CvButton from '../CvButton'
 import styles from './Footer.module.css'
 
 const NAV = [
@@ -54,6 +55,7 @@ export default function Footer() {
             </a>
           )}
           {info.location && <p className={styles.colText}>{info.location}</p>}
+          <CvButton className={`${styles.colLink} ${styles.colButton}`} showIcon={false} />
         </div>
 
         {social.length > 0 && (

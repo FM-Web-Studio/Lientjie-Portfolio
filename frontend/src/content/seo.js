@@ -5,7 +5,7 @@
 
 // The address search engines should credit. The same pages are also served on
 // lientjie-portfolio.firebaseapp.com, and the canonical link keeps them from counting twice.
-const SITE_URL = 'https://lientjie-portfolio.web.app'
+export const SITE_URL = 'https://lientjie-portfolio.web.app'
 export const SITE_NAME = 'Lientjie Meiring'
 const HOME_TITLE = `${SITE_NAME} · Architecture`
 

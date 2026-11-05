@@ -308,3 +308,5 @@
      visible characters. */
   .fields { grid-template-columns: minmax(0, 1fr); }
 }
+
+.cvRow { margin-top: var(--sp-8); }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { subscribeBioSection } from '../../firebase'
-import { Figure, Reveal } from '../../components'
+import { Figure, Reveal, CvButton } from '../../components'
 import { useInView } from '../../hooks'
 import { useContent } from '../../context/ContentContext'
 import styles from './About.module.css'
@@ -209,6 +209,7 @@ export default function About() {
               )}
             </h1>
             <p className={styles.role}>{title}</p>
+            <div className={styles.cvRow}><CvButton /></div>
           </Reveal>
 
           <Reveal className={styles.headMedia} variant="fade" amount={0.1}>
@@ -287,7 +288,7 @@ export default function About() {
                   ))
                 : eduItems.map((item, i) => (
                     <Entry
-                      key={`${item.period}-${item.degree}`}
+                      key={`${i}-${item.period}-${item.degree}`}
                       index={i}
                       period={item.period}
                       role={item.degree}
@@ -310,7 +311,7 @@ export default function About() {
             <div className={styles.timeline}>
               {expItems.map((item, i) => (
                 <Entry
-                  key={`${item.period}-${item.role}`}
+                  key={`${i}-${item.period}-${item.role}`}
                   index={i}
                   period={item.period}
                   role={item.role}
@@ -337,7 +338,7 @@ export default function About() {
             <div className={styles.timeline}>
               {achItems.map((item, i) => (
                 <Entry
-                  key={`${item.period}-${item.title}`}
+                  key={`${i}-${item.period}-${item.title}`}
                   index={i}
                   period={item.period}
                   role={item.title}

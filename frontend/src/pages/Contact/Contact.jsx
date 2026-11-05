@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { createMessage, CONTACT_LIMITS } from '../../firebase'
 import Honeypot from '../../components/Honeypot'
-import { Reveal } from '../../components'
+import { Reveal, CvButton } from '../../components'
 import { useToast } from '../../context/ToastContext'
 import { useContent } from '../../context/ContentContext'
 import styles from './Contact.module.css'
@@ -267,6 +267,7 @@ export default function Contact() {
                 </div>
               ))}
             </dl>
+            <div className={styles.cvRow}><CvButton /></div>
           </Reveal>
         </div>
       </section>

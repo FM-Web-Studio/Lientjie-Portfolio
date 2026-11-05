@@ -1,0 +1,15 @@
+.cv { flex: none; }
+
+.cv[aria-busy='true'] { cursor: progress; }
+
+.icon { transition: transform var(--t-base); }
+.cv:hover .icon { transform: translateY(2px); }
+
+.spin { animation: spin 0.9s linear infinite; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .spin { animation: none; }
+  .cv:hover .icon { transform: none; }
+}

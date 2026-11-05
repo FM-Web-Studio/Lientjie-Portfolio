@@ -1,0 +1,1 @@
+export { renderCv } from './CvDocument'

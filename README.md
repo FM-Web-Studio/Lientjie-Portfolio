@@ -8,11 +8,28 @@ Live at https://lientjie-portfolio.web.app
 ## One Firebase project, two sites
 
 This site shares the Firebase project `lientjie-project` with the petsitting site.
-`firestore.rules`, `storage.rules`, `firestore.indexes.json` and the Cloud Functions
-are project wide, so they live in ONE place: the
+The Cloud Functions for both sites live in this repo's `functions/` folder and deploy
+with this site. `firestore.rules`, `storage.rules` and `firestore.indexes.json` are
+project wide and live in the
 [`Lientjie-Petsitting`](https://github.com/FM-Web-Studio/Lientjie-Petsitting) repo.
-This repo deploys only its hosting target. A new collection or Storage folder here
-needs its rule added there first, or the default deny rejects it.
+A new collection or Storage folder here needs its rule added there first, or the
+default deny rejects it.
+
+## The CV
+
+"Download CV" (About page, Contact page, footer) builds an A4 PDF in the visitor's
+browser from the same Firestore documents the About page shows, plus the visible
+projects, read fresh at the moment of download. There is no stored file to keep up to
+date: edit the About content in `/admin` and the next download reflects it. Its
+wording, languages, references and project count are under Site Copy > CV.
+
+The PDF engine (`frontend/src/cv`, react-pdf) is about 460 KB gzipped, so it loads
+only when someone hovers, focuses or clicks the button. Its fonts are bundled copies of
+the site's typefaces. IBM Plex Mono comes from `@ibm/plex-mono` because the Fontsource
+WOFF files for it fail to parse in react-pdf.
+
+The profile photo appears on the CV only if the Storage bucket allows the site to
+fetch it (CORS). Without that it is left off and the CV still downloads.
 
 ## Contact form and spam
 
