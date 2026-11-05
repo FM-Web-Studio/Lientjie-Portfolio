@@ -5,6 +5,7 @@ import { ToastProvider } from './context/ToastContext'
 import { ContentProvider, useContent } from './context/ContentContext'
 import { useMomentumScroll, usePageMeta } from './hooks'
 import { Home, Work, Interests, About, Contact, NotFound, Admin, Privacy, Terms, preloadPages } from './pages'
+import { whenSettled } from './lib/motion'
 
 function PageFallback() {
   return <div style={{ minHeight: '100svh' }} aria-hidden="true" />
@@ -17,10 +18,8 @@ function PublicLayout() {
   // Pages wait for the live site copy, so headlines never animate a default and then swap.
   const { loaded } = useContent()
   useEffect(() => {
-    const go = () => preloadPages()
-    if ('requestIdleCallback' in window) { const id = requestIdleCallback(go, { timeout: 3000 }); return () => cancelIdleCallback(id) }
-    const t = setTimeout(go, 1500)
-    return () => clearTimeout(t)
+    // Other pages are fetched once the opening has played, so preparing them never stutters it.
+    return whenSettled(preloadPages, 2600)
   }, [])
   return (
     <>

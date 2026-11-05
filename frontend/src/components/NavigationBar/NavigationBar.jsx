@@ -10,7 +10,6 @@ import { Sun, Moon, ArrowUpRight } from '../Icons'
 import styles from './NavigationBar.module.css'
 
 const LINKS = [
-  { label: 'Index',     to: '/',          menuOnly: true },
   { label: 'Work',      to: '/work'      },
   { label: 'Interests', to: '/interests' },
   { label: 'About',     to: '/about'     },
@@ -36,7 +35,7 @@ export function ThemeToggle({ className = '' }) {
 }
 
 export default function NavigationBar() {
-  const { copy } = useContent()
+  const { copy, loaded } = useContent()
   const brand = copy('brand')
   const info = copy('contact')
   const location = useLocation()
@@ -85,10 +84,11 @@ export default function NavigationBar() {
     const wrap = linksRef.current
     if (!wrap || !pill.current) return
     const el = target || wrap.querySelector('[aria-current="page"]')
-    if (!el) { gsap.to(pill.current, { opacity: 0, duration: 0.3 }); return }
+    // overwrite: a newer move cancels a slower one still running, so the pill can never fade back in.
+    if (!el) { gsap.to(pill.current, { opacity: 0, duration: 0.3, overwrite: 'auto' }); return }
     const a = el.getBoundingClientRect()
     const b = wrap.getBoundingClientRect()
-    gsap.to(pill.current, { x: a.left - b.left, width: a.width, opacity: 1, duration: 0.6, ease: 'expo.out' })
+    gsap.to(pill.current, { x: a.left - b.left, width: a.width, opacity: 1, duration: 0.6, ease: 'expo.out', overwrite: 'auto' })
   }
   useLayoutEffect(() => { movePill() }, [location.pathname, hasInterests]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -100,33 +100,36 @@ export default function NavigationBar() {
 
   useEffect(() => { setOpen(false) }, [location.pathname])
 
-  // The menu opens as a circle growing out of the menu button.
+  // Phones and tablets only: the panel drops from the menu button, its links follow one by one.
   useEffect(() => {
     const el = menu.current
     if (!el) return undefined
-    const r = menuBtn.current?.getBoundingClientRect()
-    const x = r ? r.left + r.width / 2 : window.innerWidth - 40
-    const y = r ? r.top + r.height / 2 : 40
-    const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))
     const q = gsap.utils.selector(el)
     const instant = reducedMotion()
+    const panel = q(`.${styles.panel}`)
+    const shade = q(`.${styles.shade}`)
 
     if (open) {
       document.documentElement.classList.add('nav-locked')
+      gsap.killTweensOf([panel, shade, q('[data-menu-item]')])
       gsap.timeline()
-        .set(el, { visibility: 'visible', clipPath: `circle(0px at ${x}px ${y}px)` })
-        .to(el, { clipPath: `circle(${radius}px at ${x}px ${y}px)`, duration: instant ? 0 : 0.9, ease: 'expo.inOut' })
-        .fromTo(q('[data-menu-item]'), { yPercent: 110 }, { yPercent: 0, duration: instant ? 0 : 1, stagger: 0.06, ease: 'expo.out' }, instant ? 0 : '-=0.45')
-        .fromTo(q('[data-menu-fade]'), { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: instant ? 0 : 0.7, stagger: 0.05 }, '<0.15')
+        .set(el, { visibility: 'visible' })
+        .fromTo(shade, { opacity: 0 }, { opacity: 1, duration: instant ? 0 : 0.3 }, 0)
+        .fromTo(panel, { opacity: 0, y: -10, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: instant ? 0 : 0.45, ease: 'expo.out' }, 0)
+        .fromTo(q('[data-menu-item]'), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: instant ? 0 : 0.4, stagger: 0.04, ease: 'power3.out' }, 0.08)
       const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+      // Growing the window to desktop width closes it, since the nav links show there.
+      const wide = window.matchMedia('(min-width: 961px)')
+      const onWide = (e) => { if (e.matches) setOpen(false) }
       window.addEventListener('keydown', onKey)
-      return () => window.removeEventListener('keydown', onKey)
+      wide.addEventListener('change', onWide)
+      return () => { window.removeEventListener('keydown', onKey); wide.removeEventListener('change', onWide) }
     }
     document.documentElement.classList.remove('nav-locked')
     if (el.style.visibility === 'visible') {
       gsap.timeline()
-        .to(q('[data-menu-item]'), { yPercent: -110, duration: instant ? 0 : 0.45, stagger: 0.03, ease: 'power3.in' })
-        .to(el, { clipPath: `circle(0px at ${x}px ${y}px)`, duration: instant ? 0 : 0.75, ease: 'expo.inOut' }, '-=0.2')
+        .to(panel, { opacity: 0, y: -8, scale: 0.97, duration: instant ? 0 : 0.22, ease: 'power2.in' }, 0)
+        .to(shade, { opacity: 0, duration: instant ? 0 : 0.22 }, 0)
         .set(el, { visibility: 'hidden' })
     }
     return undefined
@@ -149,12 +152,12 @@ export default function NavigationBar() {
         <div className={styles.inner}>
           <Link to="/" className={`roll-host ${styles.brand}`} aria-label={brand.siteName} data-cursor="hide">
             <img src="/logo-96.v2.png" alt="" className={styles.brandMark} width="30" height="30" />
-            <span className={styles.brandName}><Roll>{brand.siteName}</Roll></span>
+            <span className={styles.brandName} style={{ visibility: loaded ? 'visible' : 'hidden' }}><Roll>{brand.siteName}</Roll></span>
           </Link>
 
           <nav ref={linksRef} className={styles.links} aria-label="Main" onPointerLeave={() => movePill()}>
             <span ref={pill} className={styles.pill} aria-hidden="true" />
-            {links.filter(l => !l.menuOnly).map(({ label, to }) => (
+            {links.map(({ label, to }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -188,45 +191,30 @@ export default function NavigationBar() {
       </header>
 
       <div id="site-menu" ref={menu} className={styles.menu} inert={open ? undefined : ''} data-lenis-prevent>
-        <div className={styles.menuGrid}>
+        <button type="button" className={styles.shade} onClick={() => setOpen(false)} aria-label="Close menu" tabIndex={-1} />
+        <div className={styles.panel}>
           <nav className={styles.menuLinks} aria-label="Menu">
-            {links.map(({ label, to }, i) => (
-              <span key={to} className={styles.menuRow}>
-                <NavLink
-                  to={to}
-                  end={to === '/'}
-                  className={({ isActive }) => `${styles.menuLink} ${isActive ? styles.menuLinkActive : ''}`}
-                  data-menu-item
-                  data-cursor="open"
-                  data-cursor-label="Go"
-                >
-                  <span className={styles.menuNum}>{String(i + 1).padStart(2, '0')}</span>
-                  <span className={styles.menuLabel}>{label}</span>
-                  <ArrowUpRight size={28} className={styles.menuArrow} />
-                </NavLink>
-              </span>
+            {links.map(({ label, to }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) => `${styles.menuLink} ${isActive ? styles.menuLinkActive : ''}`}
+                data-menu-item
+              >
+                <span>{label}</span>
+                <ArrowUpRight size={18} className={styles.menuArrow} />
+              </NavLink>
             ))}
           </nav>
-
-          <aside className={styles.menuAside}>
-            <div data-menu-fade className={styles.menuBlock}>
-              <p className="eyebrow">Get in touch</p>
-              {info.email && <a className="link" href={`mailto:${info.email}`}>{info.email}</a>}
-              {info.phone && <a className="link" href={`tel:${info.phone.replace(/\s+/g, '')}`}>{info.phone}</a>}
-            </div>
+          <div className={styles.menuFoot} data-menu-item>
+            {info.email && <a className={styles.menuMail} href={`mailto:${info.email}`}>{info.email}</a>}
             {social.length > 0 && (
-              <div data-menu-fade className={styles.menuBlock}>
-                <p className="mono">Elsewhere</p>
-                {social.map(s => (
-                  <a key={s.href} className="link" href={s.href} target="_blank" rel="noopener noreferrer">{s.label}<ArrowUpRight size={12} /></a>
-                ))}
+              <div className={styles.menuSocial}>
+                {social.map(sl => <a key={sl.href} href={sl.href} target="_blank" rel="noopener noreferrer">{sl.label}</a>)}
               </div>
             )}
-            <div data-menu-fade className={styles.menuBlock}>
-              <CvButton />
-            </div>
-            <p data-menu-fade className={`mono ${styles.menuFoot}`}>{info.location}</p>
-          </aside>
+            <CvButton variant="accent" block />
+          </div>
         </div>
       </div>
     </>

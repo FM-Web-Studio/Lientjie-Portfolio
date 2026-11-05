@@ -2,7 +2,7 @@ import {
   collection, doc, getDocs, updateDoc, deleteDoc, query, orderBy,
 } from 'firebase/firestore'
 import { getFunctions, httpsCallable } from 'firebase/functions'
-import { app, db } from './app'
+import { app, db, ensureAppCheck } from './app'
 
 const COL = 'portfolio_messages'
 
@@ -17,6 +17,7 @@ const clip = (value, max) => String(value ?? '').trim().slice(0, max)
 // website is the hidden trap field, elapsed is how long the form was open in ms.
 // Throws an Error whose message is 'limit' (with .limit 'sender' or 'everyone') or 'failed'.
 export async function createMessage({ website = '', elapsed = 0, ...data }) {
+  ensureAppCheck()
   const send = httpsCallable(getFunctions(app, 'europe-west1'), 'sendMessage')
   try {
     await send({

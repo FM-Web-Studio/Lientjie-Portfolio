@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { createMessage, CONTACT_LIMITS } from '../../firebase'
+import { createMessage, CONTACT_LIMITS, ensureAppCheck } from '../../firebase'
 import Honeypot from '../../components/Honeypot'
 import { Reveal, CvButton, Button, TextReveal, ArrowRight, ArrowUpRight, Check, Mail, Spinner } from '../../components'
 import { useToast } from '../../context/ToastContext'
@@ -36,6 +36,9 @@ function useLocalTime() {
     hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Johannesburg',
   }).format(new Date())
   const [time, setTime] = useState(fmt)
+  // Start the anti-spam check while the visitor reads and types, so sending is not held up.
+  useEffect(() => { ensureAppCheck() }, [])
+
   useEffect(() => {
     const id = setInterval(() => setTime(fmt()), 15000)
     return () => clearInterval(id)

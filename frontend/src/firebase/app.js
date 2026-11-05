@@ -20,9 +20,14 @@ if (import.meta.env.DEV && !import.meta.env.FIREBASE_API_KEY) {
 
 export const app     = initializeApp(firebaseConfig)
 
-// App Check stays off until a reCAPTCHA v3 site key is set, so nothing changes before the keys exist.
+// App Check guards the contact form's sendMessage function. It is started only where it is needed
+// (the Contact page and the admin), because once running, Firebase holds every read until the
+// reCAPTCHA check finishes, about three seconds of blank page on first load. Public reads do not need it.
 const appCheckKey = import.meta.env.FIREBASE_APPCHECK_SITE_KEY
-if (appCheckKey) {
+let appCheckStarted = false
+export function ensureAppCheck() {
+  if (appCheckStarted || !appCheckKey) return
+  appCheckStarted = true
   // FIREBASE_APPCHECK_DEBUG_TOKEN (local dev only): empty or false = off, true = print a new debug
   // token in the browser console to register in App Check, anything else = that registered token.
   const debugToken = String(import.meta.env.FIREBASE_APPCHECK_DEBUG_TOKEN ?? '').trim()

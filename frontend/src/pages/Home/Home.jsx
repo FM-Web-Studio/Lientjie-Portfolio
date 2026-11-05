@@ -7,6 +7,7 @@ import useTilt from '../../hooks/useTilt'
 import { useContent } from '../../context/ContentContext'
 import styles from './Home.module.css'
 import { toneFor } from '../../lib/tone'
+import { whenSettled } from '../../lib/motion'
 
 const FEATURED_COUNT = 4
 // The 3D model is its own download, fetched only when the home page shows.
@@ -105,6 +106,9 @@ export default function Home() {
   const open = (project, origin) => setActive({ project, origin })
   // Without WebGL the hero falls back to the stack of project prints.
   const [no3d, setNo3d] = useState(false)
+  // Starting the 3D engine blocks the page for a moment, so it waits until the opening has played.
+  const [show3d, setShow3d] = useState(false)
+  useEffect(() => whenSettled(() => setShow3d(true)), [])
   const fallBack = useCallback(() => setNo3d(true), [])
   const stats = [1, 2, 3].map(i => ({ value: t[`stat${i}Value`], label: t[`stat${i}Label`] })).filter(s => s.value)
   const steps = [1, 2, 3, 4].map(i => ({ title: t[`process${i}Title`], body: t[`process${i}Body`] })).filter(s => s.title)
@@ -130,7 +134,9 @@ export default function Home() {
             ? <div className={styles.heroImage}><Figure src={t.heroImage.trim()} alt="" ratio="4 / 5" priority /></div>
             : no3d
               ? <PhotoStack projects={projects} onOpen={open} />
-              : <Suspense fallback={<div className={styles.stage} />}><Hero3D onUnavailable={fallBack} /></Suspense>}
+              : show3d
+                ? <Suspense fallback={<div className={styles.stage} />}><Hero3D onUnavailable={fallBack} /></Suspense>
+                : <div className={styles.stage} />}
         </div>
       </section>
 

@@ -9,13 +9,16 @@
   will-change: transform;
 }
 
+/* The exact pointer position. It never hides, and a halo in the page colour keeps it
+   visible over mint buttons, photos and text alike. */
 .dot {
-  width: 6px;
-  height: 6px;
-  margin: -3px 0 0 -3px;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
   border-radius: 50%;
-  background: var(--accent);
-  transition: width 300ms var(--ease-out), height 300ms var(--ease-out), margin 300ms var(--ease-out), opacity 200ms;
+  background: var(--fg-1);
+  box-shadow: 0 0 0 2px var(--bg-0), 0 0 0 3px rgba(var(--accent-rgb), 0.9);
+  transition: transform 250ms var(--ease-out), background-color 250ms;
 }
 
 .ring { width: 0; height: 0; }
@@ -24,25 +27,24 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(var(--accent-rgb), 0.55);
+  border: 1.5px solid rgba(var(--accent-rgb), 0.85);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   transition:
-    width 500ms var(--ease-out-expo),
-    height 500ms var(--ease-out-expo),
+    width 450ms var(--ease-out-expo),
+    height 450ms var(--ease-out-expo),
     background-color 300ms var(--ease-out),
     border-color 300ms var(--ease-out),
     transform 250ms var(--ease-out);
 }
 
 .label {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.04em;
+  font-family: var(--font-sans);
+  font-size: 13px;
   font-weight: 600;
   color: #121212;
   opacity: 0;
@@ -51,16 +53,18 @@
 }
 
 .press .disc { transform: translate(-50%, -50%) scale(0.8); }
+.press + .dot { transform: scale(0.8); }
 
-.root[data-mode='link'] .disc { width: 60px; height: 60px; background: rgba(var(--accent-rgb), 0.12); border-color: transparent; }
-.root[data-mode='link'] .dot { opacity: 0 !important; }
+/* Links: the ring grows and fills softly, the dot stays as the precise point. */
+.root[data-mode='link'] .disc { width: 52px; height: 52px; background: rgba(var(--accent-rgb), 0.16); border-color: var(--accent); }
 
+/* Buttons and nav items with their own hover: the ring closes in tight around the dot. */
+.root[data-mode='hide'] .disc { width: 24px; height: 24px; border-color: var(--accent); }
+
+/* Big labelled disc ("View", "Drag"): the label replaces the dot. */
 .root[data-mode='label'] .disc { width: 88px; height: 88px; background: #B0EFC3; border-color: #B0EFC3; }
 .root[data-mode='label'] .label { opacity: 1; transform: none; }
 .root[data-mode='label'] .dot { opacity: 0 !important; }
 
-.root[data-mode='hide'] .disc { width: 10px; height: 10px; border-color: transparent; }
-.root[data-mode='hide'] .dot { opacity: 0 !important; }
-
-.root[data-mode='text'] .disc { width: 4px; height: 28px; border-radius: 2px; border-color: transparent; background: var(--accent); }
-.root[data-mode='text'] .dot { opacity: 0 !important; }
+/* Text fields: the system text caret takes over. */
+.root[data-mode='text'] .disc, .root[data-mode='text'] .dot { opacity: 0 !important; }

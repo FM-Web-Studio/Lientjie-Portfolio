@@ -28,7 +28,6 @@
 .onLight .links { background: rgba(255, 255, 255, 0.18); }
 .onLight .burger { background: #121212; }
 .onLight .burger span { background: #B0EFC3; }
-.menuOpen::before { opacity: 0; }
 
 .inner {
   height: var(--nav-h);
@@ -152,7 +151,7 @@
 }
 .onScrim .burger span { background: #121212; }
 .menuOpen .burger span { background: var(--accent); }
-.menuBtn:hover .burger span:last-child { width: 7px; }
+@media (hover: hover) { .menuBtn:not([aria-expanded="true"]):hover .burger span:last-child { width: 7px; } }
 .menuOpen .burger span:first-child { transform: translateY(3.25px) rotate(45deg); }
 .menuOpen .burger span:last-child { width: 12px; transform: translateY(-3.25px) rotate(-45deg); }
 
@@ -160,60 +159,78 @@
 .progress > span { display: block; height: 100%; background: var(--accent); transform: scaleX(0); transform-origin: left center; }
 .menuOpen .progress { opacity: 0; }
 
-/* ── The full-screen menu ─────────────────────────────────────────────── */
+/* ── The menu: phones and tablets only, a small panel under the bar ─────── */
 .menu {
   position: fixed;
   inset: 0;
   z-index: calc(var(--z-sticky) - 1);
   visibility: hidden;
-  background: var(--bg-1);
-  color: var(--fg-1);
-  overflow-y: auto;
 }
-
-.menuGrid {
-  min-height: 100%;
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: var(--sp-12);
-  align-items: end;
-  padding: calc(var(--nav-h) + var(--sp-12)) var(--gutter) var(--sp-12);
+.shade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  cursor: default;
+}
+.panel {
+  position: absolute;
+  top: calc(var(--nav-h) + 4px);
+  right: var(--gutter);
+  width: min(360px, calc(100vw - var(--gutter) * 2));
+  padding: var(--sp-2);
+  background: var(--bg-1);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
+  box-shadow: var(--depth-2);
+  transform-origin: top right;
 }
 
 .menuLinks { display: flex; flex-direction: column; }
-.menuRow { display: block; overflow: hidden; border-bottom: 1px solid var(--rule); }
 .menuLink {
   display: flex;
-  align-items: baseline;
-  gap: var(--sp-6);
-  padding: clamp(6px, 1.2vh, 14px) 0;
-  text-decoration: none;
-  color: var(--fg-1);
-  transition: color 400ms, opacity 400ms;
-}
-.menuLinks:hover .menuLink:not(:hover) { opacity: 0.35; }
-.menuNum { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--accent); letter-spacing: 0.1em; min-width: 2.5ch; }
-.menuLabel {
-  font-family: var(--font-serif);
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px var(--sp-4);
+  font-size: var(--text-xl);
   font-weight: 600;
-  font-size: clamp(2rem, 6vh, 3.5rem);
-  line-height: 1;
-  letter-spacing: var(--tracking-display);
-  transition: transform 700ms var(--ease-out-expo), font-style 0s;
+  letter-spacing: -0.02em;
+  color: var(--fg-1);
+  text-decoration: none;
+  border-radius: var(--r-md);
+  transition: background-color 250ms, color 250ms;
 }
-.menuLink:hover .menuLabel, .menuLinkActive .menuLabel { font-style: normal; color: var(--accent); transform: translateX(16px); }
-.menuArrow { margin-left: auto; align-self: center; opacity: 0; transform: translate(-16px, 16px); transition: opacity 400ms, transform 700ms var(--ease-out-expo); color: var(--accent); }
-.menuLink:hover .menuArrow { opacity: 1; transform: none; }
+.menuLink:hover, .menuLink:focus-visible { background: var(--bg-2); }
+.menuLinkActive { color: var(--accent); }
+.menuLinkActive::after { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.menuLinkActive .menuArrow { display: none; }
+.menuArrow { color: var(--fg-3); transition: transform 400ms var(--ease-out-expo), color 250ms; }
+.menuLink:hover .menuArrow { transform: translate(2px, -2px); color: var(--accent); }
 
-.menuAside { display: flex; flex-direction: column; gap: var(--sp-8); padding-bottom: var(--sp-3); }
-.menuBlock { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-3); }
-.menuBlock .link { font-size: var(--text-lg); }
-.menuFoot { margin-top: var(--sp-4); }
+.menuFoot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+  padding: var(--sp-4);
+  border-top: 1px solid var(--rule);
+}
+.menuMail { font-size: var(--text-sm); color: var(--fg-2); text-decoration: none; overflow-wrap: anywhere; }
+.menuMail:hover { color: var(--accent); }
+.menuSocial { display: flex; gap: var(--sp-4); }
+.menuSocial a { font-size: var(--text-sm); color: var(--fg-3); text-decoration: none; }
+.menuSocial a:hover { color: var(--accent); }
+
+/* Desktop shows the links in the bar, so the menu button is not needed. */
+@media (min-width: 961px) {
+  .menuBtn, .menu { display: none; }
+}
 
 @media (max-width: 960px) {
   .links { display: none; }
   .inner { grid-template-columns: 1fr auto; }
-  .menuGrid { grid-template-columns: 1fr; align-items: start; }
 }
 @media (max-width: 420px) {
   .menuWord { display: none; }

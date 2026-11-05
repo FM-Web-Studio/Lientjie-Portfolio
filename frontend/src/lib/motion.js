@@ -48,4 +48,27 @@ export function afterCurtain(fn) {
   }
 }
 
+// Runs fn once the opening has finished and the page is quiet: after the intro (if it plays),
+// a pause for the hero entrance, then an idle moment. Heavy work waits here so it never makes
+// an animation stutter. Returns a cancel function.
+export function whenSettled(fn, pause = 1400) {
+  let timer = 0
+  let idle = 0
+  let cancelled = false
+  const go = () => {
+    timer = setTimeout(() => {
+      if (cancelled) return
+      if ('requestIdleCallback' in window) idle = requestIdleCallback(() => !cancelled && fn(), { timeout: 2000 })
+      else fn()
+    }, pause)
+  }
+  const stop = afterLoader(go)
+  return () => {
+    cancelled = true
+    stop()
+    clearTimeout(timer)
+    if (idle && 'cancelIdleCallback' in window) cancelIdleCallback(idle)
+  }
+}
+
 export { gsap, ScrollTrigger, SplitText, useGSAP }

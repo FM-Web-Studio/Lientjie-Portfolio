@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../hooks'
 import { useContent } from '../../context/ContentContext'
 import { useToast } from '../../context/ToastContext'
-import { signInWithGoogle, signOut, getMessages } from '../../firebase'
+import { signInWithGoogle, signOut, getMessages, ensureAppCheck } from '../../firebase'
 import Button from '../../components/Button'
 import { ThemeToggle } from '../../components/NavigationBar'
 import { ArrowLeft, ArrowUpRight, Spinner } from '../../components/Icons'
@@ -62,6 +62,9 @@ function Gate({ children, status }) {
     </div>
   )
 }
+
+// The admin keeps App Check on from the start, in case sign-in or writes are set to require it.
+ensureAppCheck()
 
 export default function Admin() {
   const { user, isAdmin, loading } = useAuth()
