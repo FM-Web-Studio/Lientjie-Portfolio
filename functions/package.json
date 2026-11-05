@@ -1,0 +1,20 @@
+{
+  "name": "lientjie-functions",
+  "description": "Cloud Functions for both Lientjie sites: spam-checked contact forms and reviews, and the notification emails",
+  "type": "commonjs",
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "logs": "firebase functions:log",
+    "deploy": "firebase deploy --only functions"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.10.0",
+    "firebase-functions": "^6.1.0",
+    "nodemailer": "^6.9.14"
+  },
+  "private": true
+}

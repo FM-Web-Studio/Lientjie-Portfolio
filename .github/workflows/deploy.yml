@@ -3,6 +3,13 @@ name: Build & Deploy to Firebase Hosting
 on:
   push:
     branches: [main]
+  # Run by hand from the Actions tab; tick the box to redeploy the functions even if they did not change.
+  workflow_dispatch:
+    inputs:
+      deploy_functions:
+        description: 'Also deploy Cloud Functions'
+        type: boolean
+        default: false
 
 jobs:
   deploy:
@@ -11,6 +18,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Full history, so the next step can see which files this push changed.
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -23,7 +33,7 @@ jobs:
         run: npm ci
         working-directory: frontend
 
-      # The contact form posts to the sendMessage function (Lientjie-Petsitting repo), which refuses
+      # The contact form posts to the sendMessage function (functions/ in this repo), which refuses
       # calls without App Check, so a build without the key would ship a form that always fails.
       - name: Check the App Check key is set
         run: |
@@ -48,17 +58,82 @@ jobs:
           ADMIN_EMAILS:                 ${{ secrets.ADMIN_EMAILS }}
           FIREBASE_APPCHECK_SITE_KEY:   ${{ secrets.FIREBASE_APPCHECK_SITE_KEY }}
 
-      # The contact form posts to the sendMessage function, deployed from the
-      # Lientjie-Petsitting repo. Without it live, the form would break.
-      - name: Check the contact form function is deployed
+      # Functions are deployed only when something under functions/ changed in this push (README
+      # edits aside), or when the workflow is run by hand with "Also deploy Cloud Functions" ticked.
+      - name: Did the functions change?
+        id: functions
+        run: |
+          before="${{ github.event.before }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            deploy="${{ inputs.deploy_functions }}"
+            echo "Run by hand; deploy functions: $deploy"
+          elif [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$before^{commit}" 2>/dev/null; then
+            deploy=true
+            echo "Cannot tell what this push changed, so deploying the functions to be safe."
+          else
+            changed=$(git diff --name-only "$before" "${{ github.sha }}" | grep '^functions/' | grep -v 'README.md$' || true)
+            if [ -n "$changed" ]; then deploy=true; echo "Functions changed:"; echo "$changed"; else deploy=false; echo "Functions unchanged; skipping their deploy."; fi
+          fi
+          echo "deploy=${deploy:-false}" >> "$GITHUB_OUTPUT"
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      # SERVICE_ACCOUNT is the JSON key of the deploy robot account (see README, Deploys).
+      - name: Authenticate to Firebase
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SERVICE_ACCOUNT" ]; then
+            echo "::error::Secret SERVICE_ACCOUNT is empty. Add the deploy service account's JSON key, then run this workflow again."
+            exit 1
+          fi
+          printf '%s' "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-sa.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-sa.json" >> "$GITHUB_ENV"
+          # The account's email is not secret, and naming it makes a permissions error easy to fix.
+          echo "Deploying as: $(node -e "console.log(require(process.argv[1]).client_email)" "$RUNNER_TEMP/firebase-sa.json")"
+
+      # functions/.env is not in git (the repo is public), so the deploy writes it from secrets:
+      # SMTP_USER (the Gmail that sends) and NOTIFY_TO (where notifications land) are required.
+      # SMTP_HOST and SMTP_PORT secrets are optional; without them Gmail's are written here,
+      # because a non-interactive deploy will not fall back to the defaults in functions/index.js.
+      - name: Deploy Cloud Functions
+        if: steps.functions.outputs.deploy == 'true'
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          NOTIFY_TO: ${{ secrets.NOTIFY_TO }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+        run: |
+          for k in SMTP_USER NOTIFY_TO; do
+            if [ -z "${!k}" ]; then
+              echo "::error::Secret $k is empty. Add it (same value as in functions/.env), then run this workflow again."
+              exit 1
+            fi
+          done
+          SMTP_HOST="${SMTP_HOST:-smtp.gmail.com}"
+          SMTP_PORT="${SMTP_PORT:-465}"
+          : > functions/.env
+          for k in SMTP_HOST SMTP_PORT SMTP_USER NOTIFY_TO; do
+            if [ -n "${!k}" ]; then printf '%s=%s\n' "$k" "${!k}" >> functions/.env; fi
+          done
+          (cd functions && npm ci)
+          firebase deploy --only functions --project lientjie-project --non-interactive
+
+      # This repo's functions serve both Lientjie sites: the contact forms, and the petsitting
+      # reviews and likes. Check they are all live before deploying the site.
+      - name: Check the functions are deployed
         run: |
           # This call carries no App Check token, so a live function refuses it with 401 and saves
           # nothing. 404 means it is not deployed; 5xx means it is broken.
-          status=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json'             -d '{"data":{}}' https://europe-west1-lientjie-project.cloudfunctions.net/sendMessage)
-          if [ "$status" != "401" ] && [ "$status" != "200" ]; then
-            echo "::error::sendMessage answered $status. Deploy functions from the Lientjie-Petsitting repo first, then run this workflow again."
-            exit 1
-          fi
+          for fn in sendMessage postReview likePost; do
+            status=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+              -d '{"data":{}}' https://europe-west1-lientjie-project.cloudfunctions.net/$fn)
+            if [ "$status" != "401" ] && [ "$status" != "200" ]; then
+              echo "::error::$fn answered $status. Run this workflow by hand with 'Also deploy Cloud Functions' ticked, then try again."
+              exit 1
+            fi
+          done
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0

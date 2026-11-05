@@ -7,7 +7,7 @@ import { app, db } from './app'
 const COL = 'portfolio_messages'
 
 // The longest value the form allows for each field. The sendMessage function
-// (in the Lientjie-Petsitting repo) applies the same caps, so keep the two in step.
+// (functions/index.js in this repo) applies the same caps, so keep the two in step.
 export const CONTACT_LIMITS = { name: 100, email: 254, subject: 150, message: 5000 }
 
 const clip = (value, max) => String(value ?? '').trim().slice(0, max)
