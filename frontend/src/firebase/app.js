@@ -2,7 +2,7 @@ import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
 import { getStorage } from 'firebase/storage'
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check'
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check'
 
 const firebaseConfig = {
   apiKey:            import.meta.env.FIREBASE_API_KEY,
@@ -23,9 +23,11 @@ export const app     = initializeApp(firebaseConfig)
 // App Check stays off until a reCAPTCHA v3 site key is set, so nothing changes before the keys exist.
 const appCheckKey = import.meta.env.FIREBASE_APPCHECK_SITE_KEY
 if (appCheckKey) {
-  const debugToken = import.meta.env.FIREBASE_APPCHECK_DEBUG_TOKEN
-  if (import.meta.env.DEV && debugToken) self.FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken === 'true' ? true : debugToken
-  initializeAppCheck(app, { provider: new ReCaptchaV3Provider(appCheckKey), isTokenAutoRefreshEnabled: true })
+  // FIREBASE_APPCHECK_DEBUG_TOKEN (local dev only): empty or false = off, true = print a new debug
+  // token in the browser console to register in App Check, anything else = that registered token.
+  const debugToken = String(import.meta.env.FIREBASE_APPCHECK_DEBUG_TOKEN ?? '').trim()
+  if (import.meta.env.DEV && debugToken && debugToken !== 'false') self.FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken === 'true' ? true : debugToken
+  initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(appCheckKey), isTokenAutoRefreshEnabled: true })
 }
 
 export const db      = getFirestore(app)

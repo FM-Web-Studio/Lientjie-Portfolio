@@ -23,6 +23,17 @@ jobs:
         run: npm ci
         working-directory: frontend
 
+      # The contact form posts to the sendMessage function (Lientjie-Petsitting repo), which refuses
+      # calls without App Check, so a build without the key would ship a form that always fails.
+      - name: Check the App Check key is set
+        run: |
+          if [ -z "$FIREBASE_APPCHECK_SITE_KEY" ]; then
+            echo "::error::Secret FIREBASE_APPCHECK_SITE_KEY is empty. Add the reCAPTCHA Enterprise site key (Google Cloud > Fraud Defense), then run this workflow again."
+            exit 1
+          fi
+        env:
+          FIREBASE_APPCHECK_SITE_KEY: ${{ secrets.FIREBASE_APPCHECK_SITE_KEY }}
+
       - name: Build
         run: npm run build
         working-directory: frontend
