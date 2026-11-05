@@ -52,9 +52,10 @@ jobs:
       # Lientjie-Petsitting repo. Without it live, the form would break.
       - name: Check the contact form function is deployed
         run: |
-          # An empty call is treated as a bot and answered with a quiet success, so nothing is saved.
+          # This call carries no App Check token, so a live function refuses it with 401 and saves
+          # nothing. 404 means it is not deployed; 5xx means it is broken.
           status=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json'             -d '{"data":{}}' https://europe-west1-lientjie-project.cloudfunctions.net/sendMessage)
-          if [ "$status" != "200" ]; then
+          if [ "$status" != "401" ] && [ "$status" != "200" ]; then
             echo "::error::sendMessage answered $status. Deploy functions from the Lientjie-Petsitting repo first, then run this workflow again."
             exit 1
           fi
