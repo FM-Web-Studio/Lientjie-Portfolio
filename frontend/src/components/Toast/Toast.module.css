@@ -1,139 +1,90 @@
-/* =============================================================================
-   TOAST
-   -----------------------------------------------------------------------------
-   Square, ruled, mono-labelled - the same vocabulary as the rest of the site
-   rather than a rounded pill. Used by both the public contact form and the
-   admin panel, so it stays on the neutral surface tokens.
-   ========================================================================== */
-
 .container {
   position: fixed;
-  /* Bottom-right, not top-right: the top-right corner is where the nav's
-     theme toggle and menu button live, and a toast landing there covers the
-     control the reader may have just used. */
+  left: 50%;
   bottom: var(--sp-6);
-  right: var(--sp-6);
   z-index: var(--z-toast);
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
+  align-items: center;
   gap: var(--sp-3);
-  /* Never wider than the viewport minus both gutters, so a long message does
-     not force a horizontal scrollbar on a phone. */
-  width: min(380px, calc(100vw - var(--sp-8)));
+  width: min(440px, calc(100vw - 32px));
+  transform: translateX(-50%);
   pointer-events: none;
 }
 
 .toast {
   position: relative;
+  overflow: hidden;
+  width: 100%;
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: start;
-  gap: var(--sp-3);
-  padding: var(--sp-4) var(--sp-4) var(--sp-4) var(--sp-5);
-  background: var(--bg-1);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-4) var(--sp-4) var(--sp-4);
+  color: var(--fg-1);
+  background: color-mix(in srgb, var(--bg-2) 88%, transparent);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
   border: 1px solid var(--rule);
-  border-radius: var(--r-xs);
+  border-radius: var(--r-lg);
   box-shadow: var(--shadow-lg);
   pointer-events: auto;
-  overflow: hidden;
-  animation: toastIn 320ms var(--ease-out-expo);
+  animation: toastIn 700ms var(--ease-spring) both;
 }
+
+.leaving { animation: toastOut 320ms var(--ease-out) forwards; }
 
 @keyframes toastIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(24px) scale(0.92); }
+  to   { opacity: 1; transform: none; }
 }
-
-.leaving {
-  animation: toastOut 200ms var(--ease-out) forwards;
-}
-
 @keyframes toastOut {
-  to { opacity: 0; transform: translateX(16px); }
+  to { opacity: 0; transform: translateY(12px) scale(0.96); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .toast, .leaving { animation: none; }
-  .leaving { opacity: 0; }
-}
-
-/* A 2px bar on the leading edge carries the status colour, so the toast body
-   itself stays neutral and legible. */
 .stripe {
   position: absolute;
   left: 0;
-  top: 0;
+  right: 0;
   bottom: 0;
-  width: 2px;
-  background: var(--fg-3);
+  height: 2px;
+  background: currentColor;
+  transform-origin: left center;
+  animation: drain var(--life) linear forwards;
 }
+@keyframes drain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 
 .iconWrap {
-  display: flex;
-  color: var(--fg-3);
-  /* Aligns the icon with the cap-height of the title rather than the top of
-     its line box. */
-  padding-top: 1px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, currentColor 16%, transparent);
 }
 
 .body { min-width: 0; }
-
-.title {
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  color: var(--fg-1);
-  margin: 0;
-}
-
-.message {
-  font-size: var(--text-sm);
-  line-height: var(--leading-snug);
-  color: var(--fg-2);
-  margin: var(--sp-2) 0 0;
-  overflow-wrap: anywhere;
-}
+.title { font-size: var(--text-sm); font-weight: 500; color: var(--fg-1); }
+.message { margin-top: 2px; font-size: var(--text-xs); line-height: 1.45; color: var(--fg-3); }
 
 .close {
-  appearance: none;
-  background: none;
-  border: 0;
-  padding: var(--sp-1);
-  color: var(--fg-4);
-  cursor: pointer;
-  display: flex;
-  transition: color var(--t-fast);
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--fg-3);
+  transition: background-color 250ms, color 250ms, transform 300ms var(--ease-out);
 }
+.close:hover { color: var(--fg-1); background: var(--bg-3); transform: rotate(90deg); }
 
-.close:hover { color: var(--fg-1); }
+.success { color: var(--state-ok); }
+.error   { color: var(--state-err); }
+.warning { color: var(--state-warn); }
+.info    { color: var(--accent); }
+.success .body, .error .body, .warning .body, .info .body { color: var(--fg-1); }
 
-/* ── Status variants ────────────────────────────────────────────────────────
-   Only the stripe and the icon carry colour. Tinting the whole panel would
-   introduce a second accent into a deliberately monochrome palette. */
-.success .stripe,
-.success .iconWrap { color: var(--state-ok); background-color: currentColor; }
-.success .iconWrap { background-color: transparent; }
-
-.error .stripe,
-.error .iconWrap { color: var(--state-err); }
-.error .stripe { background: var(--state-err); }
-
-.warning .stripe,
-.warning .iconWrap { color: var(--state-warn); }
-.warning .stripe { background: var(--state-warn); }
-
-.info .stripe,
-.info .iconWrap { color: var(--accent); }
-.info .stripe { background: var(--accent); }
-
-.success .stripe { background: var(--state-ok); }
-
-@media (max-width: 560px) {
-  .container {
-    left: var(--sp-4);
-    right: var(--sp-4);
-    bottom: var(--sp-4);
-    width: auto;
-  }
+@media (prefers-reduced-motion: reduce) {
+  .toast, .leaving { animation: none; }
+  .stripe { animation: none; display: none; }
 }

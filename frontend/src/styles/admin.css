@@ -1,177 +1,39 @@
-/* =============================================================================
- * ADMIN COMPAT TOKENS + SCROLLBAR
- * =============================================================================
- * The admin panel (Admin.module.css, Modal) was written
- * against an older token vocabulary. Rather than rewrite four admin files for
- * a public-site redesign, those names are aliased here onto the current
- * Theme.css tokens, so the admin inherits the new palette automatically and
- * keeps flipping with the theme.
- *
- * The aliases sit on `:root`, which has lower specificity than the
- * `[data-theme='...']` blocks in Theme.css - so a name that exists in BOTH
- * files resolves to the theme's value, not to an alias here. That is why
- * --accent-hover is deliberately absent below: Theme.css owns it now, and
- * re-declaring it here would create a self-referencing cycle with --accent-h.
- *
- * Public components do NOT use these names. Toast and ProjectLightbox were
- * moved onto the real vocabulary as part of the redesign; only the four admin
- * files still depend on this shim.
- *
- * We deliberately do NOT restyle bare <input>/<button> globally (that would
- * leak into the public site). The admin uses scoped classes instead.
- * ========================================================================== */
+/* Admin-only globals. Loaded with the lazy admin chunk, so nothing here may restyle the public site:
+   no :root token overrides, everything scoped to .admin-scope or the .admin-modal portal. */
 
-:root {
-  /* ── Text ─────────────────────────────────────────────────────────────── */
-  --primary-text-color:   var(--fg-1);
-  --secondary-text-color: var(--fg-2);
-  --tertiary-text-color:  var(--fg-3);
-  --disabled-color:       var(--fg-4);
-
-  /* ── Surfaces ─────────────────────────────────────────────────────────── */
-  --background-0: var(--bg-0);
-  --background-1: var(--bg-1);
-  --background-2: var(--bg-2);
-  --background-3: var(--bg-3);
-  --background-4: var(--bg-3);
-
-  /* The old palette carried dedicated translucent "glass" tokens. The new one
-     composes them from the surface value instead, so there is one fewer thing
-     to keep in sync when a background changes. */
-  --bg-glass:          color-mix(in srgb, var(--bg-1) 86%, transparent);
-  --bg-glass-strong:   color-mix(in srgb, var(--bg-0) 95%, transparent);
-  --frosted-background: var(--bg-glass);
-  --overlay-deep:      var(--overlay);
-
-  /* ── Borders ──────────────────────────────────────────────────────────────
-     --border-1 maps to the decorative rule. The admin's form fields are drawn
-     as full boxes rather than underlines, and a box outline reads as a
-     component boundary at a much lower contrast than a single underline does,
-     so --rule is adequate there. --border-color-hover carries the accent. */
-  --border-1:            var(--rule);
-  --border-2:            var(--rule);
-  --border-hover:        var(--accent-line);
-  --border-color:        var(--rule);
-  --border-color-hover:  var(--accent-line);
-
-  /* ── Accent ───────────────────────────────────────────────────────────── */
-  --accent-1:     var(--accent);
-  --accent-1-rgb: var(--accent-rgb);
-  --accent-h:     var(--accent-hover);
-  --accent-text:  var(--accent-ink);
-  --accent-sub:   var(--accent-dim);
-  --accent-sub2:  var(--accent-line);
-
-  /* ── Status ───────────────────────────────────────────────────────────── */
-  --error:   var(--state-err);
-  --success: var(--state-ok);
-  --warning: var(--state-warn);
-  --info:    var(--accent);
-
-  --error-color:   var(--state-err);
-  --success-color: var(--state-ok);
-  --warning-color: var(--state-warn);
-
-  --error-line: var(--state-err-line);
-  --error-sub:  var(--state-err-dim);
-  /* The new palette has no dedicated tint for these two, and the admin only
-     uses them as a faint wash behind a status row. Derived from the state
-     colour so they track it. */
-  --success-sub: color-mix(in srgb, var(--state-ok) 13%, transparent);
+.admin-scope,
+.admin-modal {
+  /* A faint warm wash behind the "Hidden" status, derived from the state colour so it tracks the theme. */
   --warning-sub: color-mix(in srgb, var(--state-warn) 13%, transparent);
-  --info-sub:    var(--accent-dim);
-
-  /* ── Radii ────────────────────────────────────────────────────────────────
-     The public design is square, so Theme.css keeps only 0 / 2px / 4px / full.
-     The admin keeps a softer geometry - it is a tool, not a portfolio page -
-     so the larger steps are defined here rather than in the theme. */
-  --r-md: 8px;
-  --r-lg: 12px;
-  --r-xl: 18px;
-
-  --radius-xs:   var(--r-xs);
-  --radius-sm:   var(--r-sm);
-  --radius-md:   var(--r-md);
-  --radius-lg:   var(--r-lg);
-  --radius-xl:   var(--r-xl);
-  --radius-full: var(--r-full);
-
-  /* ── Shadows ──────────────────────────────────────────────────────────────
-     The public design communicates elevation with a change of surface value
-     and keeps only two shadow steps. The admin's modals and dropdowns do need
-     real elevation, so the middle steps live here. */
-  --shadow-md: 0 4px 18px rgba(0, 0, 0, 0.16), 0 1px 4px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 22px 60px rgba(0, 0, 0, 0.28);
-
-  /* ── Transitions ──────────────────────────────────────────────────────── */
-  --transition:       var(--t-base);
-  --transition-fast:  var(--t-fast);
-  --transition-base:  var(--t-base);
-  --transition-slow:  var(--t-slow);
-
-  /* ── Spacing ──────────────────────────────────────────────────────────── */
-  --spacing-xs:  0.25rem;
-  --spacing-sm:  0.5rem;
-  --spacing-md:  1rem;
-  --spacing-lg:  1.5rem;
-  --spacing-xl:  2rem;
-  --spacing-2xl: 3rem;
-  --spacing-3xl: 4rem;
-
-  /* ── Type ─────────────────────────────────────────────────────────────── */
-  --font-size-xs:   0.875rem;
-  --font-size-sm:   0.9375rem;
-  --font-size-base: 1rem;
-  --font-size-md:   1.125rem;
-  --font-size-lg:   1.25rem;
-  --font-size-xl:   1.5rem;
-  --font-size-2xl:  1.875rem;
-  --font-size-3xl:  2.25rem;
-
-  /* Admin-only z-index, kept above the public scale so a dropdown inside a
-     modal cannot land under the site's toast layer. */
-  --z-dropdown:     1000;
-  --z-admin-sticky: 1020;
-}
-
-/* Browsers without color-mix (Safari < 16.2) would drop the glass tokens
-   entirely and render a transparent panel. Fall back to the opaque surface. */
-@supports not (color: color-mix(in srgb, red 50%, transparent)) {
-  :root {
-    --bg-glass:        var(--bg-1);
-    --bg-glass-strong: var(--bg-0);
-    --success-sub:     transparent;
-    --warning-sub:     transparent;
-  }
 }
 
 .admin-scope {
-  color: var(--primary-text-color);
+  color: var(--fg-1);
   background: var(--bg-0);
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Scrollbar - no track, floating brass thumb ─────────────────────────── */
-.admin-scope ::-webkit-scrollbar,
-.admin-modal ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-  background: transparent;
+@supports not (color: color-mix(in srgb, red 50%, transparent)) {
+  .admin-scope, .admin-modal { --warning-sub: transparent; }
 }
+
+/* Scrollbar: no track, a floating accent thumb. */
+.admin-scope ::-webkit-scrollbar,
+.admin-modal ::-webkit-scrollbar { width: 10px; height: 10px; background: transparent; }
 .admin-scope ::-webkit-scrollbar-track,
 .admin-scope ::-webkit-scrollbar-corner,
 .admin-modal ::-webkit-scrollbar-track,
 .admin-modal ::-webkit-scrollbar-corner { background: transparent; }
 .admin-scope ::-webkit-scrollbar-thumb,
 .admin-modal ::-webkit-scrollbar-thumb {
-  background: rgba(var(--accent-rgb), 0.5);
+  background: rgba(var(--accent-rgb), 0.4);
   border-radius: 999px;
   border: 3px solid transparent;
   background-clip: padding-box;
 }
 .admin-scope ::-webkit-scrollbar-thumb:hover,
-.admin-modal ::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-rgb), 0.8); }
+.admin-modal ::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-rgb), 0.75); }
 .admin-scope, .admin-modal {
   scrollbar-width: thin;
-  scrollbar-color: rgba(var(--accent-rgb), 0.55) transparent;
+  scrollbar-color: rgba(var(--accent-rgb), 0.45) transparent;
 }

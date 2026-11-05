@@ -1,90 +1,67 @@
 .page {
-  /* Fills the viewport minus the nav so the footer still sits below the fold
-     rather than riding up under a short page. */
-  min-height: 100svh;
-  display: flex;
-  align-items: center;
-  padding-top: var(--nav-h);
-  padding-bottom: clamp(48px, 8vh, 96px);
-}
-
-.body {
-  grid-column: 1 / 8;
-  min-width: 0;
-}
-
-.eyebrow {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  color: var(--fg-3);
-  margin: 0 0 var(--sp-6);
-}
-
-.eyebrow::before {
-  content: '';
-  width: 40px;
-  height: 1px;
-  background: var(--accent);
-  flex-shrink: 0;
-}
-
-.code {
-  font-family: var(--font-serif);
-  font-size: var(--text-display);
-  line-height: var(--leading-display);
-  letter-spacing: var(--tracking-display);
-  font-weight: 400;
-  font-style: italic;
-  color: var(--fg-1);
-  margin: 0;
   display: flex;
   flex-direction: column;
-  /* Optical alignment against the gutter - see .display in global.css. */
-  margin-left: -0.045em;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-6);
+  min-height: min(100svh, 900px);
+  padding-top: calc(var(--nav-h) + 48px);
+  padding-bottom: 72px;
+  text-align: center;
 }
 
-.codeLast {
-  font-style: normal;
-  margin-left: 0.14em;
-}
-
-.text {
-  max-width: 42ch;
-  margin: clamp(24px, 4vh, 40px) 0 0;
-  font-size: var(--text-md);
-  line-height: var(--leading-relaxed);
-  color: var(--fg-2);
-}
-
-.actions {
+.digits {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-3);
-  margin-top: clamp(28px, 4vh, 44px);
+  align-items: center;
+  gap: 0.04em;
+  font-size: clamp(5rem, 13vw, 9rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: var(--tracking-display);
+  color: var(--fg-1);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.digit { display: inline-block; will-change: transform; }
+.digit:not(.zero):hover { animation: wobble 700ms var(--ease-spring); }
+@keyframes wobble {
+  20% { rotate: -12deg; }
+  45% { rotate: 9deg; }
+  70% { rotate: -4deg; }
+  100% { rotate: 0deg; }
 }
 
-/* Two repeating gradients rather than an asset - no request, and it scales
-   with the column for free. */
-.plate {
-  grid-column: 9 / 13;
-  align-self: stretch;
-  min-height: 320px;
-  background-image:
-    repeating-linear-gradient(to right,  var(--rule) 0 1px, transparent 1px 48px),
-    repeating-linear-gradient(to bottom, var(--rule) 0 1px, transparent 1px 48px);
-  border: 1px solid var(--rule);
-  /* Rasterised once instead of on scroll frames. */
-  transform: translateZ(0);
+/* The zero is a mint ring with an eye that follows the pointer. */
+.zero {
+  display: grid;
+  place-items: center;
+  width: 0.66em;
+  height: 0.76em;
+  margin-inline: 0.04em;
+  border: 0.13em solid var(--accent);
+  border-radius: 999px;
+  transition: scale 500ms var(--ease-spring);
+}
+.zero:hover { scale: 1.08; }
+.eye { display: grid; place-items: center; width: 0.24em; height: 0.24em; }
+.pupil {
+  width: 0.12em;
+  height: 0.12em;
+  border-radius: 50%;
+  background: var(--fg-1);
 }
 
-@media (max-width: 900px) {
-  .codeLast { margin-left: 0.08em; }
-  /* The plate is second-column decoration; stacked it just makes the page
-     taller for no gain. */
-  .plate { display: none; }
+.title {
+  font-size: var(--text-4xl);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: var(--tracking-display);
+}
+.text { max-width: 42ch; font-size: var(--text-lg); line-height: 1.6; color: var(--fg-2); }
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-3); margin-top: var(--sp-2); }
+
+@media (prefers-reduced-motion: reduce) {
+  .digit:not(.zero):hover { animation: none; }
+  .zero { transition: none; }
 }

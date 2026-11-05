@@ -1,0 +1,33 @@
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: var(--glow-opacity);
+}
+
+/* Radial gradients, not blur filters: the same softness at a fraction of the cost. */
+.blob {
+  position: absolute;
+  width: 62vmax;
+  height: 62vmax;
+  border-radius: 50%;
+  will-change: transform;
+  animation: drift 26s ease-in-out infinite alternate;
+}
+.mint     { top: -22vmax; left: -14vmax; background: radial-gradient(circle, rgba(176, 239, 195, 0.55), transparent 62%); }
+.lavender { top: 8vmax; right: -24vmax; background: radial-gradient(circle, rgba(201, 184, 255, 0.5), transparent 62%); animation-duration: 31s; }
+.coral    { top: 48vh; left: 18vw; background: radial-gradient(circle, rgba(242, 167, 167, 0.4), transparent 62%); animation-duration: 36s; }
+.sky      { bottom: -30vmax; right: -6vmax; background: radial-gradient(circle, rgba(159, 211, 255, 0.45), transparent 62%); animation-duration: 29s; }
+.peach    { bottom: -26vmax; left: -22vmax; background: radial-gradient(circle, rgba(227, 203, 185, 0.4), transparent 62%); animation-duration: 40s; }
+
+@keyframes drift {
+  0%   { translate: 0 0; scale: 1; }
+  50%  { translate: 6vw -4vh; scale: 1.12; }
+  100% { translate: -5vw 5vh; scale: 0.94; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blob { animation: none; }
+}

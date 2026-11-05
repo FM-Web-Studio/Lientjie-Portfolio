@@ -89,6 +89,7 @@ export default defineConfig({
         manualChunks: {
           'firebase': ['firebase/app', 'firebase/firestore', 'firebase/auth', 'firebase/storage', 'firebase/app-check', 'firebase/functions'],
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'motion': ['gsap', 'gsap/ScrollTrigger', 'gsap/SplitText', '@gsap/react', 'lenis'],
         },
       },
     },

@@ -1,219 +1,233 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useTheme } from '../../hooks'
 import { useContent } from '../../context/ContentContext'
 import { subscribeInterests } from '../../firebase'
+import { gsap, reducedMotion } from '../../lib/motion'
+import { Roll } from '../Button'
+import CvButton from '../CvButton'
+import { Sun, Moon, ArrowUpRight } from '../Icons'
 import styles from './NavigationBar.module.css'
 
 const LINKS = [
+  { label: 'Index',     to: '/',          menuOnly: true },
   { label: 'Work',      to: '/work'      },
   { label: 'Interests', to: '/interests' },
   { label: 'About',     to: '/about'     },
   { label: 'Contact',   to: '/contact'   },
 ]
 
-function SunIcon() {
+export function ThemeToggle({ className = '' }) {
+  const { theme, toggle } = useTheme()
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-         strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="4.2" />
-      <path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7" />
-    </svg>
-  )
-}
-
-function MoonIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-         strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z" />
-    </svg>
+    <button
+      type="button"
+      className={`${styles.iconBtn} ${className}`}
+      onClick={toggle}
+      aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+      data-cursor="hide"
+    >
+      <span className={styles.iconSwap} data-theme-icon={theme}>
+        <Sun size={16} />
+        <Moon size={16} />
+      </span>
+    </button>
   )
 }
 
 export default function NavigationBar() {
-  const { theme, toggle } = useTheme()
   const { copy } = useContent()
   const brand = copy('brand')
+  const info = copy('contact')
   const location = useLocation()
   const [open, setOpen] = useState(false)
-  const [lifted, setLifted] = useState(false)
-  /* Whether this route has a section that the bar is allowed to float over
-     transparently. Starts true so the very first paint on Home does not flash
-     an opaque bar over the hero before the effect below runs. */
-  /* '' = not allowed to overlay; 'ground' = the section beneath uses the
-     theme's own surface, so theme text colours are correct; 'scrim' = the
-     section beneath is a dark scrim over imagery in BOTH themes, so the bar
-     must use fixed light type regardless of theme. */
+  const [scrolled, setScrolled] = useState(false)
+  const [hidden, setHidden] = useState(false)
   const [overlay, setOverlay] = useState('ground')
-
-  /* Whether the Interests tab should appear at all. Starts true so a site
-     that already has interests never flashes the link away and back on
-     first paint; the listener flips it to false only once it has actually
-     confirmed the list is empty. A subscribe error fails open (stays true)
-     rather than hiding a real tab over a transient network hiccup. */
   const [hasInterests, setHasInterests] = useState(true)
+  const progress = useRef(null)
+  const menu = useRef(null)
+  const menuBtn = useRef(null)
+  const linksRef = useRef(null)
+  const pill = useRef(null)
 
-  useEffect(() => {
-    const unsubscribe = subscribeInterests(
-      items => setHasInterests(items.length > 0),
-      () => setHasInterests(true),
-    )
-    return unsubscribe
-  }, [])
-
+  useEffect(() => subscribeInterests(items => setHasInterests(items.length > 0), () => setHasInterests(true)), [])
   const links = LINKS.filter(l => l.to !== '/interests' || hasInterests)
 
-  /*
-   * Whether the bar may be transparent at all on this route.
-   *
-   * A transparent bar draws its type in the THEME's text colour, which is only
-   * legible over the theme's own ground. Most pages now open with a
-   * full-strength brand band - the Contact header is mint, which is a light
-   * surface in both themes - and bone-white nav type over mint is unreadable.
-   *
-   * Rather than teach the nav about individual routes, the section that wants
-   * to be floated over declares it with `data-nav-overlay` (currently only the
-   * home hero, which sets its own dark scrim and so controls its own
-   * contrast). Anywhere that attribute is absent, the bar is opaque from the
-   * first pixel.
-   */
+  // A page whose first section is a dark image declares data-nav-overlay="scrim", so the bar uses light type over it.
   useEffect(() => {
-    const el = document.querySelector('[data-nav-overlay]')
-    setOverlay(el ? (el.getAttribute('data-nav-overlay') || 'ground') : '')
+    const check = () => {
+      const el = document.querySelector('main [data-nav-overlay]')
+      setOverlay(el?.getAttribute('data-nav-overlay') || 'ground')
+    }
+    // Pages mount after the site copy loads, so look again shortly after navigating.
+    const timers = [50, 700, 1600].map(ms => setTimeout(check, ms))
+    return () => timers.forEach(clearTimeout)
   }, [location.pathname])
 
-  /*
-   * The bar gains a background once the page has scrolled past the overlay
-   * section. The threshold is a fixed 80px rather than the hero's measured
-   * height: reading the hero would couple the nav to one page's markup, and
-   * the visual goal is only "no longer sitting on top of the first screenful
-   * of image".
-   *
-   * `passive: true` because this listener never calls preventDefault, and
-   * without the flag the browser must wait for it before it can scroll.
-   */
+  // Hide on the way down, return on the way up, and track how far down the page is.
   useEffect(() => {
-    const onScroll = () => setLifted(window.scrollY > 80)
+    let last = window.scrollY
+    const onScroll = () => {
+      const y = window.scrollY
+      const max = document.documentElement.scrollHeight - window.innerHeight
+      setScrolled(y > 40)
+      if (Math.abs(y - last) > 6) { setHidden(y > last && y > 300); last = y }
+      if (progress.current) progress.current.style.transform = `scaleX(${max > 0 ? Math.min(1, y / max) : 0})`
+    }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Close the overlay on navigation. Without this, following a link inside the
-  // overlay leaves it open on top of the page that just loaded.
+  // The pill behind the desktop links glides to whichever link is active or hovered.
+  const movePill = (target) => {
+    const wrap = linksRef.current
+    if (!wrap || !pill.current) return
+    const el = target || wrap.querySelector('[aria-current="page"]')
+    if (!el) { gsap.to(pill.current, { opacity: 0, duration: 0.3 }); return }
+    const a = el.getBoundingClientRect()
+    const b = wrap.getBoundingClientRect()
+    gsap.to(pill.current, { x: a.left - b.left, width: a.width, opacity: 1, duration: 0.6, ease: 'expo.out' })
+  }
+  useLayoutEffect(() => { movePill() }, [location.pathname, hasInterests]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const onResize = () => movePill()
+    window.addEventListener('resize', onResize)
+    document.fonts?.ready.then(onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => { setOpen(false) }, [location.pathname])
 
+  // The menu opens as a circle growing out of the menu button.
   useEffect(() => {
-    if (!open) return undefined
-    const onKey = e => { if (e.key === 'Escape') setOpen(false) }
-    window.addEventListener('keydown', onKey)
-    /* The overlay covers the viewport, so the page behind it must not scroll.
-       Lenis drives scrolling from the root element, so hiding overflow on
-       <body> alone would not stop it - the class goes on <html>. */
-    document.documentElement.classList.add('nav-locked')
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      document.documentElement.classList.remove('nav-locked')
+    const el = menu.current
+    if (!el) return undefined
+    const r = menuBtn.current?.getBoundingClientRect()
+    const x = r ? r.left + r.width / 2 : window.innerWidth - 40
+    const y = r ? r.top + r.height / 2 : 40
+    const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))
+    const q = gsap.utils.selector(el)
+    const instant = reducedMotion()
+
+    if (open) {
+      document.documentElement.classList.add('nav-locked')
+      gsap.timeline()
+        .set(el, { visibility: 'visible', clipPath: `circle(0px at ${x}px ${y}px)` })
+        .to(el, { clipPath: `circle(${radius}px at ${x}px ${y}px)`, duration: instant ? 0 : 0.9, ease: 'expo.inOut' })
+        .fromTo(q('[data-menu-item]'), { yPercent: 110 }, { yPercent: 0, duration: instant ? 0 : 1, stagger: 0.06, ease: 'expo.out' }, instant ? 0 : '-=0.45')
+        .fromTo(q('[data-menu-fade]'), { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: instant ? 0 : 0.7, stagger: 0.05 }, '<0.15')
+      const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+      window.addEventListener('keydown', onKey)
+      return () => window.removeEventListener('keydown', onKey)
     }
+    document.documentElement.classList.remove('nav-locked')
+    if (el.style.visibility === 'visible') {
+      gsap.timeline()
+        .to(q('[data-menu-item]'), { yPercent: -110, duration: instant ? 0 : 0.45, stagger: 0.03, ease: 'power3.in' })
+        .to(el, { clipPath: `circle(0px at ${x}px ${y}px)`, duration: instant ? 0 : 0.75, ease: 'expo.inOut' }, '-=0.2')
+        .set(el, { visibility: 'hidden' })
+    }
+    return undefined
   }, [open])
+
+  const onScrim = !scrolled && overlay === 'scrim' && !open
+  const onLight = !scrolled && overlay === 'light-ground' && !open
+  const social = [
+    info.instagram && { label: 'Instagram', href: info.instagram },
+    info.linkedin && { label: 'LinkedIn', href: info.linkedin },
+    info.facebook && { label: 'Facebook', href: info.facebook },
+  ].filter(Boolean)
 
   return (
     <>
       <a className="skip-link" href="#main">Skip to content</a>
-
       <header
-        className={[
-          styles.bar,
-          (lifted || !overlay) ? styles.barLifted : '',
-          /* Only while actually floating over a scrim - once lifted the bar has
-             its own ground and must go back to theme colours. */
-          (!lifted && overlay === 'scrim') ? styles.barOnScrim : '',
-        ].filter(Boolean).join(' ')}
+        className={[styles.bar, scrolled && styles.scrolled, hidden && !open && styles.hidden, onScrim && styles.onScrim, onLight && styles.onLight, open && styles.menuOpen].filter(Boolean).join(' ')}
       >
         <div className={styles.inner}>
-          <Link to="/" className={styles.brand} aria-label={brand.siteName}>
-            {/* logo-96, not the full-size logo.v2.png: this renders at 26px, so
-                the original would be a 53KB download and a quarter-megapixel
-                decode for a thumbnail, on every page. Explicit width/height
-                reserves the slot before the image arrives. */}
-            <img
-              src="/logo-96.v2.png"
-              alt=""
-              className={styles.brandMark}
-              width="26"
-              height="26"
-            />
-            <span className={styles.brandName}>{brand.siteName}</span>
+          <Link to="/" className={`roll-host ${styles.brand}`} aria-label={brand.siteName} data-cursor="hide">
+            <img src="/logo-96.v2.png" alt="" className={styles.brandMark} width="30" height="30" />
+            <span className={styles.brandName}><Roll>{brand.siteName}</Roll></span>
           </Link>
 
-          <nav className={styles.links} aria-label="Main">
-            {links.map(({ label, to }) => (
+          <nav ref={linksRef} className={styles.links} aria-label="Main" onPointerLeave={() => movePill()}>
+            <span ref={pill} className={styles.pill} aria-hidden="true" />
+            {links.filter(l => !l.menuOnly).map(({ label, to }) => (
               <NavLink
                 key={to}
                 to={to}
-                className={({ isActive }) =>
-                  `${styles.link} ${isActive ? styles.linkActive : ''}`
-                }
+                className={({ isActive }) => `roll-host ${styles.link} ${isActive ? styles.linkActive : ''}`}
+                onPointerEnter={(e) => movePill(e.currentTarget)}
+                data-cursor="hide"
               >
-                {label}
+                <Roll>{label}</Roll>
               </NavLink>
             ))}
           </nav>
 
           <div className={styles.tools}>
+            <ThemeToggle />
             <button
-              type="button"
-              className={styles.iconBtn}
-              onClick={toggle}
-              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            >
-              {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-            </button>
-
-            <button
+              ref={menuBtn}
               type="button"
               className={styles.menuBtn}
-              onClick={() => setOpen(true)}
-              aria-label="Open menu"
+              onClick={() => setOpen(o => !o)}
+              aria-label={open ? 'Close menu' : 'Open menu'}
               aria-expanded={open}
+              aria-controls="site-menu"
+              data-cursor="hide"
             >
-              Menu
+              <span className={styles.menuWord}>{open ? 'Close' : 'Menu'}</span>
+              <span className={styles.burger} aria-hidden="true"><span /><span /></span>
             </button>
           </div>
         </div>
+        <span className={styles.progress} aria-hidden="true"><span ref={progress} /></span>
       </header>
 
-      {/* Mobile overlay. Rendered always and hidden with a transform rather
-          than unmounted, so it can transition both ways. `inert` keeps its
-          links out of the tab order while closed; `visibility: hidden` alone
-          does that in most engines but not reliably in Safari. */}
-      <div
-        className={`${styles.overlay} ${open ? styles.overlayOpen : ''}`}
-        inert={open ? undefined : ''}
-      >
-        <div className={styles.overlayHead}>
-          <span className="mono">Menu</span>
-          <button
-            type="button"
-            className={styles.closeBtn}
-            onClick={() => setOpen(false)}
-            aria-label="Close menu"
-          >
-            Close
-          </button>
-        </div>
-
-        <nav className={styles.overlayNav} aria-label="Main">
-          {[{ label: 'Index', to: '/' }, ...links].map(({ label, to }, i) => (
-            <NavLink key={to} to={to} className={styles.overlayLink}>
-              <span className={styles.overlayNum}>
-                {String(i).padStart(2, '0')}
+      <div id="site-menu" ref={menu} className={styles.menu} inert={open ? undefined : ''} data-lenis-prevent>
+        <div className={styles.menuGrid}>
+          <nav className={styles.menuLinks} aria-label="Menu">
+            {links.map(({ label, to }, i) => (
+              <span key={to} className={styles.menuRow}>
+                <NavLink
+                  to={to}
+                  end={to === '/'}
+                  className={({ isActive }) => `${styles.menuLink} ${isActive ? styles.menuLinkActive : ''}`}
+                  data-menu-item
+                  data-cursor="open"
+                  data-cursor-label="Go"
+                >
+                  <span className={styles.menuNum}>{String(i + 1).padStart(2, '0')}</span>
+                  <span className={styles.menuLabel}>{label}</span>
+                  <ArrowUpRight size={28} className={styles.menuArrow} />
+                </NavLink>
               </span>
-              {label}
-            </NavLink>
-          ))}
-        </nav>
+            ))}
+          </nav>
+
+          <aside className={styles.menuAside}>
+            <div data-menu-fade className={styles.menuBlock}>
+              <p className="eyebrow">Get in touch</p>
+              {info.email && <a className="link" href={`mailto:${info.email}`}>{info.email}</a>}
+              {info.phone && <a className="link" href={`tel:${info.phone.replace(/\s+/g, '')}`}>{info.phone}</a>}
+            </div>
+            {social.length > 0 && (
+              <div data-menu-fade className={styles.menuBlock}>
+                <p className="mono">Elsewhere</p>
+                {social.map(s => (
+                  <a key={s.href} className="link" href={s.href} target="_blank" rel="noopener noreferrer">{s.label}<ArrowUpRight size={12} /></a>
+                ))}
+              </div>
+            )}
+            <div data-menu-fade className={styles.menuBlock}>
+              <CvButton />
+            </div>
+            <p data-menu-fade className={`mono ${styles.menuFoot}`}>{info.location}</p>
+          </aside>
+        </div>
       </div>
     </>
   )

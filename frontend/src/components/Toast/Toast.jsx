@@ -35,8 +35,9 @@ function ToastItem({ toast, onRemove }) {
       className={`${styles.toast} ${styles[toast.type]} ${toast.leaving ? styles.leaving : ''}`}
       role="alert"
       aria-live="assertive"
+      style={{ '--life': `${toast.duration || 4500}ms` }}
     >
-      <div className={styles.stripe} />
+      {toast.duration > 0 && <div className={styles.stripe} />}
       <div className={styles.iconWrap}>{ICONS[toast.type]}</div>
       <div className={styles.body}>
         {toast.title && <p className={styles.title}>{toast.title}</p>}

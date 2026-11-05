@@ -8,28 +8,12 @@
     <meta name="description" content="Lientjie Meiring - Architecture Student & Designer, University of Johannesburg" />
     <title>Lientjie Meiring · Architecture</title>
 
-    <!--
-      Tells the browser the page supports both schemes, so form controls,
-      scrollbars and the space outside the page body are painted to match
-      instead of defaulting to light.
-    -->
+    <!-- Lets the browser paint form controls and scrollbars to match either theme. -->
     <meta name="color-scheme" content="dark light" />
     <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#E6E6E6" media="(prefers-color-scheme: light)" />
 
-    <!--
-      Sets data-theme BEFORE first paint.
-
-      Every colour token lives inside a [data-theme='dark'] / [data-theme='light']
-      block, and useTheme can only apply the attribute after React has mounted.
-      Without this, the first paint has no palette at all: the page renders with
-      the browser's initial values - transparent background, black text - and
-      then snaps to the real theme a moment later. Inline and blocking is the
-      point; deferring it would reintroduce the flash it exists to prevent.
-
-      Kept in sync with getInitial() in hooks/useTheme.jsx: same storage key,
-      same dark-by-default fallback. If one changes, change both.
-    -->
+    <!-- Sets the theme before first paint, so there is no flash. Same key and default as hooks/useTheme.jsx. -->
     <script>
       (function () {
         try {
@@ -39,31 +23,17 @@
             : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
           document.documentElement.setAttribute('data-theme', theme)
         } catch (e) {
-          /* Private mode can throw on localStorage access. Dark is the
-             designed default, so fall back to it rather than to no theme. */
+          /* Private mode can block localStorage; dark is the default. */
           document.documentElement.setAttribute('data-theme', 'dark')
         }
       })()
     </script>
 
-    <!--
-      One request for every family the site actually renders.
-
-      These used to be pulled by an @import inside global.css. An @import
-      nested in a stylesheet cannot start until that stylesheet has been
-      downloaded and parsed, so the real fonts sat behind a four-hop waterfall:
-      html -> global.css -> Google CSS -> font files. They swapped in around
-      940ms and reflowed the hero, which was the entire source of the page's
-      load-time layout shift (CLS 0.094; 0.0007 with fonts blocked).
-
-      Declared here as a plain <link> instead, they start in the preload
-      scanner alongside the HTML. The metric-matched fallbacks in global.css
-      then make the swap itself invisible.
-    -->
+    <!-- Fonts as a plain <link>, so the browser fetches them alongside the HTML. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
   </head>

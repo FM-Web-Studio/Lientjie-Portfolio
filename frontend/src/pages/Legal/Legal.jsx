@@ -1,10 +1,14 @@
-import { Fragment } from 'react'
+import { Fragment, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useContent } from '../../context/ContentContext'
 import { LEGAL_UPDATED, privacyPolicy, termsOfUse } from '../../content/legal'
+import { Reveal, Button, ArrowRight } from '../../components'
+import { scrollToTarget } from '../../hooks'
+import { gsap, ScrollTrigger, useGSAP } from '../../lib/motion'
 import styles from './Legal.module.css'
 
 const LINK = /\[([^\]]+)\]\(([^)]+)\)/g
+const pad = n => String(n).padStart(2, '0')
 
 // Plain text with [text](url) links. Site paths stay in the app, the rest open as normal links.
 function Inline({ text }) {
@@ -32,29 +36,104 @@ function Legal({ build, other }) {
     location: info.location || 'Gauteng, South Africa',
   })
 
+  const root = useRef(null)
+  const [active, setActive] = useState(0)
+
+  // Highlights the section being read in the contents list.
+  useGSAP(() => {
+    gsap.utils.toArray('[data-legal-section]', root.current).forEach((el, i) => ScrollTrigger.create({
+      trigger: el,
+      start: 'top 40%',
+      end: 'bottom 40%',
+      onToggle: self => { if (self.isActive) setActive(i) },
+    }))
+  }, { scope: root, dependencies: [doc.title] })
+
+  const goTo = (e, i) => {
+    e.preventDefault()
+    const el = document.getElementById(`s-${pad(i + 1)}`)
+    if (el) scrollToTarget(el, { offset: -96 })
+  }
+
   return (
-    <section className={`tone-base ${styles.page}`}>
-      <div className="grid12">
+    <div ref={root} className="container">
+      <header className={styles.hero}>
+        <Reveal variant="rise-sm" className={styles.meta}>
+          <span className="badge badge-dot">Legal</span>
+          <span className={styles.updated}>Updated {LEGAL_UPDATED}</span>
+        </Reveal>
+        <Reveal as="h1" variant="rise" index={1} className={styles.title}>
+          {doc.title}<span className="dot">.</span>
+        </Reveal>
+        <Reveal as="p" variant="rise" index={2} className={styles.intro}>{doc.intro}</Reveal>
+      </header>
+
+      <div className={styles.page}>
+        <aside className={styles.tocCol}>
+          <nav className={styles.toc} aria-label="Contents">
+            <p className={styles.tocHead}>Contents</p>
+            <ol className={styles.tocList}>
+              {doc.sections.map((s, i) => (
+                <li key={`${i}-${s.heading}`}>
+                  <a
+                    href={`#s-${pad(i + 1)}`}
+                    className={styles.tocLink}
+                    aria-current={active === i ? 'true' : undefined}
+                    onClick={e => goTo(e, i)}
+                  >
+                    <span className={styles.tocNum}>{i + 1}</span>
+                    <span>{s.heading}</span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        </aside>
+
         <article className={styles.body}>
-          <p className={styles.eyebrow}>Updated {LEGAL_UPDATED}</p>
-          <h1 className={styles.title}>{doc.title}<span className="dot">.</span></h1>
-          <p className={styles.intro}>{doc.intro}</p>
+          <details className={`card ${styles.tocMobile}`}>
+            <summary>
+              <span>Contents</span>
+              <span className={styles.tocPlus} aria-hidden="true" />
+            </summary>
+            <ol>
+              {doc.sections.map((s, i) => (
+                <li key={`${i}-${s.heading}`}>
+                  <a href={`#s-${pad(i + 1)}`} onClick={e => goTo(e, i)}>
+                    <span className={styles.tocNum}>{i + 1}</span>
+                    <span>{s.heading}</span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </details>
 
           {doc.sections.map((s, i) => (
-            <section key={s.heading} className={styles.section}>
+            <section
+              key={`${i}-${s.heading}`}
+              id={`s-${pad(i + 1)}`}
+              data-legal-section=""
+              className={styles.section}
+            >
               <h2 className={styles.heading}>
-                <span className={styles.num}>{String(i + 1).padStart(2, '0')}</span>{s.heading}
+                <span className={styles.num} aria-hidden="true">{i + 1}</span>
+                <span>{s.heading}</span>
               </h2>
               {s.blocks.map((b, j) => (Array.isArray(b)
-                ? <ul key={j}>{b.map(item => <li key={item}><Inline text={item} /></li>)}</ul>
+                ? <ul key={j}>{b.map((item, k) => <li key={`${k}-${item}`}><Inline text={item} /></li>)}</ul>
                 : <p key={j}><Inline text={b} /></p>))}
             </section>
           ))}
 
-          <p className={styles.other}>See also the <Link to={other.to}>{other.label}</Link>.</p>
+          <div className={`card ${styles.other}`}>
+            <p className={styles.otherKey}>See also the {other.label}.</p>
+            <Button to={other.to} size="sm" icon={<ArrowRight size={14} />}>
+              {other.label.charAt(0).toUpperCase() + other.label.slice(1)}
+            </Button>
+          </div>
         </article>
       </div>
-    </section>
+    </div>
   )
 }
 

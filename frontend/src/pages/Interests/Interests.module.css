@@ -1,184 +1,118 @@
-/* =============================================================================
-   INTERESTS
-   -----------------------------------------------------------------------------
-   Header matches Work's: title on the gutter, supporting text opposite. Below
-   it, a plain masonry-free grid of tiles - unlike Work's alternating bleed
-   rows, these are personal snapshots rather than presentation sheets, so they
-   read better as an even grid than as full-bleed editorial spreads.
-   ========================================================================== */
-
+/* ── Header ── */
 .head {
-  padding-top: calc(var(--nav-h) + clamp(48px, 9vh, 112px));
-  padding-bottom: clamp(40px, 6vh, 72px);
+  padding-top: calc(var(--nav-h) + clamp(48px, 9vh, 96px));
+  padding-bottom: var(--sp-6);
 }
-
-.headMain {
-  grid-column: 1 / 8;
-  min-width: 0;
-}
-
-.eyebrow {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  color: var(--fg-3);
-  margin: 0 0 var(--sp-6);
-}
-
-.eyebrow::before {
-  content: '';
-  width: 40px;
-  height: 1px;
-  background: var(--accent);
-  flex-shrink: 0;
-}
-
+.headTop { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-4); }
 .title {
-  font-family: var(--font-serif);
+  margin-top: var(--sp-5);
   font-size: var(--text-display);
-  line-height: var(--leading-display);
+  font-weight: 600;
+  line-height: 1;
   letter-spacing: var(--tracking-display);
-  font-weight: 400;
   color: var(--fg-1);
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  margin-left: -0.045em;
 }
-
-.title em { font-style: italic; font-weight: 300; }
-.titleLast { margin-left: 0.14em; }
-
-.headMeta {
-  grid-column: 9 / 13;
-  align-self: end;
-  min-width: 0;
-  padding-bottom: var(--sp-3);
-}
-
 .sub {
-  font-size: var(--text-base);
-  line-height: var(--leading-relaxed);
+  margin-top: var(--sp-5);
+  max-width: 52ch;
+  font-size: var(--text-lg);
+  line-height: 1.6;
   color: var(--fg-2);
-  margin: 0;
-  max-width: 36ch;
 }
 
-/* ── Grid ───────────────────────────────────────────────────────────────── */
-.section {
-  padding-top: var(--sp-8);
-  padding-bottom: var(--section-y);
-}
+/* ── Interests ── */
+.chapters { padding-bottom: var(--section-y); }
+.chapter { padding-top: clamp(40px, 5vw, 64px); }
+.chapter + .chapter { margin-top: clamp(48px, 7vw, 88px); border-top: 1px solid var(--rule); }
 
-.grid {
-  grid-column: 1 / 13;
+.chapterHead {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(clamp(180px, 22vw, 280px), 1fr));
-  gap: clamp(16px, 2vw, 28px);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-6) clamp(32px, 6vw, 96px);
+  align-items: end;
+  margin-bottom: var(--sp-8);
 }
-
-/* ── Tile ───────────────────────────────────────────────────────────────── */
-.tile {
-  appearance: none;
-  background: none;
-  border: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-  text-align: left;
-  cursor: pointer;
-  color: inherit;
-  font: inherit;
+.name {
+  margin-top: var(--sp-4);
+  font-size: var(--text-3xl);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
 }
+.chapterText { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-5); }
+.desc { max-width: 52ch; font-size: var(--text-base); line-height: 1.65; color: var(--fg-2); white-space: pre-line; }
 
-.tileMedia {
+/* A bento grid: fixed rows, spans set per photo in JSX, so it stays tidy at any count. */
+.bento {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: clamp(180px, 19vw, 280px);
+  gap: var(--sp-4);
+}
+.bento[data-count='1'] { grid-template-columns: minmax(0, 1fr); max-width: 820px; }
+.bento[data-count='2'] { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: clamp(220px, 28vw, 420px); }
+.photoItem, .skelPhoto { grid-column: span var(--c, 1); grid-row: span var(--r, 1); min-width: 0; }
+.photoItem > .photo { height: 100%; }
+
+.photo {
   position: relative;
+  display: block;
+  width: 100%;
   overflow: hidden;
+  border-radius: var(--r-lg);
+  background: var(--bg-2);
+  text-align: left;
+  /* Keeps the rounded clip intact while the child scales in Safari. */
+  isolation: isolate;
 }
+.emptyPhoto { max-width: 820px; }
+.zoom { display: block; height: 100%; transition: transform 1s var(--ease-out-expo); will-change: transform; }
+.photo:hover .zoom, .photo:focus-visible .zoom { transform: scale(1.05); }
+.fig { height: 100%; }
+.fig :global(img) { width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
 
-.tileMedia img {
-  transition: transform var(--t-slow, 0.6s) var(--ease-out, ease);
-}
-
-.tile:hover .tileMedia img,
-.tile:focus-visible .tileMedia img {
-  transform: scale(1.045);
-}
-
-/* Bottom scrim so the foot's mono metadata reads clearly over busy photos,
-   without needing a solid caption bar that would flatten the image. */
-.tileScrim {
+.caption {
   position: absolute;
-  inset: auto 0 0 0;
-  height: 42%;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.32), transparent);
+  left: var(--sp-3);
+  right: var(--sp-3);
+  bottom: var(--sp-3);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 8px 14px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: #F4F4F4;
+  background: rgba(18, 18, 18, 0.55);
+  backdrop-filter: blur(10px);
+  border-radius: var(--r-full);
   opacity: 0;
-  transition: opacity var(--t-base);
+  transform: translateY(12px);
+  transition: opacity 300ms var(--ease-out), transform 500ms var(--ease-spring);
   pointer-events: none;
 }
+.caption > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.captionNum { flex-shrink: 0; opacity: 0.75; font-variant-numeric: tabular-nums; }
+.photo:hover .caption, .photo:focus-visible .caption { opacity: 1; transform: none; }
 
-.tile:hover .tileScrim,
-.tile:focus-visible .tileScrim {
-  opacity: 1;
+.skelLine { display: block; height: 16px; border-radius: 8px; }
+.skelPhoto { display: block; border-radius: var(--r-lg); }
+
+@media (max-width: 760px) {
+  .chapterHead { grid-template-columns: 1fr; align-items: start; }
+  .bento, .bento[data-count='2'] { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 42vw; gap: var(--sp-3); }
+  .bento[data-count='1'] { grid-template-columns: minmax(0, 1fr); grid-auto-rows: 64vw; }
+  .bento[data-count='1'] .photoItem { grid-column: auto; }
+  .photoItem, .skelPhoto { grid-column: span var(--m, 1); grid-row: span 1; }
+  .bento[data-count='3'] .photoItem:first-child { grid-row: span 2; grid-column: span 1; }
+  .photo, .skelPhoto { border-radius: var(--r-md); }
 }
-
-.tileFoot {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  column-gap: var(--sp-3);
-  row-gap: 2px;
-  align-items: baseline;
+@media (hover: none) {
+  /* Touch has no hover, so the caption simply stays hidden; the viewer shows the title. */
+  .caption { display: none; }
 }
-
-.tileNum {
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  color: var(--accent);
-  letter-spacing: var(--tracking-mono);
-}
-
-.tileName {
-  font-family: var(--font-serif);
-  font-size: var(--text-lg);
-  color: var(--fg-1);
-  line-height: 1.15;
-}
-
-.tileCount {
-  grid-column: 2;
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  color: var(--fg-3);
-}
-
-/* ── Skeleton ───────────────────────────────────────────────────────────── */
-.skelMedia {
-  width: 100%;
-  aspect-ratio: 4 / 5;
-  background: var(--bg-2);
-}
-
-.skelLine {
-  display: block;
-  height: 0.9em;
-  background: var(--bg-2);
-  border-radius: var(--r-xs);
-}
-
-@media (max-width: 900px) {
-  .headMeta {
-    align-self: start;
-    padding-bottom: 0;
-    margin-top: var(--sp-10);
-    grid-column: 1 / 13;
-  }
-  .sub { max-width: var(--measure); }
-  .titleLast { margin-left: 0.08em; }
+@media (prefers-reduced-motion: reduce) {
+  .zoom, .caption { transition: none; }
 }

@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react'
 import { getBioSection, updateBioSection } from '../../../../firebase'
 import { useToast } from '../../../../context/ToastContext'
 import Modal from '../../../../components/Modal'
+import Button from '../../../../components/Button'
+import { Plus } from '../../../../components/Icons'
+import { SectionHeader, EmptyState, SkeletonRows, IconAction, cx } from '../../ui'
+import { IconPencil, IconTrash } from '../../icons'
 import styles from '../../Admin.module.css'
 
 const BLANK = { institution: '', degree: '', period: '', description: '' }
@@ -46,39 +50,42 @@ export default function EducationSection() {
     addToast({ type: 'success', title: 'Entry deleted' })
   }
 
+  const addButton = <Button variant="accent" size="sm" magnetic={false} icon={<Plus size={14} />} onClick={openAdd}>Add entry</Button>
+
   return (
     <div>
-      <div className={styles.sectionHeader}>
-        <p className={styles.intro} style={{ margin: 0 }}>Education timeline shown on the About page.</p>
-        <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`} onClick={openAdd}>+ Add Entry</button>
-      </div>
+      <SectionHeader description={<p>Education timeline shown on the About page.</p>} action={addButton} />
 
-      {loading ? <p className={styles.empty}>Loading…</p>
-        : items.length === 0 ? <p className={styles.empty}>No education entries yet.</p>
-        : items.map((it, i) => (
-          <div key={i} className={styles.listRow}>
-            <div className={styles.listRowContent}>
-              <strong>{it.degree}</strong>
-              <span className={styles.meta}>{it.institution}{it.period ? ` · ${it.period}` : ''}</span>
-            </div>
-            <div className={styles.listRowActions}>
-              <button className={`${styles.btn} ${styles.btnOutline} ${styles.btnSm}`} onClick={() => openEdit(i)}>Edit</button>
-              <button className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`} onClick={() => remove(i)}>Delete</button>
-            </div>
+      {loading ? <SkeletonRows rows={3} />
+        : items.length === 0 ? <EmptyState title="No education yet">Add a degree or course and it appears on the About page timeline.</EmptyState>
+        : (
+          <div className={styles.list}>
+            {items.map((it, i) => (
+              <div key={i} className={styles.row} style={{ '--i': i }}>
+                <div className={styles.rowMain}>
+                  <strong className={styles.rowTitle}>{it.degree}</strong>
+                  <span className={styles.rowMeta}>{it.institution}{it.period ? ` · ${it.period}` : ''}</span>
+                </div>
+                <div className={styles.rowActions}>
+                  <IconAction label={`Edit "${it.degree}"`} onClick={() => openEdit(i)}><IconPencil size={15} /></IconAction>
+                  <IconAction label={`Delete "${it.degree}"`} danger onClick={() => remove(i)}><IconTrash size={15} /></IconAction>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
 
-      <Modal open={!!modal} onClose={close} title={modal?.mode === 'add' ? 'Add Education' : 'Edit Education'}>
+      <Modal open={!!modal} onClose={close} title={modal?.mode === 'add' ? 'Add education' : 'Edit education'}>
         <form onSubmit={save}>
           <div className={styles.grid2}>
-            <div className={styles.field}><label>Institution *</label><input value={form.institution} onChange={set('institution')} placeholder="University of Johannesburg" /></div>
-            <div className={styles.field}><label>Degree / Qualification *</label><input value={form.degree} onChange={set('degree')} placeholder="Bachelor of Architecture" /></div>
-            <div className={`${styles.field} ${styles.span2}`}><label>Period</label><input value={form.period} onChange={set('period')} placeholder="2023 - Present" /></div>
-            <div className={`${styles.field} ${styles.span2}`}><label>Description</label><textarea rows={3} value={form.description} onChange={set('description')} placeholder="Brief description…" /></div>
+            <div className={styles.field}><label htmlFor="ed-inst">Institution *</label><input id="ed-inst" value={form.institution} onChange={set('institution')} placeholder="University of Johannesburg" /></div>
+            <div className={styles.field}><label htmlFor="ed-deg">Degree / qualification *</label><input id="ed-deg" value={form.degree} onChange={set('degree')} placeholder="Bachelor of Architecture" /></div>
+            <div className={cx(styles.field, styles.span2)}><label htmlFor="ed-per">Period</label><input id="ed-per" value={form.period} onChange={set('period')} placeholder="2023 - Present" /></div>
+            <div className={cx(styles.field, styles.span2)}><label htmlFor="ed-desc">Description</label><textarea id="ed-desc" rows={3} value={form.description} onChange={set('description')} placeholder="Brief description…" /></div>
           </div>
           <div className={styles.formActions}>
-            <button type="button" className={`${styles.btn} ${styles.btnOutline}`} onClick={close}>Cancel</button>
-            <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
+            <Button size="sm" magnetic={false} onClick={close}>Cancel</Button>
+            <Button variant="accent" size="sm" magnetic={false} type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
           </div>
         </form>
       </Modal>

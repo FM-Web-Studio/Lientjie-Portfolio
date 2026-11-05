@@ -1,243 +1,241 @@
-/* =============================================================================
-   WORK
-   -----------------------------------------------------------------------------
-   Header → sticky filter strip → full-bleed rows. The header is deliberately
-   not a centred hero: the title holds the gutter and the supporting text sits
-   in the opposite columns.
-   ========================================================================== */
-
+/* ── Header ── */
 .head {
-  /* Clears the fixed nav, then a generous block so the title has air without
-     needing a full viewport of it - a 100vh header on an index page costs the
-     reader a scroll before they see a single project. */
-  padding-top: calc(var(--nav-h) + clamp(48px, 9vh, 112px));
-  padding-bottom: clamp(40px, 6vh, 72px);
+  padding-top: calc(var(--nav-h) + clamp(48px, 9vh, 96px));
+  padding-bottom: var(--sp-10);
 }
-
-.headMain {
-  grid-column: 1 / 8;
-  min-width: 0;
-}
-
-.eyebrow {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  color: var(--fg-3);
-  margin: 0 0 var(--sp-6);
-}
-
-.eyebrow::before {
-  content: '';
-  width: 40px;
-  height: 1px;
-  background: var(--accent);
-  flex-shrink: 0;
-}
-
+.headTop { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-4); }
 .title {
-  font-family: var(--font-serif);
+  margin-top: var(--sp-5);
   font-size: var(--text-display);
-  line-height: var(--leading-display);
+  font-weight: 600;
+  line-height: 1;
   letter-spacing: var(--tracking-display);
-  font-weight: 400;
   color: var(--fg-1);
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  /* Optical alignment against the gutter - see .display in global.css. */
-  margin-left: -0.045em;
 }
-
-.title em {
-  font-style: italic;
-  font-weight: 300;
-}
-
-.titleLast { margin-left: 0.14em; }
-
-/* Supporting text and stats, held in the right-hand columns and bottom-aligned
-   with the title so the two blocks share a baseline. */
-.headMeta {
-  grid-column: 9 / 13;
-  align-self: end;
-  min-width: 0;
-  padding-bottom: var(--sp-3);
-}
-
 .sub {
-  font-size: var(--text-base);
-  line-height: var(--leading-relaxed);
-  color: var(--fg-2);
-  margin: 0 0 var(--sp-8);
-  max-width: 36ch;
-}
-
-.headStats {
-  display: flex;
-  gap: var(--sp-10);
-  margin: 0;
-}
-
-.headStat {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--rule);
-  flex: 1;
-}
-
-.statKey {
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  color: var(--fg-3);
-}
-
-.statVal {
-  font-family: var(--font-serif);
+  margin-top: var(--sp-5);
+  max-width: 52ch;
   font-size: var(--text-lg);
-  color: var(--fg-1);
-  margin: 0;
+  line-height: 1.6;
+  color: var(--fg-2);
 }
 
-/* ── Sticky filter strip ────────────────────────────────────────────────────
-   `top` is the nav height so it parks directly beneath it. This works only
-   because <html> uses `overflow-x: clip` rather than `hidden` - `hidden`
-   would make <html> a scroll container and silently break the stickiness. */
-.filterBar {
-  position: sticky;
-  top: var(--nav-h);
-  z-index: var(--z-above);
-  background: color-mix(in srgb, var(--bg-0) 88%, transparent);
-  backdrop-filter: blur(14px);
-  border-block: 1px solid var(--rule);
-}
-
-@supports not (backdrop-filter: blur(1px)) {
-  .filterBar { background: var(--bg-0); }
-}
-
-.filterInner {
+/* ── Toolbar: filter chips on the left, layout toggle on the right ── */
+.toolbar {
+  display: flex;
   align-items: center;
-  min-height: 56px;
+  justify-content: space-between;
+  gap: var(--sp-6);
+  padding-bottom: var(--sp-10);
 }
+.filters { display: flex; flex-wrap: wrap; gap: var(--sp-2); min-width: 0; }
+.toolbarEnd { flex-shrink: 0; }
 
-.filters {
-  grid-column: 1 / 10;
-  display: flex;
-  flex-wrap: wrap;
-  /* Column gap only: a row gap here would push the strip taller when the
-     filters wrap on a narrow viewport, and it is sticky, so its height eats
-     the reader's viewport for the whole page. */
-  column-gap: var(--sp-6);
-  row-gap: 0;
-  min-width: 0;
-}
-
-.filterBtn {
-  appearance: none;
-  background: none;
-  border: 0;
-  padding: var(--sp-4) 0;
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  color: var(--fg-3);
-  cursor: pointer;
+/* A segmented pill with a thumb that slides under the active option. */
+.views {
   position: relative;
-  transition: color var(--t-fast);
-  white-space: nowrap;
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  border-radius: var(--r-full);
+  background: var(--bg-1);
+  border: 1px solid var(--rule);
 }
-
-.filterBtn::after {
-  content: '';
+.viewThumb {
   position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 1px;
-  background: var(--accent);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform var(--t-base);
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  border-radius: var(--r-full);
+  background: var(--fg-1);
+  transition: transform 500ms var(--ease-spring);
 }
-
-.filterBtn:hover { color: var(--fg-1); }
-.filterBtn:hover::after { transform: scaleX(1); }
-
-.filterOn { color: var(--fg-1); }
-.filterOn::after { transform: scaleX(1); }
-
-.count {
-  grid-column: 11 / 13;
-  justify-self: end;
-  display: flex;
-  align-items: baseline;
+.views[data-view='index'] .viewThumb { transform: translateX(100%); }
+.viewBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: var(--sp-2);
-  font-family: var(--font-mono);
+  height: 32px;
+  padding: 0 var(--sp-4);
   font-size: var(--text-sm);
-  color: var(--fg-1);
-  margin: 0;
+  font-weight: 500;
+  color: var(--fg-3);
+  border-radius: var(--r-full);
+  transition: color 300ms;
+}
+.viewBtn:hover { color: var(--fg-1); }
+.viewBtn[aria-pressed='true'] { color: var(--bg-0); }
+
+/* ── Results ── */
+.results { padding-bottom: var(--section-y); }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(32px, 3.5vw, 48px) clamp(20px, 2.4vw, 32px);
+}
+
+.cardWrap { min-width: 0; }
+.card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.cardMedia {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  background: var(--bg-2);
+}
+.cardZoom { display: block; transition: transform 1s var(--ease-out-expo); will-change: transform; }
+.card:hover .cardZoom { transform: scale(1.05); }
+.cardFig :global(img) { width: 100%; height: 100%; object-fit: cover; }
+.glare {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(420px circle at var(--gx, 50%) var(--gy, 50%), rgba(255, 255, 255, 0.18), transparent 60%);
+  opacity: 0;
+  transition: opacity 400ms;
+  pointer-events: none;
+}
+.card:hover .glare { opacity: 1; }
+.cardBody {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  padding-top: var(--sp-4);
+}
+.cardText { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
+.cardTitle { font-size: var(--text-xl); font-weight: 600; line-height: 1.2; letter-spacing: -0.02em; }
+.cardMeta { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; min-width: 0; }
+.cardMeta :global(.badge) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.cardYear { font-size: var(--text-sm); color: var(--fg-3); }
+.cardArrow {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  transition: transform 600ms var(--ease-spring), background-color 300ms, color 300ms, border-color 300ms;
+}
+.card:hover .cardArrow, .card:focus-visible .cardArrow { transform: rotate(45deg); background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+.skelMedia { display: block; aspect-ratio: 4 / 3; border-radius: var(--r-lg); }
+
+.empty { padding: var(--sp-12) var(--sp-6); text-align: center; color: var(--fg-3); }
+
+/* ── List view ── */
+.list { list-style: none; border-top: 1px solid var(--rule); }
+.listItem { border-bottom: 1px solid var(--rule); }
+.row {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto 64px 36px;
+  align-items: center;
+  gap: var(--sp-5);
+  width: 100%;
+  padding: var(--sp-4) var(--sp-3);
+  text-align: left;
+  border-radius: var(--r-md);
+  transition: background-color 300ms;
+}
+.row:hover, .row:focus-visible { background: var(--bg-1); }
+.rowThumb {
+  width: 56px;
+  height: 42px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-2);
+}
+.rowThumb img { width: 100%; height: 100%; object-fit: cover; }
+.rowTitle {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+  transition: transform 500ms var(--ease-out-expo);
+}
+.row:hover .rowTitle { transform: translateX(6px); }
+.rowCat { justify-self: end; }
+.rowYear { font-size: var(--text-sm); color: var(--fg-3); text-align: right; font-variant-numeric: tabular-nums; }
+.rowArrow {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  transition: transform 600ms var(--ease-spring), background-color 300ms, color 300ms, border-color 300ms;
+}
+.row:hover .rowArrow, .row:focus-visible .rowArrow { transform: rotate(45deg); background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+/* The floating preview: a small rounded photo that trails the pointer. */
+.preview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: var(--z-overlay);
+  width: 260px;
+  margin: -96px 0 0 28px;
+  pointer-events: none;
+}
+.previewInner {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--bg-2);
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 300ms var(--ease-out), transform 500ms var(--ease-spring);
+}
+.preview[data-shown='true'] .previewInner { opacity: 1; transform: scale(1); }
+.previewItem { position: absolute; inset: 0; opacity: 0; transition: opacity 300ms; }
+.previewItem[data-on='true'] { opacity: 1; }
+.previewItem img { width: 100%; height: 100%; object-fit: cover; }
+.previewEmpty {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  padding: var(--sp-4);
+  text-align: center;
+  font-weight: 600;
+  color: var(--fg-2);
+  background: radial-gradient(120% 90% at 30% 20%, var(--accent-dim), transparent 60%), var(--bg-2);
 }
 
-.countUnit {
-  font-size: var(--text-2xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono);
-  color: var(--fg-3);
+/* The thumbnail is for touch and keyboard; with the preview it would repeat itself. */
+@media (hover: hover) and (pointer: fine) {
+  .row { grid-template-columns: minmax(0, 1fr) auto 64px 36px; }
+  .rowThumb { display: none; }
 }
 
-/* ── List ───────────────────────────────────────────────────────────────── */
-.list {
-  padding-top: var(--sp-8);
-  padding-bottom: var(--section-y);
+@media (max-width: 1080px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-
-.empty {
-  grid-column: 1 / 9;
-  padding-block: clamp(64px, 14vh, 160px);
-  font-family: var(--font-serif);
-  font-size: var(--text-2xl);
-  color: var(--fg-3);
+@media (max-width: 760px) {
+  .toolbar { flex-direction: column; align-items: flex-start; gap: var(--sp-4); }
+  .row { grid-template-columns: 56px minmax(0, 1fr) 36px; gap: var(--sp-4); padding-inline: 0; }
+  .rowCat, .rowYear { display: none; }
+  .rowTitle { font-size: var(--text-lg); white-space: normal; }
 }
-
-@media (max-width: 900px) {
-  .headMeta {
-    align-self: start;
-    padding-bottom: 0;
-    margin-top: var(--sp-10);
-  }
-
-  .sub { max-width: var(--measure); }
-
-  .titleLast { margin-left: 0.08em; }
-
-  .filterInner { min-height: 48px; }
-
-  /* Horizontal scroll rather than wrapping. Wrapped filters make the sticky
-     strip two or three rows tall, which on a phone permanently occupies a
-     third of the viewport. */
-  .filters {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    column-gap: var(--sp-5);
-    scrollbar-width: none;
-    /* Fades the right edge so it is visible that the row continues. */
-    mask-image: linear-gradient(to right, #000 0, #000 88%, transparent 100%);
-  }
-
-  .filters::-webkit-scrollbar { display: none; }
-
-  /* The count competes with the filters for the same row on a narrow screen,
-     and the filters are the interactive half. */
-  .count { display: none; }
+@media (max-width: 760px) and (hover: hover) and (pointer: fine) {
+  .row { grid-template-columns: minmax(0, 1fr) 36px; padding-inline: var(--sp-3); }
+}
+@media (max-width: 620px) {
+  .grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .viewThumb, .cardArrow, .rowArrow, .rowTitle, .previewInner, .cardZoom { transition: none; }
 }

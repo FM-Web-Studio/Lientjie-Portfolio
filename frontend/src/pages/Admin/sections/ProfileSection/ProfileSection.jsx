@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { getBioProfile, updateBioSection, uploadFile, pruneUnusedImages } from '../../../../firebase'
 import { useToast } from '../../../../context/ToastContext'
+import Button from '../../../../components/Button'
+import { SectionHeader, SaveBar, DropZone, useDirty, cx } from '../../ui'
+import { IconTrash } from '../../icons'
 import styles from '../../Admin.module.css'
 
 const BLANK = { name: '', title: '', subtitle: '', bio: '', profileImage: '' }
@@ -10,17 +13,20 @@ export default function ProfileSection() {
   const [form, setForm] = useState(BLANK)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [dirty, markClean] = useDirty(form)
   const fileRef = useRef()
   // The image Firestore currently holds, so a replaced one can be cleaned up.
   const savedImage = useRef('')
 
   useEffect(() => {
     getBioProfile().then(p => {
-      if (!p) return
-      setForm({ ...BLANK, ...p })
+      if (!p) { markClean(BLANK); return }
+      const next = { ...BLANK, ...p }
+      setForm(next)
+      markClean(next)
       savedImage.current = p.profileImage || ''
     })
-  }, [])
+  }, [markClean])
 
   const set = (f) => (e) => setForm(prev => ({ ...prev, [f]: e.target.value }))
 
@@ -31,6 +37,7 @@ export default function ProfileSection() {
     try {
       await updateBioSection('profile', form)
       savedImage.current = form.profileImage || ''
+      markClean(form)
       addToast({ type: 'success', title: 'Profile saved' })
       await pruneUnusedImages([previous])
     } catch { addToast({ type: 'error', title: 'Save failed' }) }
@@ -51,50 +58,65 @@ export default function ProfileSection() {
 
   return (
     <div>
-      <p className={styles.intro}>
-        Your name, title and bio as shown on the <strong>About</strong> page. Email,
-        phone, location and social links live under <strong>Contact Info</strong>.
-      </p>
-      {/* The big name on the home page is NOT this field. It is split across two
-          typographic halves (italic first name, roman last name) and lives in
-          Site Copy. Saying so here is the whole fix for "I changed my name and
-          nothing happened": Profile is the obvious place to look, and it is the
-          wrong one. */}
-      <p className={styles.intro}>
-        Changing the large name on the <strong>home page</strong>? That one lives under{' '}
-        <strong>Site Copy → Home → &ldquo;Hero - first name&rdquo; / &ldquo;Hero - last name&rdquo;</strong>.
-      </p>
-      <form className={styles.formCard} onSubmit={handleSave}>
-        <div className={styles.grid2}>
-          <div className={styles.field}><label>Full Name</label><input value={form.name} onChange={set('name')} placeholder="Lientjie Meiring" /></div>
-          <div className={styles.field}><label>Title</label><input value={form.title} onChange={set('title')} placeholder="Architecture Student" /></div>
-          <div className={`${styles.field} ${styles.span2}`}><label>Subtitle</label><input value={form.subtitle} onChange={set('subtitle')} placeholder="Aspiring Architect & Design Enthusiast" /></div>
-          <div className={`${styles.field} ${styles.span2}`}><label>Bio</label><textarea rows={5} value={form.bio} onChange={set('bio')} placeholder="Short professional bio shown on the About page…" /></div>
-          <div className={`${styles.field} ${styles.span2}`}>
-            <label>Profile Image</label>
-            {form.profileImage
-              ? <img src={form.profileImage} alt="Profile" className={styles.imgPreview} onError={e => { e.currentTarget.style.display = 'none' }} />
-              : <p className={styles.uploadMsg}>No profile image yet.</p>}
-            <div className={styles.imgRow}>
-              <label className={`${styles.btn} ${styles.btnOutline} ${styles.btnSm} ${styles.uploadBtn}`}>
-                {uploading ? 'Uploading…' : form.profileImage ? 'Replace image' : 'Upload image'}
-                <input type="file" accept="image/*" ref={fileRef} onChange={handleImage} hidden disabled={uploading} />
-              </label>
+      <SectionHeader
+        description={<>
+          <p>
+            Your name, title and bio as shown on the <strong>About</strong> page. Email,
+            phone, location and social links live under <strong>Contact Info</strong>.
+          </p>
+          {/* Profile is the obvious place to change the big home page name, and the wrong one. */}
+          <p className={styles.note}>
+            <span>
+              Changing the large name on the <strong>home page</strong>? That one lives under{' '}
+              <strong>Site Copy → Home → &ldquo;Big name on home page&rdquo;</strong>.
+            </span>
+          </p>
+        </>}
+      />
+      <form onSubmit={handleSave}>
+        <div className={styles.formCard}>
+          <p className={styles.cardLabel}>Identity</p>
+          <div className={styles.grid2}>
+            <div className={styles.field}><label htmlFor="pr-name">Full name</label><input id="pr-name" value={form.name} onChange={set('name')} placeholder="Lientjie Meiring" /></div>
+            <div className={styles.field}><label htmlFor="pr-title">Title</label><input id="pr-title" value={form.title} onChange={set('title')} placeholder="Architecture Student" /></div>
+            <div className={cx(styles.field, styles.span2)}><label htmlFor="pr-sub">Subtitle</label><input id="pr-sub" value={form.subtitle} onChange={set('subtitle')} placeholder="Aspiring Architect & Design Enthusiast" /></div>
+            <div className={cx(styles.field, styles.span2)}><label htmlFor="pr-bio">Bio</label><textarea id="pr-bio" rows={6} value={form.bio} onChange={set('bio')} placeholder="Short professional bio shown on the About page…" /></div>
+          </div>
+        </div>
+
+        <div className={styles.formCard}>
+          <p className={styles.cardLabel}>Portrait</p>
+          <div className={styles.imgField}>
+            <div className={styles.preview}>
+              {form.profileImage
+                ? <img key={form.profileImage} src={form.profileImage} alt="Profile" decoding="async" onError={e => { e.currentTarget.style.display = 'none' }} />
+                : <span className={styles.previewEmpty}>No portrait</span>}
+            </div>
+            <div className={styles.imgSide}>
+              <DropZone
+                ref={fileRef}
+                busy={uploading}
+                onFiles={handleImage}
+                title={form.profileImage ? 'Replace portrait' : 'Upload a portrait'}
+              />
               {form.profileImage && (
-                <button
-                  type="button"
-                  className={`${styles.btn} ${styles.btnOutline} ${styles.btnSm}`}
-                  onClick={() => setForm(f => ({ ...f, profileImage: '' }))}
-                >
-                  Remove image
-                </button>
+                <div className={styles.imgRow}>
+                  <Button
+                    size="sm"
+                    magnetic={false}
+                    className={cx(styles.danger, styles.noNudge)}
+                    icon={<IconTrash size={15} />}
+                    onClick={() => setForm(f => ({ ...f, profileImage: '' }))}
+                  >
+                    Remove image
+                  </Button>
+                </div>
               )}
             </div>
           </div>
         </div>
-        <div className={styles.formActions}>
-          <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={saving}>{saving ? 'Saving…' : 'Save Profile'}</button>
-        </div>
+
+        <SaveBar dirty={dirty} saving={saving} label="Save profile" />
       </form>
     </div>
   )

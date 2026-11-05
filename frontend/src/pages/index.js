@@ -1,12 +1,25 @@
 import { lazy } from 'react'
 
-// Every page loads on demand, so a visitor only downloads the page they open.
-export const Home      = lazy(() => import('./Home'))
-export const Work      = lazy(() => import('./Work'))
-export const Interests = lazy(() => import('./Interests'))
-export const About     = lazy(() => import('./About'))
-export const Contact   = lazy(() => import('./Contact'))
-export const NotFound  = lazy(() => import('./NotFound'))
+// Pages are split into their own files, then all fetched in idle time after the first
+// page shows, so moving between pages never waits on a download.
+const loaders = {
+  Home:      () => import('./Home'),
+  Work:      () => import('./Work'),
+  Interests: () => import('./Interests'),
+  About:     () => import('./About'),
+  Contact:   () => import('./Contact'),
+  NotFound:  () => import('./NotFound'),
+  Legal:     () => import('./Legal'),
+}
+
+export const preloadPages = () => Object.values(loaders).forEach(load => load())
+
+export const Home      = lazy(loaders.Home)
+export const Work      = lazy(loaders.Work)
+export const Interests = lazy(loaders.Interests)
+export const About     = lazy(loaders.About)
+export const Contact   = lazy(loaders.Contact)
+export const NotFound  = lazy(loaders.NotFound)
 export const Admin     = lazy(() => import('./Admin'))
-export const Privacy   = lazy(() => import('./Legal').then(m => ({ default: m.Privacy })))
-export const Terms     = lazy(() => import('./Legal').then(m => ({ default: m.Terms })))
+export const Privacy   = lazy(() => loaders.Legal().then(m => ({ default: m.Privacy })))
+export const Terms     = lazy(() => loaders.Legal().then(m => ({ default: m.Terms })))

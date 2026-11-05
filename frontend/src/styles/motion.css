@@ -1,137 +1,60 @@
-/* =============================================================================
-   MOTION
-   -----------------------------------------------------------------------------
-   Reveals are driven by a `data-in` attribute that the Reveal component sets
-   from an IntersectionObserver, NOT by `animation-timeline: view()`.
-
-   Scroll-driven CSS animations are the more elegant mechanism, but they are
-   still unsupported in Safari and Firefox at the time of writing, which means
-   maintaining a JS fallback anyway - and two mechanisms that must agree on the
-   same start state is how elements end up permanently invisible in one engine.
-   One observer-driven path behaves identically everywhere.
-
-   Everything here animates only `transform` and `opacity`. Both are composited,
-   so a reveal firing while the user is scrolling does not cause layout or
-   paint work on the main thread.
-   ========================================================================== */
-
-/* The element's resting (revealed) state is its natural one, and the hidden
-   state is the override. Written this way round so that if JS never runs - a
-   failed chunk, a crawler, a reader with scripting off - the content is
-   visible rather than permanently transparent. */
-[data-reveal] {
-  opacity: 1;
-  transform: none;
-}
+/* Reveals: the Reveal component flips data-reveal when an element enters view.
+   The hidden state only applies when motion is allowed, so content is never stuck invisible. */
+[data-reveal] { opacity: 1; transform: none; }
 
 @media (prefers-reduced-motion: no-preference) {
-  [data-reveal='false'] {
-    opacity: 0;
-  }
-
   [data-reveal] {
     transition:
-      opacity var(--t-slow) var(--ease-out),
-      transform var(--t-slow) var(--ease-out);
-    /* Each child of a staggered group sets --i; the delay is small because a
-       long cascade down a full-bleed row reads as sluggish rather than
-       choreographed. */
-    transition-delay: calc(var(--i, 0) * 70ms);
+      opacity 1s var(--ease-out),
+      transform 1.2s var(--ease-out-expo),
+      clip-path 1.4s var(--ease-out-expo),
+      filter 1s var(--ease-out);
+    transition-delay: calc(var(--i, 0) * 90ms);
   }
 
-  [data-reveal='false'].rise      { transform: translateY(28px); }
-  [data-reveal='false'].rise-sm   { transform: translateY(12px); }
-  [data-reveal='false'].slide-in  { transform: translateX(-32px); }
-  [data-reveal='false'].slide-in-r{ transform: translateX(32px); }
+  [data-reveal='false'] { opacity: 0; }
+  [data-reveal='false'].rise       { transform: translateY(48px); }
+  [data-reveal='false'].rise-sm    { transform: translateY(20px); }
+  [data-reveal='false'].slide-in   { transform: translateX(-48px); }
+  [data-reveal='false'].slide-in-r { transform: translateX(48px); }
+  [data-reveal='false'].fade       { opacity: 0; }
+  [data-reveal='false'].blur       { filter: blur(12px); transform: translateY(16px); }
+  [data-reveal='false'].scale-in   { transform: scale(0.94); }
+  /* Swings up into place from below, like a card tipping toward you. */
+  [data-reveal='false'].flip-up    { transform: perspective(1000px) rotateX(24deg) translateY(56px) scale(0.96); transform-origin: center bottom; }
 
-  /* Imagery fades only - it is deliberately NOT scaled.
-     `transform: scale()` on an <img>, or on any element containing one, makes
-     Chromium re-rasterise the image from its full-resolution source for the
-     new scale, on every frame of the transition. Measured on a 7016x9933
-     source that is ~200ms per frame: p95 frame time 182ms and 9s of
-     main-thread raster during five seconds of hovering. Opacity is composited,
-     so its cost is the same whatever the image's resolution. */
-  [data-reveal='false'].fade      { opacity: 0; }
+  /* A curtain lifts off the element's children. The clip sits on the children, not the
+     observed element, because a fully clipped element never registers as in view. */
+  [data-reveal='false'].clip, [data-reveal='false'].clip-x { opacity: 1; }
+  .clip > *, .clip-x > * {
+    clip-path: inset(0 0 0 0);
+    transition: clip-path 1.4s var(--ease-out-expo);
+    transition-delay: calc(var(--i, 0) * 90ms);
+  }
+  [data-reveal='false'].clip > *   { clip-path: inset(100% 0 0 0); }
+  [data-reveal='false'].clip-x > * { clip-path: inset(0 100% 0 0); }
 
-  /* A rule that draws itself. transform-origin is set per-use because a
-     vertical spine and a horizontal divider want different origins. */
-  [data-reveal='false'].draw-x    { transform: scaleX(0); }
-  [data-reveal='false'].draw-y    { transform: scaleY(0); }
+  [data-reveal='false'].draw-x { opacity: 1; transform: scaleX(0); }
+  [data-reveal='false'].draw-y { opacity: 1; transform: scaleY(0); }
   .draw-x { transform-origin: left center; }
   .draw-y { transform-origin: center top; }
 }
 
-/* ── Hover affordance on a figure ───────────────────────────────────────────
-   An inset rule that fades in, NOT a scale on the image.
 
-   The scale this replaces was the single worst performance problem on the
-   site: hovering a project row produced 200ms frames and made every
-   subsequent hover - on a button, a link, anything - lag behind the pointer,
-   because the compositor was still re-rasterising a 70-megapixel bitmap. See
-   the note on `.fade` above.
-
-   Opacity on a 1px border is composited and costs the same regardless of what
-   is behind it, so this cannot regress no matter what gets uploaded. It also
-   suits the drafting register of the rest of the page better than a zoom.
-
-   Gated behind a fine pointer: on a touch screen `:hover` sticks after a tap,
-   so the rule would stay visible until the user tapped elsewhere. */
-.lift { position: relative; }
-
-@media (hover: hover) and (pointer: fine) {
-  .lift::after {
-    content: '';
-    position: absolute;
-    inset: clamp(8px, 1.2vw, 18px);
-    border: 1px solid var(--accent);
-    opacity: 0;
-    transition: opacity var(--t-base) var(--ease-out);
-    pointer-events: none;
-
-    /* A DELIBERATE exception to the rule stated in global.css that these
-       hints should not be left on permanently.
-
-       Without it this overlay shares a compositing layer with the image, so
-       animating its opacity invalidates that region - and repainting the
-       region means re-rasterising the image underneath it. On a 7016x9933
-       source that measured p95 187.8ms with 47 frames over 100ms, i.e. the
-       opacity fade was just as expensive as the scale it replaced.
-
-       Promoted, the fade runs on the GPU and never touches the image's raster:
-       p95 6.2ms, 3 long frames instead of 47, main-thread work 8.9s -> 1.0s.
-
-       The cost is one layer per row. It is the size of the figure but holds
-       only a 1px frame, so it is cheap to raster, and there are a handful of
-       rows rather than the dozens the global.css note was warning about. */
-    will-change: opacity;
-  }
-
-  .lift:hover::after { opacity: 0.9; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0.45); }
+  100% { box-shadow: 0 0 0 14px rgba(var(--accent-rgb), 0); }
 }
+.pulse { animation: pulse-ring 2s var(--ease-out) infinite; }
 
-/* ── Marquee ────────────────────────────────────────────────────────────────
-   Used once, for the availability strip. Duplicated content inside, so the
-   loop has no visible seam; the copy is aria-hidden so a screen reader does
-   not read the text twice. */
-@keyframes marquee {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
-.marquee {
-  display: flex;
-  width: max-content;
-  animation: marquee 38s linear infinite;
-}
 @media (prefers-reduced-motion: reduce) {
-  .marquee { animation: none; }
+  .pulse { animation: none; }
 }
 
-/* ── Scroll cue ─────────────────────────────────────────────────────────── */
-@keyframes cue {
-  0%, 100% { transform: translateY(0);   opacity: 0.55; }
-  50%      { transform: translateY(7px); opacity: 1; }
-}
-.cue { animation: cue 2.4s var(--ease-out) infinite; }
-@media (prefers-reduced-motion: reduce) {
-  .cue { animation: none; }
-}
+/* The new-theme snapshot grows as a circle from the toggle (View Transitions API). */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+::view-transition-new(root) { z-index: 1; }
+
+/* TextReveal masks: extra room below each line so descenders on tight display type are not clipped. */
+.tr-line-mask { padding-bottom: 0.14em; margin-bottom: -0.14em; padding-inline: 0.04em; margin-inline: -0.04em; }
