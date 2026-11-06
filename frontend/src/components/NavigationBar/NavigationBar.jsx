@@ -171,6 +171,7 @@ export default function NavigationBar() {
           </nav>
 
           <div className={styles.tools}>
+            <CvButton variant="accent" size="sm" className={styles.barCv} />
             <ThemeToggle />
             <button
               ref={menuBtn}

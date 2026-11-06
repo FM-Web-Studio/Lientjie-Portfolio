@@ -48,7 +48,9 @@
 }
 .brandMark { border-radius: 50%; transition: transform 800ms var(--ease-out-expo); }
 .brand:hover .brandMark { transform: rotate(-200deg) scale(1.08); }
+/* Flex, so the rolling label centres on its box instead of sitting on the text baseline. */
 .brandName {
+  display: inline-flex;
   font-size: var(--text-base);
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -82,7 +84,10 @@
 .link {
   position: relative;
   z-index: 1;
-  padding: 10px 18px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
   font-size: var(--text-sm);
   font-weight: 500;
   color: inherit;
@@ -94,6 +99,13 @@
 .links:hover .linkActive:not(:hover) { color: inherit; }
 
 .tools { display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-2); }
+
+/* Desktop only: phones and tablets have it in the menu panel. Mint fill, dark over the mint and coral bands so it never blends in. */
+.tools .barCv {
+  min-height: 44px;
+  white-space: nowrap;
+}
+.onLight .tools .barCv { --btn-fg: #B0EFC3; --btn-bg: #121212; --btn-line: #121212; }
 
 .iconBtn {
   width: 44px;
@@ -229,7 +241,7 @@
 }
 
 @media (max-width: 960px) {
-  .links { display: none; }
+  .links, .tools .barCv { display: none; }
   .inner { grid-template-columns: 1fr auto; }
 }
 @media (max-width: 420px) {
